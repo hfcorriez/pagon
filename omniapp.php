@@ -35,7 +35,7 @@ class Core
         register_shutdown_function(array(__CLASS__, '__shutdown'));
 
         self::__init();
-        self::register_error_handler();
+        self::register_handler();
     }
 
     public static function start()
@@ -152,10 +152,16 @@ class Core
         return self::__arrayObjectWrapper(self::$env[$key]);
     }
 
-    public static function register_error_handler()
+    public static function register_handler()
     {
         set_error_handler(array(__CLASS__, '__error'));
         set_exception_handler(array(__CLASS__, '__exception'));
+    }
+    
+    public static function restore_handler()
+    {
+        restore_error_handler();
+        restore_exception_handler();
     }
 
     public static function log($text, $level = self::LOG_LEVEL_NOTICE)
