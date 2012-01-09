@@ -1,7 +1,18 @@
 <?php
-
+/**
+* OmniApp Framework
+*
+* @package		OmniApp
+* @author		Corrie Zhao
+* @copyright	(c) 2011 OmniApp Framework
+*/
 namespace OMniApp;
 
+/**
+ * Core Class
+ * @author Corrie Zhao
+ * @todo 分离Request和Config，优化Dispatch，优化Config，增加Response，实现Model，优化日志记录
+ */
 class Core
 {
     private static $config;
@@ -24,6 +35,7 @@ class Core
         register_shutdown_function(array(__CLASS__, '__shutdown'));
 
         self::__init();
+        self::register_error_handler();
     }
 
     public static function start()
@@ -142,7 +154,8 @@ class Core
 
     public static function register_error_handler()
     {
-
+        set_error_handler(array(__CLASS__, '__error'));
+        set_exception_handler(array(__CLASS__, '__exception'));
     }
 
     public static function log($text, $level = self::LOG_LEVEL_NOTICE)
@@ -167,11 +180,88 @@ class Core
         self::__logSave();
     }
 
+    public static function __error($errno, $errstr, $errfile, $errline)
+    {
+        $is_log = false;
+        switch ($errno) {
+            case E_NOTICE:
+            case E_USER_NOTICE:
+                $is_display = false;
+                $errtag = "Notice";
+                $level = self::LOG_LEVEL_NOTICE;
+                break;
+            case E_WARNING:
+            case E_USER_WARNING:
+                $is_log = true;
+                $is_display = false;
+                $errtag = "Warn";
+                $level = self::LOG_LEVEL_WARN;
+                break;
+            case E_ERROR:
+            case E_USER_ERROR:
+                $is_log = true;
+                $errtag = "Fatal";
+                $level = self::LOG_LEVEL_ERROR;
+                break;
+            default:
+                $is_display = false;
+                $errtag = "Unknown";
+                $level = self::LOG_LEVEL_CRITICAL;
+        }
+
+        $text = sprintf("%s:  %s in %s on line %d (%s)", $errtag, $errstr, $errfile, $errline, self::$request->url);
+
+        if ($is_log) self::log($text, $level);
+        
+        // @todo 调用User Error控制器
+    }
+
+    public static function __exception($exception)
+    {
+        $traceline = "#%s %s(%s): %s(%s)";
+        $message = "Exception: Uncaught exception '%s' with message '%s' in %s:%s\nStack trace:\n%s\n  thrown in %s on line %s";
+        
+        $trace = $exception->getTrace();
+        foreach ($trace as $key => $stackPoint) {
+            $trace[$key]['args'] = array_map('gettype', is_array($trace[$key]['args']) ? $trace[$key]['args'] : array());
+        }
+        
+        $result = array();
+        foreach ($trace as $key => $stackPoint) {
+            $result[] = sprintf(
+            $traceline,
+            $key,
+            $stackPoint['file'],
+            $stackPoint['line'],
+            $stackPoint['function'],
+            implode(', ', $stackPoint['args'])
+            );
+        }
+        $result[] = '#' . ++$key . ' {main}';
+        
+        $text = sprintf(
+            $message . ' (%s)',
+            get_class($exception),
+            $exception->getMessage(),
+            $exception->getFile(),
+            $exception->getLine(),
+            implode("\n", $result),
+            $exception->getFile(),
+            $exception->getLine(),
+            self::$request->url
+        );
+        
+        self::log($text, self::LOG_LEVEL_ERROR);
+        
+        // @todo 调用User Exception控制器
+    }
+
     private static function __init()
     {
         // Env init
         self::$env = new ArrayObjectWrapper(array());
         self::$env['is_cli'] = (PHP_SAPI == 'cli');
+        self::$env['is_win'] = (substr(PHP_OS, 0, 3) == 'WIN');
         self::$env['start_time'] = microtime(true);
         self::$env['start_memory'] = memory_get_usage();
 
@@ -193,7 +283,7 @@ class Core
             }
         }
 
-        if ($_SERVER['PHP_AUTH_USER']) {
+        if (isset($_SERVER['PHP_AUTH_USER'])) {
             $pass = isset($_SERVER['PHP_AUTH_PW']) ? $_SERVER['PHP_AUTH_PW'] : '';
             $headers['authorization'] = 'Basic '.base64_encode($_SERVER['PHP_AUTH_USER'].':'.$pass);
         }
@@ -240,46 +330,6 @@ class Core
         $fileName .= str_replace('_', DIRECTORY_SEPARATOR, $class_name) . '.php';
 
         require self::config('app')->classpath . '/' . strtolower($fileName);
-    }
-
-    private static function __error($errno, $errstr, $errfile, $errline)
-    {
-        $is_log = false;
-        switch ($errno) {
-            case E_NOTICE:
-            case E_USER_NOTICE:
-                $is_display = false;
-                $errtag = "Notice";
-                $level = self::LOG_LEVEL_NOTICE;
-                break;
-            case E_WARNING:
-            case E_USER_WARNING:
-                $is_log = true;
-                $is_display = false;
-                $errtag = "Warning";
-                $level = self::LOG_LEVEL_WARN;
-                break;
-            case E_ERROR:
-            case E_USER_ERROR:
-                $is_log = true;
-                $errtag = "Fatal";
-                $level = self::LOG_LEVEL_ERROR;
-                break;
-            default:
-                $is_display = false;
-            $errtag = "Unknown";
-            $level = self::LOG_LEVEL_CRITICAL;
-            break;
-        }
-
-        $message = sprintf("%s:  %s in %s on line %d (%s)", $errtag, $errstr, $errfile, $errline, self::request()->url);
-
-        if ($is_log) self::log($message, $level);
-    }
-
-    private static function __exception()
-    {
-
     }
 
     private static function __arrayObjectWrapper($array = false)
