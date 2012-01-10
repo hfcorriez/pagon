@@ -14,11 +14,13 @@ namespace OMni;
  */
 class App
 {
-    public static $config;
-    public static $request;
-    public static $env;
-
-    private static $logs = array();
+    public static $config = array(
+        'timezone' => 'UTC',
+        'lang' => 'en_US',
+    );
+    public static $request = array();
+    public static $env = array();
+    public static $logs = array();
 
     const LOG_LEVEL_DEBUG = 0;
     const LOG_LEVEL_NOTICE = 1;
@@ -28,7 +30,15 @@ class App
 
     public static function init($config = array())
     {
-        self::$config = new ArrayObjectWrapper($config);
+        iconv_set_encoding("internal_encoding", "UTF-8");
+        mb_internal_encoding('UTF-8');
+        
+        self::$config = new ArrayObjectWrapper(array_merge(self::$config, $config));
+        
+        self::__init();
+        
+        date_default_timezone_set(self::$config->timezone);
+        
         if(!self::$config->apppath) throw new Exception('Config::apppath must be set before.');
         
         if (self::$config->error)
@@ -37,13 +47,12 @@ class App
         }
 
         if(self::$config->classpath) spl_autoload_register(array(__CLASS__, '__autoloader'));
-        
-        self::__init();
+        register_shutdown_function(array(__CLASS__, '__shutdown'));
     }
 
     public static function start()
     {
-        self::dispatch(self::$request['path']);
+        self::dispatch(self::$request->path);
     }
 
     public static function dispatch($path)
@@ -131,7 +140,7 @@ class App
         if($level < self::$config->log['level']) return;
         
         $log = array (
-            'id' => isset($_SERVER['HTTP_REQUEST_ID']) ? $_SERVER['HTTP_REQUEST_ID'] : '',
+            'id' => isset($_SERVER['HTTP_TRACK_ID']) ? $_SERVER['HTTP_TRACK_ID'] : '',
             'time' => microtime(true),
             'text' => $text,
             'level' => $level,
@@ -222,6 +231,17 @@ class App
         
         if($is_display && ($contoller = self::$config->route['exception'])) Controller::start($contoller, array($text));
     }
+    
+    private static function __preferedLanguage()
+    {
+        $lang = false;
+        if(isset($_COOKIE['lang'])) $lang = $_COOKIE['lang'];
+        if(!$lang) 
+        {
+            $lang = self::$config->languages ? I18n::preferedLanguage(self::$config->languages) : self::$config->lang;
+        }
+        return $lang;
+    }
 
     private static function __init()
     {
@@ -230,15 +250,17 @@ class App
         self::$request = new ArrayObjectWrapper(array());
         
         // Env init
+        self::$env['lang'] = self::__preferedLanguage();
         self::$env['is_cli'] = (PHP_SAPI == 'cli');
         self::$env['is_win'] = (substr(PHP_OS, 0, 3) == 'WIN');
         self::$env['start_time'] = microtime(true);
         self::$env['start_memory'] = memory_get_usage();
+        self::$env['timezone'] = date_default_timezone_get();
 
         if(!self::$env->is_cli)
         {
             // Request init
-            if(empty($_SERVER['HTTP_REQUEST_ID'])) $_SERVER['HTTP_REQUEST_ID'] = md5(uniqid());
+            if(empty($_SERVER['HTTP_TRACK_ID'])) $_SERVER['HTTP_TRACK_ID'] = md5(uniqid());
     
             self::$request['path'] = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
             self::$request['url'] = 'http://' . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'];
@@ -295,8 +317,7 @@ class App
     private static function __autoloader($class_name)
     {
         $class_name = ltrim($class_name, '\\');
-        $fileName  = '';
-        $namespace = '';
+        $fileName = $namespace = '';
 
         if ($lastNsPos = strripos($class_name, '\\'))
         {
@@ -305,9 +326,7 @@ class App
             $fileName  = str_replace('\\', DIRECTORY_SEPARATOR, $namespace) . DIRECTORY_SEPARATOR;
         }
 
-        $fileName .= str_replace('_', DIRECTORY_SEPARATOR, $class_name) . '.php';
-
-        require self::$config->classpath . '/' . strtolower($fileName);
+        require self::$config->classpath . '/' . strtolower(str_replace('_', DIRECTORY_SEPARATOR, $class_name) . '.php');
     }
 }
 
@@ -341,7 +360,7 @@ class View
 
 class Model
 {
-    public function __construct($name)
+    public function __construct()
     {
         //
     }
@@ -380,7 +399,7 @@ abstract class Controller
         
         if(!in_array($method, $request_methods) || !method_exists($controller, $method))
         {
-            if( ! method_exists($controller, 'run'))
+            if(!method_exists($controller, 'run'))
             {
                 throw new Exception('Contoller::run not exist.');
             }
@@ -394,3 +413,75 @@ abstract class Controller
         return $controller;
     }
 }
+
+class I18n 
+{
+    public static $lang = 'en-US';
+    public static $source = 'en-US';
+    protected static $_cache = array();
+
+    public static function lang($lang = NULL)
+    {
+        if ($lang) I18n::$lang = strtolower(str_replace(array(' ', '_'), '-', $lang));
+        return I18n::$lang;
+    }
+    
+    public static function get($string, $lang = NULL)
+    {
+        if ( ! $lang) $lang = I18n::$lang;
+        $table = I18n::load($lang);
+        return isset($table[$string]) ? $table[$string] : $string;
+    }
+    
+    public static function load($lang)
+    {
+        if (isset(I18n::$_cache[$lang])) return I18n::$_cache[$lang];
+
+        $table = array();
+
+        $parts = explode('-', $lang);
+        $path = implode(DIRECTORY_SEPARATOR, $parts);
+
+        $file = App::$config->localepath . '/' . $path . '.php';
+        if (file_exists($file)) $table = include($file);
+
+        return I18n::$_cache[$lang] = $table;
+    }
+
+    public static function preferedLanguage($available_languages, $http_accept_language="auto")
+    {
+        if ($http_accept_language == "auto") $http_accept_language = !empty($_SERVER['HTTP_ACCEPT_LANGUAGE']) ? $_SERVER['HTTP_ACCEPT_LANGUAGE'] : '';
+
+        preg_match_all("/([[:alpha:]]{1,8})(-([[:alpha:]|-]{1,8}))?" . "(\s*;\s*q\s*=\s*(1\.0{0,3}|0\.\d{0,3}))?\s*(,|$)/i", $http_accept_language, $hits, PREG_SET_ORDER);
+
+        $bestlang = $available_languages[0];
+        $bestqval = 0;
+
+        foreach ($hits as $arr)
+        {
+            $langprefix = strtolower ($arr[1]);
+            if (!empty($arr[3]))
+            {
+                $langrange = strtolower ($arr[3]);
+                $language = $langprefix . "-" . $langrange;
+            }
+            else $language = $langprefix;
+            $qvalue = 1.0;
+            if (!empty($arr[5])) $qvalue = floatval($arr[5]);
+             
+            if (in_array($language,$available_languages) && ($qvalue > $bestqval))
+            {
+                $bestlang = $language;
+                $bestqval = $qvalue;
+            }
+            else if (in_array($langprefix,$available_languages) && (($qvalue*0.9) > $bestqval))
+            {
+                $bestlang = $langprefix;
+                $bestqval = $qvalue*0.9;
+            }
+        }
+        return $bestlang;
+    }
+}
+
+require 'omnifunc.php';
