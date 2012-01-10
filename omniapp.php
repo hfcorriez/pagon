@@ -20,6 +20,7 @@ class Core
     private static $env;
 
     private static $logs = array();
+    private static $error = false;
 
     const LOG_LEVEL_DEBUG = 0;
     const LOG_LEVEL_NOTICE = 1;
@@ -27,15 +28,19 @@ class Core
     const LOG_LEVEL_ERROR = 3;
     const LOG_LEVEL_CRITICAL = 4;
 
-    public static function init($config = array())
+    public static function init($config = array(), $setting = array())
     {
         self::$config = new ArrayObjectWrapper($config);
+        
+        foreach ($setting as $key => $value) self::${$key} = $value;
+        
+        if (self::$error)
+        {
+            self::register_error_handler();
+        }
 
         spl_autoload_register(array(__CLASS__, '__autoloader'));
-        register_shutdown_function(array(__CLASS__, '__shutdown'));
-
         self::__init();
-        self::register_handler();
     }
 
     public static function start()
@@ -45,9 +50,20 @@ class Core
 
     public static function dispatch($path)
     {
-        list($params, $route, $controller) = self::route($path);
-
-        $controller = new $controller($route);
+        list($controller, $route, $params) = self::route($path);
+        if(gettype($controller) == 'object' && get_class($controller) == 'Closure')
+        {
+            call_user_func_array($controller, $params);
+        }
+        else
+       {
+            self::controller($controller, $params);
+        }
+    }
+    
+    public static function controller($controller, $params)
+    {
+        $controller = new $controller($params);
         $request_methods = array('GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'HEAD');
         $method = self::$request['method'];
 
@@ -72,6 +88,7 @@ class Core
         $controller->after($method);
 
         return $controller;
+        
     }
 
     public static function model($name)
@@ -91,7 +108,7 @@ class Core
         $path = trim($path, '/');
         if($path === '')
         {
-            return array(array(), '', $routes['']);
+            return array($routes['default'], '', array());
         }
 
         if($path AND ! preg_match('/^[\w\-~\/\.]{1,400}$/', $path))
@@ -121,7 +138,7 @@ class Core
                         $params = $matches;
                     }
 
-                    return array($params, $complete, $controller);
+                    return array($controller, $complete, $params);
                 }
             }
             else
@@ -129,12 +146,12 @@ class Core
                 if(mb_substr($path, 0, mb_strlen($route)) === $route)
                 {
                     $params = explode('/', trim(mb_substr($path, mb_strlen($route)), '/'));
-                    return array($params, $route, $controller);
+                    return array($controller, $route, $params);
                 }
             }
         }
 
-        return array(array($path), $path, $routes['404']);
+        return array($routes['404'], $path, array($path));
     }
 
     public static function config($key = false)
@@ -152,13 +169,13 @@ class Core
         return self::__arrayObjectWrapper(self::$env[$key]);
     }
 
-    public static function register_handler()
+    public static function register_error_handler()
     {
         set_error_handler(array(__CLASS__, '__error'));
         set_exception_handler(array(__CLASS__, '__exception'));
     }
     
-    public static function restore_handler()
+    public static function restore_error_handler()
     {
         restore_error_handler();
         restore_exception_handler();
@@ -219,7 +236,7 @@ class Core
 
         if ($is_log) self::log($text, $level);
         
-        // @todo 调用User Error控制器
+        if($is_display && ($contoller = self::config('route')->error)) self::controller($contoller, array($text));
     }
 
     public static function __exception($exception)
@@ -233,14 +250,15 @@ class Core
         }
         
         $result = array();
-        foreach ($trace as $key => $stackPoint) {
+        foreach ($trace as $key => $stackPoint) 
+        {
             $result[] = sprintf(
-            $traceline,
-            $key,
-            $stackPoint['file'],
-            $stackPoint['line'],
-            $stackPoint['function'],
-            implode(', ', $stackPoint['args'])
+                $traceline,
+                $key,
+                $stackPoint['file'],
+                $stackPoint['line'],
+                $stackPoint['function'],
+                implode(', ', $stackPoint['args'])
             );
         }
         $result[] = '#' . ++$key . ' {main}';
@@ -259,7 +277,7 @@ class Core
         
         self::log($text, self::LOG_LEVEL_ERROR);
         
-        // @todo 调用User Exception控制器
+        if($is_display && ($contoller = self::config('route')->exception)) self::controller($contoller, array($text));
     }
 
     private static function __init()

@@ -9,8 +9,12 @@ $config['app'] = array(
 );
 
 $config['route'] = array(
-    '' => '\Controller\Front\Index',
     '404' => '\Controller\Front\Page404',
+    'error' => '\Controller\Front\Page404',
+	'exception' => '\Controller\Front\Page404',
+	
+    '' => '\Controller\Front\Index',
+	'p' => function($params){var_dump($params);},
 );
 
 $config['log'] = array(
