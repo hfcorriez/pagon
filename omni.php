@@ -55,48 +55,8 @@ class App
         }
         else
        {
-            self::controller($controller, $params);
+            Controller::start($controller, $params);
         }
-    }
-    
-    public static function controller($controller, $params)
-    {
-        $controller = new $controller($params);
-        $request_methods = array('GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'HEAD');
-        $method = self::$request['method'];
-
-        if(!in_array($method, $request_methods) || !method_exists($controller, $method))
-        {
-            if( ! method_exists($controller, 'run'))
-            {
-                throw new Exception('Invalid Request Method.');
-            }
-            $method = 'run';
-        }
-
-        $controller->before($method);
-        if($params)
-        {
-            call_user_func_array(array($controller, $method), $params);
-        }
-        else
-        {
-            $controller->$method();
-        }
-        $controller->after($method);
-
-        return $controller;
-        
-    }
-
-    public static function model($name)
-    {
-        return Model($name);
-    }
-
-    public static function view($tpl)
-    {
-        return View($tpl);
     }
 
     public static function route($path)
@@ -219,7 +179,7 @@ class App
 
         if ($is_log) self::log($text, $level);
         
-        if($is_display && ($contoller = self::$config->route['error'])) self::controller($contoller, array($text));
+        if($is_display && ($contoller = self::$config->route['error'])) Controller::start($contoller, array($text));
     }
 
     public static function __exception($exception)
@@ -260,7 +220,7 @@ class App
         
         self::log($text, self::LOG_LEVEL_ERROR);
         
-        if($is_display && ($contoller = self::$config->route['exception'])) self::controller($contoller, array($text));
+        if($is_display && ($contoller = self::$config->route['exception'])) Controller::start($contoller, array($text));
     }
 
     private static function __init()
@@ -349,12 +309,6 @@ class App
 
         require self::$config->classpath . '/' . strtolower($fileName);
     }
-
-    private static function __arrayObjectWrapper($array = false)
-    {
-        if(is_array($array)) return new ArrayObjectWrapper($array);
-        else return $array;
-    }
 }
 
 class View
@@ -417,4 +371,26 @@ abstract class Controller
 {
     abstract function before();
     abstract function after();
+    
+    public static function start($controller, $params = array())
+    {
+        $controller = new $controller();
+        $request_methods = array('GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'HEAD');
+        $method = self::$request->method;
+        
+        if(!in_array($method, $request_methods) || !method_exists($controller, $method))
+        {
+            if( ! method_exists($controller, 'run'))
+            {
+                throw new Exception('Contoller::run not exist.');
+            }
+            $method = 'run';
+        }
+        
+        $controller->before($method);
+        call_user_func_array(array($controller, $method), $params);
+        $controller->after($method);
+        
+        return $controller;
+    }
 }
