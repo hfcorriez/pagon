@@ -15,12 +15,11 @@ namespace OMni;
  */
 class App
 {
-    private static $config;
-    private static $request;
-    private static $env;
+    public static $config;
+    public static $request;
+    public static $env;
 
     private static $logs = array();
-    private static $error = false;
 
     const LOG_LEVEL_DEBUG = 0;
     const LOG_LEVEL_NOTICE = 1;
@@ -28,18 +27,18 @@ class App
     const LOG_LEVEL_ERROR = 3;
     const LOG_LEVEL_CRITICAL = 4;
 
-    public static function init($config = array(), $setting = array())
+    public static function init($config = array())
     {
         self::$config = new ArrayObjectWrapper($config);
+        if(!self::$config->apppath) throw new Exception('Config::apppath must be set before.');
         
-        foreach ($setting as $key => $value) self::${$key} = $value;
-        
-        if (self::$error)
+        if (self::$config->error)
         {
             self::register_error_handler();
         }
 
-        spl_autoload_register(array(__CLASS__, '__autoloader'));
+        if(self::$config->classpath) spl_autoload_register(array(__CLASS__, '__autoloader'));
+        
         self::__init();
     }
 
@@ -103,12 +102,13 @@ class App
 
     public static function route($path)
     {
-        $routes = self::config('route');
+        $routes = self::$config->route;
+        if(!is_array($routes) || empty($routes)) throw new Exception('Config::routes must be set before.');
 
         $path = trim($path, '/');
         if($path === '')
         {
-            return array($routes['default'], '', array());
+            return array($routes[''], '', array());
         }
 
         if($path AND ! preg_match('/^[\w\-~\/\.]{1,400}$/', $path))
@@ -137,7 +137,6 @@ class App
                   {
                         $params = $matches;
                     }
-
                     return array($controller, $complete, $params);
                 }
             }
@@ -150,23 +149,9 @@ class App
                 }
             }
         }
-
+        
+        if(!isset($routes['404'])) throw new Exception('Config::routes["404"] must be set before.');
         return array($routes['404'], $path, array($path));
-    }
-
-    public static function config($key = false)
-    {
-        return self::__arrayObjectWrapper(self::$config[$key]);
-    }
-
-    public static function request($key = false)
-    {
-        return self::__arrayObjectWrapper(self::$request[$key]);
-    }
-
-    public static function env($key = false)
-    {
-        return self::__arrayObjectWrapper(self::$env[$key]);
     }
 
     public static function register_error_handler()
@@ -183,10 +168,9 @@ class App
 
     public static function log($text, $level = self::LOG_LEVEL_NOTICE)
     {
-        if($level < self::config('log')->level)
-        {
-            return;
-        }
+        if(!self::$config->log) trigger_error('Config::log not be set.', E_USER_NOTICE);
+        if($level < self::$config->log['level']) return;
+        
         $log = array (
             'id' => isset($_SERVER['HTTP_REQUEST_ID']) ? $_SERVER['HTTP_REQUEST_ID'] : '',
             'time' => microtime(true),
@@ -236,7 +220,7 @@ class App
 
         if ($is_log) self::log($text, $level);
         
-        if($is_display && ($contoller = self::config('route')->error)) self::controller($contoller, array($text));
+        if($is_display && ($contoller = self::$config->route['error'])) self::controller($contoller, array($text));
     }
 
     public static function __exception($exception)
@@ -277,7 +261,7 @@ class App
         
         self::log($text, self::LOG_LEVEL_ERROR);
         
-        if($is_display && ($contoller = self::config('route')->exception)) self::controller($contoller, array($text));
+        if($is_display && ($contoller = self::$config->route['exception'])) self::controller($contoller, array($text));
     }
 
     private static function __init()
@@ -318,7 +302,13 @@ class App
     {
         if(!empty(self::$logs))
         {
-            $dir = self::config('log')->dir . '/' . date('Ymd');
+            if(!self::$config->log['dir'])
+            {
+                trigger_error('Config::log["dir"] not set.', E_USER_NOTICE);
+                return;
+            }
+            
+            $dir = self::$config->log['dir'] . '/' . date('Ymd');
             if (!is_dir($dir))
             {
                 mkdir($dir, 0777);
@@ -353,7 +343,7 @@ class App
 
         $fileName .= str_replace('_', DIRECTORY_SEPARATOR, $class_name) . '.php';
 
-        require self::config('app')->classpath . '/' . strtolower($fileName);
+        require self::$config->classpath . '/' . strtolower($fileName);
     }
 
     private static function __arrayObjectWrapper($array = false)
@@ -386,7 +376,7 @@ class View
     {
         ob_start();
         extract((array) $this);
-        require Core::config('app')->viewpath . '/' . strtolower($this->_view) . '.php';
+        require (App::$config->viewpath ? App::$config->viewpath : App::$config->apppath) . '/' . strtolower($this->_view) . '.php';
         return ob_get_clean();
     }
 }
@@ -403,12 +393,19 @@ class Exception extends \Exception {}
 
 class ArrayObjectWrapper extends \ArrayObject
 {
-    public function __set($name, $val) {
+    public function __set($name, $val) 
+    {
         $this[$name] = $val;
     }
 
-    public function __get($name) {
-        return $this[$name];
+    public function __get($name) 
+    {
+        return isset($this[$name]) ? $this[$name] : null;
+    }
+    
+    public function __isset($name)
+    {
+        return isset($this[$name]);
     }
 }
 

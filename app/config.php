@@ -1,9 +1,7 @@
 <?php
 
-$config = array();
-
-$config['app'] = array(
-    'dir' => APP_DIR,
+$config = array(
+    'apppath' => APP_DIR,
     'classpath' => APP_DIR . DIRECTORY_SEPARATOR . 'classes',
     'viewpath' => APP_DIR . DIRECTORY_SEPARATOR . 'views',
 );
