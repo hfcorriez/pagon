@@ -6,14 +6,14 @@
 * @author		Corrie Zhao
 * @copyright	(c) 2011 OmniApp Framework
 */
-namespace OMniApp;
+namespace OMni;
 
 /**
  * Core Class
  * @author Corrie Zhao
  * @todo 分离Request和Config，优化Dispatch，优化Config，增加Response，实现Model，优化日志记录
  */
-class Core
+class App
 {
     private static $config;
     private static $request;
