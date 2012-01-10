@@ -5,6 +5,7 @@
 * @package		OmniApp
 * @author		Corrie Zhao <hfcorriez@gmail.com>
 * @copyright	(c) 2011 OmniApp Framework
+* @todo 		Support Cli, I18n
 */
 namespace OMni;
 
@@ -264,36 +265,41 @@ class App
 
     private static function __init()
     {
-        // Env init
+        // Make objective
         self::$env = new ArrayObjectWrapper(array());
+        self::$request = new ArrayObjectWrapper(array());
+        
+        // Env init
         self::$env['is_cli'] = (PHP_SAPI == 'cli');
         self::$env['is_win'] = (substr(PHP_OS, 0, 3) == 'WIN');
         self::$env['start_time'] = microtime(true);
         self::$env['start_memory'] = memory_get_usage();
 
-        // Request init
-        if(empty($_SERVER['HTTP_REQUEST_ID'])) $_SERVER['HTTP_REQUEST_ID'] = md5(uniqid());
-
-        self::$request = new ArrayObjectWrapper(array());
-        self::$request['path'] = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
-        self::$request['url'] = 'http://' . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'];
-        self::$request['method'] = $_SERVER['REQUEST_METHOD'];
-        self::$request['is_ajax'] = !empty($_SERVER['X-Requested-With']) && 'XMLHttpRequest' == $_SERVER['X-Requested-With'];
-
-        $headers = array();
-        foreach ($_SERVER as $key => $value) {
-            if ('HTTP_' === substr($key, 0, 5)) {
-                $headers[strtolower(substr($key, 5))] = $value;
-            } elseif (in_array($key, array('CONTENT_LENGTH', 'CONTENT_MD5', 'CONTENT_TYPE'))) {
-                $headers[strtolower($key)] = $value;
+        if(!self::$env->is_cli)
+        {
+            // Request init
+            if(empty($_SERVER['HTTP_REQUEST_ID'])) $_SERVER['HTTP_REQUEST_ID'] = md5(uniqid());
+    
+            self::$request['path'] = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+            self::$request['url'] = 'http://' . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'];
+            self::$request['method'] = $_SERVER['REQUEST_METHOD'];
+            self::$request['is_ajax'] = !empty($_SERVER['X-Requested-With']) && 'XMLHttpRequest' == $_SERVER['X-Requested-With'];
+    
+            $headers = array();
+            foreach ($_SERVER as $key => $value) {
+                if ('HTTP_' === substr($key, 0, 5)) {
+                    $headers[strtolower(substr($key, 5))] = $value;
+                } elseif (in_array($key, array('CONTENT_LENGTH', 'CONTENT_MD5', 'CONTENT_TYPE'))) {
+                    $headers[strtolower($key)] = $value;
+                }
             }
+    
+            if (isset($_SERVER['PHP_AUTH_USER'])) {
+                $pass = isset($_SERVER['PHP_AUTH_PW']) ? $_SERVER['PHP_AUTH_PW'] : '';
+                $headers['authorization'] = 'Basic '.base64_encode($_SERVER['PHP_AUTH_USER'].':'.$pass);
+            }
+            self::$request['headers'] = $headers;
         }
-
-        if (isset($_SERVER['PHP_AUTH_USER'])) {
-            $pass = isset($_SERVER['PHP_AUTH_PW']) ? $_SERVER['PHP_AUTH_PW'] : '';
-            $headers['authorization'] = 'Basic '.base64_encode($_SERVER['PHP_AUTH_USER'].':'.$pass);
-        }
-        self::$request['headers'] = $headers;
     }
 
     private static function __logSave()
