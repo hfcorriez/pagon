@@ -6,9 +6,9 @@ class Front extends \OMni\Controller
 {
     protected $params;
     
-    public function __construct($params)
+    public function __construct()
     {
-        $this->params = $params;
+        //todo something
     }
     
     public function before()
