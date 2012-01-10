@@ -5,7 +5,6 @@
 * @package		OmniApp
 * @author		Corrie Zhao <hfcorriez@gmail.com>
 * @copyright	(c) 2011 OmniApp Framework
-* @todo 		Support Cli, I18n
 */
 namespace OMni
 {
@@ -53,7 +52,7 @@ class App
 
     public static function start()
     {
-        self::dispatch(self::$request->path);
+        self::dispatch(self::$env->is_cli ? join('/', self::$env->cli_params) : self::$request->path);
     }
 
     public static function dispatch($path)
@@ -258,8 +257,14 @@ class App
         self::$env['start_memory'] = memory_get_usage();
         self::$env['timezone'] = date_default_timezone_get();
 
-        if(!self::$env->is_cli)
+        if(self::$env->is_cli)
         {
+            $argv = $_SERVER['argv'];
+            self::$env->cli_basename = array_shift($argv);
+            self::$env->cli_params = $argv;
+        }
+        else
+       {
             // Request init
             if(empty($_SERVER['HTTP_TRACK_ID'])) $_SERVER['HTTP_TRACK_ID'] = md5(uniqid());
     
@@ -477,6 +482,7 @@ class I18n
 }
 
 }
+// global functions
 namespace {
     
 if(!function_exists('__'))

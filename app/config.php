@@ -12,7 +12,7 @@ $config['route'] = array(
 	'exception' => '\Controller\Front\Page404',
 	
     '' => '\Controller\Front\Index',
-	'p' => function(){
+	'debug' => function(){
 	    var_dump(func_get_args());
 	    var_dump(\Omni\App::$env);
         var_dump(__('ddd'));
