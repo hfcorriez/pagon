@@ -20,7 +20,7 @@ $config['route'] = array(
 );
 
 $config['log'] = array(
-    'level' => \OMni\App::LOG_LEVEL_DEBUG,
+    'level' => \OMni\LOG_LEVEL_DEBUG,
     'dir' => APP_DIR . '/logs',
 );
 

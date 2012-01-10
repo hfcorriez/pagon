@@ -9,7 +9,13 @@
 */
 namespace OMni
 {
-    
+
+const LOG_LEVEL_DEBUG = 0;
+const LOG_LEVEL_NOTICE = 1;
+const LOG_LEVEL_WARN = 2;
+const LOG_LEVEL_ERROR = 3;
+const LOG_LEVEL_CRITICAL = 4;
+
 /**
  * App Class
  */
@@ -22,12 +28,6 @@ class App
     public static $request = array();
     public static $env = array();
     public static $logs = array();
-
-    const LOG_LEVEL_DEBUG = 0;
-    const LOG_LEVEL_NOTICE = 1;
-    const LOG_LEVEL_WARN = 2;
-    const LOG_LEVEL_ERROR = 3;
-    const LOG_LEVEL_CRITICAL = 4;
 
     public static function init($config = array())
     {
@@ -135,7 +135,7 @@ class App
         restore_exception_handler();
     }
 
-    public static function log($text, $level = self::LOG_LEVEL_NOTICE)
+    public static function log($text, $level = LOG_LEVEL_NOTICE)
     {
         if(!self::$config->log) trigger_error('Config::log not be set.', E_USER_NOTICE);
         if($level < self::$config->log['level']) return;
@@ -164,25 +164,25 @@ class App
             case E_USER_NOTICE:
                 $is_display = false;
                 $errtag = "Notice";
-                $level = self::LOG_LEVEL_NOTICE;
+                $level = LOG_LEVEL_NOTICE;
                 break;
             case E_WARNING:
             case E_USER_WARNING:
                 $is_log = true;
                 $is_display = false;
                 $errtag = "Warn";
-                $level = self::LOG_LEVEL_WARN;
+                $level = LOG_LEVEL_WARN;
                 break;
             case E_ERROR:
             case E_USER_ERROR:
                 $is_log = true;
                 $errtag = "Fatal";
-                $level = self::LOG_LEVEL_ERROR;
+                $level = LOG_LEVEL_ERROR;
                 break;
             default:
                 $is_display = false;
                 $errtag = "Unknown";
-                $level = self::LOG_LEVEL_CRITICAL;
+                $level = LOG_LEVEL_CRITICAL;
         }
 
         $text = sprintf("%s:  %s in %s on line %d (%s)", $errtag, $errstr, $errfile, $errline, self::$request->url);
@@ -228,7 +228,7 @@ class App
             self::$request->url
         );
         
-        self::log($text, self::LOG_LEVEL_ERROR);
+        self::log($text, LOG_LEVEL_ERROR);
         
         if($is_display && ($contoller = self::$config->route['exception'])) Controller::start($contoller, array($text));
     }
