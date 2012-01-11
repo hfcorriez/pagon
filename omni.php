@@ -37,6 +37,8 @@ class App
         
         self::__init();
         
+        I18n::$lang = self::$env->lang;
+        
         if(!self::$config->apppath) throw new Exception('Config::apppath must be set before.');
         
         if (self::$config->error)
@@ -233,7 +235,7 @@ class App
     private static function __preferedLanguage()
     {
         if(isset($_COOKIE['lang'])) return $_COOKIE['lang'];
-        if(!self::$config->languages || !is_array(self::$config->languages)) return 'en_US';
+        if(!self::$config->languages || !is_array(self::$config->languages)) return 'en-US';
         
         preg_match_all("/([[:alpha:]]{1,8})(-([[:alpha:]|-]{1,8}))?" . "(\s*;\s*q\s*=\s*(1\.0{0,3}|0\.\d{0,3}))?\s*(,|$)/i", $_SERVER['HTTP_ACCEPT_LANGUAGE'], $hits, PREG_SET_ORDER);
         $bestlang = self::$config->languages[0];
@@ -251,12 +253,12 @@ class App
             $qvalue = 1.0;
             if (!empty($arr[5])) $qvalue = floatval($arr[5]);
              
-            if (in_array($language,$available_languages) && ($qvalue > $bestqval))
+            if (in_array($language,self::$config->languages) && ($qvalue > $bestqval))
             {
                 $bestlang = $language;
                 $bestqval = $qvalue;
             }
-            else if (in_array($langprefix,$available_languages) && (($qvalue*0.9) > $bestqval))
+            else if (in_array($langprefix,self::$config->languages) && (($qvalue*0.9) > $bestqval))
             {
                 $bestlang = $langprefix;
                 $bestqval = $qvalue*0.9;
@@ -439,7 +441,6 @@ abstract class Controller
 class I18n 
 {
     public static $lang = 'en-US';
-    public static $source = 'en-US';
     protected static $_cache = array();
 
     public static function lang($lang = NULL)
@@ -450,7 +451,7 @@ class I18n
     
     public static function get($string, $lang = NULL)
     {
-        if ( ! $lang) $lang = I18n::$lang;
+        if (!$lang) $lang = I18n::$lang;
         $table = I18n::load($lang);
         return isset($table[$string]) ? $table[$string] : $string;
     }
@@ -460,11 +461,10 @@ class I18n
         if (isset(I18n::$_cache[$lang])) return I18n::$_cache[$lang];
 
         $table = array();
-
         $parts = explode('-', $lang);
         $path = implode(DIRECTORY_SEPARATOR, $parts);
 
-        $file = App::$config->localepath . '/' . $path . '.php';
+        $file = App::$config->langpath . '/' . $path . '.php';
         if (file_exists($file)) $table = include($file);
 
         return I18n::$_cache[$lang] = $table;
