@@ -5,7 +5,6 @@
 * @package		OmniApp
 * @author		Corrie Zhao <hfcorriez@gmail.com>
 * @copyright	(c) 2011 OmniApp Framework
-* @todo			Event
 */
 namespace OMni
 {
@@ -27,6 +26,8 @@ class App
     public static $request = array();
     public static $env = array();
     public static $logs = array();
+    
+    private static $init = false;
 
     public static function init($config = array())
     {
@@ -35,6 +36,7 @@ class App
         self::$config = new ArrayObjectWrapper(array_merge(self::$config, $config));
         date_default_timezone_set(self::$config->timezone);
         
+        Event::add('init');
         self::__init();
         
         I18n::$lang = self::$env->lang;
@@ -44,19 +46,23 @@ class App
         if(self::$config->classpath) spl_autoload_register(array(__CLASS__, '__autoloader'));
         
         register_shutdown_function(array(__CLASS__, '__shutdown'));
+        self::$init = true;
     }
+    
+    public static function isInit(){ return self::$init; }
 
     public static function run()
     {
-        self::dispatch(self::$env->is_cli ? join('/', self::$env->argv) : self::$request->path);
+        Event::add('run');
+        return self::dispatch(self::$env->is_cli ? join('/', self::$env->argv) : self::$request->path);
     }
 
     public static function dispatch($path)
     {
         list($controller, $route, $params) = self::route($path);
         
-        if(is_object($controller) && get_class($controller) == 'Closure') call_user_func_array($controller, $params);
-        else Controller::run($controller, $params);
+        if(is_object($controller) && get_class($controller) == 'Closure') return call_user_func_array($controller, $params);
+        else return Controller::start($controller, $params);
     }
 
     public static function route($path)
@@ -133,15 +139,18 @@ class App
             'memory' => memory_get_usage(),
         );
         self::$logs[] = $log;
+        Event::add('log', $log);
     }
 
     public static function __shutdown()
     {
+        Event::add('shutdown');
         self::__logSave();
     }
 
     public static function __error($errno, $errstr, $errfile, $errline)
     {
+        Event::add('error', func_get_args());
         $is_log = true;
         $is_display = false;
         switch ($errno) {
@@ -172,36 +181,10 @@ class App
         if($is_display && ($contoller = self::$config->route['error'])) Controller::start($contoller, array($text));
     }
 
-    public static function __exception($exception)
+    public static function __exception(\Exception $exception)
     {
-        $trace = $exception->getTrace();
-        foreach ($trace as $key => $stackPoint) $trace[$key]['args'] = array_map('gettype', is_array($trace[$key]['args']) ? $trace[$key]['args'] : array());
-        
-        $result = array();
-        foreach ($trace as $key => $stackPoint) 
-        {
-            $result[] = sprintf(
-                "#%s %s(%s): %s(%s)",
-                $key,
-                $stackPoint['file'],
-                $stackPoint['line'],
-                $stackPoint['function'],
-                implode(', ', $stackPoint['args'])
-            );
-        }
-        $result[] = '#' . ++$key . ' {main}';
-        
-        $text = sprintf(
-            "Exception: Uncaught exception '%s' with message '%s' in %s:%s\nStack trace:\n%s\n  thrown in %s on line %s" . ' (%s)',
-            get_class($exception),
-            $exception->getMessage(),
-            $exception->getFile(),
-            $exception->getLine(),
-            implode("\n", $result),
-            $exception->getFile(),
-            $exception->getLine(),
-            self::$request->url
-        );
+        Event::add('exception', $exception);
+        $text = $exception->getTraceAsString() . " ({self::$request->url})";
         
         self::log($text, LOG_LEVEL_ERROR);
         if($contoller = self::$config->route['exception']) Controller::start($contoller, array($text));
@@ -210,10 +193,10 @@ class App
     private static function __preferedLanguage()
     {
         if(isset($_COOKIE['lang'])) return $_COOKIE['lang'];
-        if(!self::$config->languages || !is_array(self::$config->languages)) return 'en-US';
+        if(!self::$config->lang || !is_array(self::$config->lang)) return 'en-US';
         
         preg_match_all("/([[:alpha:]]{1,8})(-([[:alpha:]|-]{1,8}))?" . "(\s*;\s*q\s*=\s*(1\.0{0,3}|0\.\d{0,3}))?\s*(,|$)/i", $_SERVER['HTTP_ACCEPT_LANGUAGE'], $hits, PREG_SET_ORDER);
-        $bestlang = self::$config->languages[0];
+        $bestlang = self::$config->lang[0];
         $bestqval = 0;
         
         foreach ($hits as $arr)
@@ -228,12 +211,12 @@ class App
             $qvalue = 1.0;
             if (!empty($arr[5])) $qvalue = floatval($arr[5]);
              
-            if (in_array($language,self::$config->languages) && ($qvalue > $bestqval))
+            if (in_array($language,self::$config->lang) && ($qvalue > $bestqval))
             {
                 $bestlang = $language;
                 $bestqval = $qvalue;
             }
-            else if (in_array($langprefix,self::$config->languages) && (($qvalue*0.9) > $bestqval))
+            else if (in_array($langprefix,self::$config->lang) && (($qvalue*0.9) > $bestqval))
             {
                 $bestlang = $langprefix;
                 $bestqval = $qvalue*0.9;
@@ -321,6 +304,7 @@ class App
 
     private static function __autoloader($class_name)
     {
+        Event::add('autoload', $class_name);
         $class_name = ltrim($class_name, '\\');
         require self::$config->classpath . '/' . strtolower(str_replace('\\', DIRECTORY_SEPARATOR, $class_name) . '.php');
     }
@@ -368,9 +352,11 @@ class ArrayObjectWrapper extends \ArrayObject
         $this[$name] = $val;
     }
 
-    public function __get($name) 
+    public function &__get($name) 
     {
-        return isset($this[$name]) ? $this[$name] : null;
+        if(array_key_exists($name, $this)) $ret = &$this[$name];
+        else $ret = null;
+        return $ret;
     }
     
     public function __isset($name)
@@ -379,23 +365,48 @@ class ArrayObjectWrapper extends \ArrayObject
     }
 }
 
+abstract class Event
+{
+    public static function on($name, $runner)
+    {
+        if (!App::isInit()) throw new Exception('App is not init.');
+        if (!isset(App::$config->event[$name])) App::$config->event[$name] = array();
+        App::$config->event[$name][] = $runner;
+    }
+    
+    public static function add($name, $params = array())
+    {
+        if (empty(App::$config->event[$name])) return;
+        foreach(App::$config->event[$name] as $runner) self::__excute($runner, $params);
+    }
+    
+    private static function __excute($runner, $params)
+    {
+        if (is_object($runner) && get_class($runner) == 'Closure') return $runner($params);
+        else
+        {
+            $event = new $runner();
+            return $event->run($params);
+        }
+    }
+    
+    abstract function run();
+}
+
 abstract class Controller
 {
     abstract function before();
     abstract function after();
     
-    public static function run($controller, $params = array())
+    public static function start($controller, $params = array())
     {
         $controller = new $controller();
         $request_methods = array('GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'HEAD');
         $method = App::$request->method;
         
-        if(!in_array($method, $request_methods) || !method_exists($controller, $method))
+        if (!in_array($method, $request_methods) || !method_exists($controller, $method))
         {
-            if(!method_exists($controller, 'run'))
-            {
-                throw new Exception('Contoller::run not exist.');
-            }
+            if (!method_exists($controller, 'run')) throw new Exception('Contoller::run not exist.');
             $method = 'run';
         }
         

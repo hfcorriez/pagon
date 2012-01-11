@@ -4,7 +4,7 @@ $config = array(
     'apppath' => APP_DIR,
     'classpath' => APP_DIR . DIRECTORY_SEPARATOR . 'classes',
     'viewpath' => APP_DIR . DIRECTORY_SEPARATOR . 'views',
-    'languages' => array('zh-CN'),
+    'lang' => array('zh-CN'),
 );
 
 $config['route'] = array(
@@ -18,6 +18,17 @@ $config['route'] = array(
 	    var_dump(\Omni\App::$env);
         var_dump(__('ddd'));
 	 },
+);
+
+$config['event'] = array(
+    'init' => array(
+        function(){var_dump('before init');}
+     ),
+    'shutdown' => array(
+        function(){var_dump('shutdown0');},
+        function(){var_dump('shutdown1');},
+        function(){var_dump('shutdown2');},
+     ),
 );
 
 $config['log'] = array(
