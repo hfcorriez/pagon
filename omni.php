@@ -5,6 +5,7 @@
 * @package		OmniApp
 * @author		Corrie Zhao <hfcorriez@gmail.com>
 * @copyright	(c) 2011 OmniApp Framework
+* @todo			Event
 */
 namespace OMni
 {
@@ -50,9 +51,9 @@ class App
         register_shutdown_function(array(__CLASS__, '__shutdown'));
     }
 
-    public static function start()
+    public static function run()
     {
-        self::dispatch(self::$env->is_cli ? join('/', self::$env->cli_params) : self::$request->path);
+        self::dispatch(self::$env->is_cli ? join('/', self::$env->argv) : self::$request->path);
     }
 
     public static function dispatch($path)
@@ -64,7 +65,7 @@ class App
         }
         else
        {
-            Controller::start($controller, $params);
+            Controller::run($controller, $params);
         }
     }
 
@@ -259,12 +260,13 @@ class App
 
         if(self::$env->is_cli)
         {
-            $argv = $_SERVER['argv'];
-            self::$env->cli_basename = array_shift($argv);
-            self::$env->cli_params = $argv;
+            $argv = $GLOBALS['argv'];
+            self::$env->_ = array_shift($argv);
+            self::$env->argv = $argv;
         }
         else
        {
+            self::$env->_ = $_SERVER['SCRIPT_FILENAME'];
             // Request init
             if(empty($_SERVER['HTTP_TRACK_ID'])) $_SERVER['HTTP_TRACK_ID'] = md5(uniqid());
     
@@ -288,6 +290,7 @@ class App
             }
             self::$request['headers'] = $headers;
         }
+        self::$env->basename = basename(self::$env->_); 
     }
 
     private static function __logSave()
@@ -388,7 +391,7 @@ abstract class Controller
     abstract function before();
     abstract function after();
     
-    public static function start($controller, $params = array())
+    public static function run($controller, $params = array())
     {
         $controller = new $controller();
         $request_methods = array('GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'HEAD');

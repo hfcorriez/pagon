@@ -27,4 +27,4 @@ define('APP_DIR', __DIR__);
         'dir' => APP_DIR . '/logs',
     ),
 ));
-\OMni\App::start();
+\OMni\App::run();
