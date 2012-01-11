@@ -23,7 +23,6 @@ class App
 {
     public static $config = array(
         'timezone' => 'UTC',
-        'lang' => 'en_US',
     );
     public static $request = array();
     public static $env = array();
@@ -33,12 +32,10 @@ class App
     {
         iconv_set_encoding("internal_encoding", "UTF-8");
         mb_internal_encoding('UTF-8');
-        
         self::$config = new ArrayObjectWrapper(array_merge(self::$config, $config));
+        date_default_timezone_set(self::$config->timezone);
         
         self::__init();
-        
-        date_default_timezone_set(self::$config->timezone);
         
         if(!self::$config->apppath) throw new Exception('Config::apppath must be set before.');
         
@@ -235,13 +232,37 @@ class App
     
     private static function __preferedLanguage()
     {
-        $lang = false;
-        if(isset($_COOKIE['lang'])) $lang = $_COOKIE['lang'];
-        if(!$lang) 
+        if(isset($_COOKIE['lang'])) return $_COOKIE['lang'];
+        if(!self::$config->languages || !is_array(self::$config->languages)) return 'en_US';
+        
+        preg_match_all("/([[:alpha:]]{1,8})(-([[:alpha:]|-]{1,8}))?" . "(\s*;\s*q\s*=\s*(1\.0{0,3}|0\.\d{0,3}))?\s*(,|$)/i", $_SERVER['HTTP_ACCEPT_LANGUAGE'], $hits, PREG_SET_ORDER);
+        $bestlang = self::$config->languages[0];
+        $bestqval = 0;
+        
+        foreach ($hits as $arr)
         {
-            $lang = self::$config->languages ? I18n::preferedLanguage(self::$config->languages) : self::$config->lang;
+            $langprefix = strtolower ($arr[1]);
+            if (!empty($arr[3]))
+            {
+                $langrange = strtolower ($arr[3]);
+                $language = $langprefix . "-" . $langrange;
+            }
+            else $language = $langprefix;
+            $qvalue = 1.0;
+            if (!empty($arr[5])) $qvalue = floatval($arr[5]);
+             
+            if (in_array($language,$available_languages) && ($qvalue > $bestqval))
+            {
+                $bestlang = $language;
+                $bestqval = $qvalue;
+            }
+            else if (in_array($langprefix,$available_languages) && (($qvalue*0.9) > $bestqval))
+            {
+                $bestlang = $langprefix;
+                $bestqval = $qvalue*0.9;
+            }
         }
-        return $lang;
+        return $bestlang;
     }
 
     private static function __init()
@@ -251,12 +272,13 @@ class App
         self::$request = new ArrayObjectWrapper(array());
         
         // Env init
-        self::$env['lang'] = self::__preferedLanguage();
-        self::$env['is_cli'] = (PHP_SAPI == 'cli');
-        self::$env['is_win'] = (substr(PHP_OS, 0, 3) == 'WIN');
-        self::$env['start_time'] = microtime(true);
-        self::$env['start_memory'] = memory_get_usage();
-        self::$env['timezone'] = date_default_timezone_get();
+        self::$env->lang = self::__preferedLanguage();
+        self::$env->is_cli = (PHP_SAPI == 'cli');
+        self::$env->is_win = (substr(PHP_OS, 0, 3) == 'WIN');
+        self::$env->start_time = microtime(true);
+        self::$env->start_memory = memory_get_usage();
+        self::$env->timezone = date_default_timezone_get();
+        self::$env->charset = 'UTF-8';
 
         if(self::$env->is_cli)
         {
@@ -270,10 +292,10 @@ class App
             // Request init
             if(empty($_SERVER['HTTP_TRACK_ID'])) $_SERVER['HTTP_TRACK_ID'] = md5(uniqid());
     
-            self::$request['path'] = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
-            self::$request['url'] = 'http://' . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'];
-            self::$request['method'] = $_SERVER['REQUEST_METHOD'];
-            self::$request['is_ajax'] = !empty($_SERVER['X-Requested-With']) && 'XMLHttpRequest' == $_SERVER['X-Requested-With'];
+            self::$request->path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+            self::$request->url = 'http://' . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'];
+            self::$request->method = $_SERVER['REQUEST_METHOD'];
+            self::$request->is_ajax = !empty($_SERVER['X-Requested-With']) && 'XMLHttpRequest' == $_SERVER['X-Requested-With'];
     
             $headers = array();
             foreach ($_SERVER as $key => $value) {
@@ -288,7 +310,7 @@ class App
                 $pass = isset($_SERVER['PHP_AUTH_PW']) ? $_SERVER['PHP_AUTH_PW'] : '';
                 $headers['authorization'] = 'Basic '.base64_encode($_SERVER['PHP_AUTH_USER'].':'.$pass);
             }
-            self::$request['headers'] = $headers;
+            self::$request->headers = $headers;
         }
         self::$env->basename = basename(self::$env->_); 
     }
@@ -446,41 +468,6 @@ class I18n
         if (file_exists($file)) $table = include($file);
 
         return I18n::$_cache[$lang] = $table;
-    }
-
-    public static function preferedLanguage($available_languages, $http_accept_language="auto")
-    {
-        if ($http_accept_language == "auto") $http_accept_language = !empty($_SERVER['HTTP_ACCEPT_LANGUAGE']) ? $_SERVER['HTTP_ACCEPT_LANGUAGE'] : '';
-
-        preg_match_all("/([[:alpha:]]{1,8})(-([[:alpha:]|-]{1,8}))?" . "(\s*;\s*q\s*=\s*(1\.0{0,3}|0\.\d{0,3}))?\s*(,|$)/i", $http_accept_language, $hits, PREG_SET_ORDER);
-
-        $bestlang = $available_languages[0];
-        $bestqval = 0;
-
-        foreach ($hits as $arr)
-        {
-            $langprefix = strtolower ($arr[1]);
-            if (!empty($arr[3]))
-            {
-                $langrange = strtolower ($arr[3]);
-                $language = $langprefix . "-" . $langrange;
-            }
-            else $language = $langprefix;
-            $qvalue = 1.0;
-            if (!empty($arr[5])) $qvalue = floatval($arr[5]);
-             
-            if (in_array($language,$available_languages) && ($qvalue > $bestqval))
-            {
-                $bestlang = $language;
-                $bestqval = $qvalue;
-            }
-            else if (in_array($langprefix,$available_languages) && (($qvalue*0.9) > $bestqval))
-            {
-                $bestlang = $langprefix;
-                $bestqval = $qvalue*0.9;
-            }
-        }
-        return $bestlang;
     }
 }
 
