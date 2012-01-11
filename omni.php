@@ -40,13 +40,9 @@ class App
         I18n::$lang = self::$env->lang;
         
         if(!self::$config->apppath) throw new Exception('Config::apppath must be set before.');
-        
-        if (self::$config->error)
-        {
-            self::register_error_handler();
-        }
-
+        if (self::$config->error) self::register_error_handler();
         if(self::$config->classpath) spl_autoload_register(array(__CLASS__, '__autoloader'));
+        
         register_shutdown_function(array(__CLASS__, '__shutdown'));
     }
 
@@ -58,14 +54,9 @@ class App
     public static function dispatch($path)
     {
         list($controller, $route, $params) = self::route($path);
-        if(gettype($controller) == 'object' && get_class($controller) == 'Closure')
-        {
-            call_user_func_array($controller, $params);
-        }
-        else
-       {
-            Controller::run($controller, $params);
-        }
+        
+        if(is_object($controller) && get_class($controller) == 'Closure') call_user_func_array($controller, $params);
+        else Controller::run($controller, $params);
     }
 
     public static function route($path)
@@ -74,19 +65,13 @@ class App
         if(!is_array($routes) || empty($routes)) throw new Exception('Config::routes must be set before.');
 
         $path = trim($path, '/');
-        if($path === '')
-        {
-            return array($routes[''], '', array());
-        }
+        if($path === '') return array($routes[''], '', array());
 
-        if($path AND ! preg_match('/^[\w\-~\/\.]{1,400}$/', $path))
-        {
-            $path = '404';
-        }
+        if($path AND ! preg_match('/^[\w\-~\/\.]{1,400}$/', $path)) $path = '404';
 
         foreach($routes as $route => $controller)
         {
-            if( ! $route) continue;
+            if(!$route) continue;
 
             if($route{0} === '/')
             {
@@ -157,55 +142,46 @@ class App
 
     public static function __error($errno, $errstr, $errfile, $errline)
     {
-        $is_log = false;
+        $is_log = true;
+        $is_display = false;
         switch ($errno) {
             case E_NOTICE:
             case E_USER_NOTICE:
-                $is_display = false;
+                $is_log = false;
                 $errtag = "Notice";
                 $level = LOG_LEVEL_NOTICE;
                 break;
             case E_WARNING:
             case E_USER_WARNING:
-                $is_log = true;
-                $is_display = false;
                 $errtag = "Warn";
                 $level = LOG_LEVEL_WARN;
                 break;
             case E_ERROR:
             case E_USER_ERROR:
-                $is_log = true;
+                $is_display = true;
                 $errtag = "Fatal";
                 $level = LOG_LEVEL_ERROR;
                 break;
             default:
-                $is_display = false;
-                $errtag = "Unknown";
+                $errtag = "CRITICAL";
                 $level = LOG_LEVEL_CRITICAL;
         }
-
         $text = sprintf("%s:  %s in %s on line %d (%s)", $errtag, $errstr, $errfile, $errline, self::$request->url);
 
         if ($is_log) self::log($text, $level);
-        
         if($is_display && ($contoller = self::$config->route['error'])) Controller::start($contoller, array($text));
     }
 
     public static function __exception($exception)
     {
-        $traceline = "#%s %s(%s): %s(%s)";
-        $message = "Exception: Uncaught exception '%s' with message '%s' in %s:%s\nStack trace:\n%s\n  thrown in %s on line %s";
-        
         $trace = $exception->getTrace();
-        foreach ($trace as $key => $stackPoint) {
-            $trace[$key]['args'] = array_map('gettype', is_array($trace[$key]['args']) ? $trace[$key]['args'] : array());
-        }
+        foreach ($trace as $key => $stackPoint) $trace[$key]['args'] = array_map('gettype', is_array($trace[$key]['args']) ? $trace[$key]['args'] : array());
         
         $result = array();
         foreach ($trace as $key => $stackPoint) 
         {
             $result[] = sprintf(
-                $traceline,
+                "#%s %s(%s): %s(%s)",
                 $key,
                 $stackPoint['file'],
                 $stackPoint['line'],
@@ -216,7 +192,7 @@ class App
         $result[] = '#' . ++$key . ' {main}';
         
         $text = sprintf(
-            $message . ' (%s)',
+            "Exception: Uncaught exception '%s' with message '%s' in %s:%s\nStack trace:\n%s\n  thrown in %s on line %s" . ' (%s)',
             get_class($exception),
             $exception->getMessage(),
             $exception->getFile(),
@@ -228,8 +204,7 @@ class App
         );
         
         self::log($text, LOG_LEVEL_ERROR);
-        
-        if($is_display && ($contoller = self::$config->route['exception'])) Controller::start($contoller, array($text));
+        if($contoller = self::$config->route['exception']) Controller::start($contoller, array($text));
     }
     
     private static function __preferedLanguage()
@@ -334,10 +309,7 @@ class App
                 chmod($dir, 0777);
             }
             $logs_wraper = array();
-            foreach(self::$logs as $log)
-            {
-                $logs_wraper[$log['level']][] = '[' . date('Y-m-d H:i:s', $log['time']) . '] ' . ($log['id'] ? "#{$log['id']} " : '') . $log['text'];
-            }
+            foreach(self::$logs as $log) $logs_wraper[$log['level']][] = '[' . date('Y-m-d H:i:s', $log['time']) . '] ' . ($log['id'] ? "#{$log['id']} " : '') . $log['text'];
 
             foreach ($logs_wraper as $level => $wraper)
             {
@@ -367,10 +339,7 @@ class View
 
     public function set($array)
     {
-        foreach($array as $k => $v)
-        {
-            $this->$k = $v;
-        }
+        foreach($array as $k => $v) $this->$k = $v;
     }
 
     public function __toString()
