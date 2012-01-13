@@ -5,6 +5,7 @@ $config = array(
     'classpath' => APP_DIR . DIRECTORY_SEPARATOR . 'classes',
     'viewpath' => APP_DIR . DIRECTORY_SEPARATOR . 'views',
     'lang' => array('zh-CN'),
+    'error' => true,
 );
 
 $config['route'] = array(

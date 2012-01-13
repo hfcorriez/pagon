@@ -18,6 +18,12 @@ const LOG_LEVEL_CRITICAL = 4;
 const DEFAULT_TIMEZONE = 'UTC';
 const DEFAULT_LANG = 'en-US';
 
+const EVENT_INIT = 'init';
+const EVENT_RUN = 'run';
+const EVENT_ERROR = 'error';
+const EVENT_EXCEPTION = 'exception';
+const EVENT_SHUTDOWN = 'shutdown';
+
 /**
  * App Class
  */
@@ -36,7 +42,7 @@ class App
         self::$config = new ArrayObjectWrapper($config);
         date_default_timezone_set(self::$config->timezone ? self::$config->timezone : DEFAULT_TIMEZONE);
         
-        Event::add('init');
+        Event::add(EVENT_INIT);
         self::__init();
         
         I18n::$lang = self::$env->lang;
@@ -53,7 +59,7 @@ class App
 
     public static function run()
     {
-        Event::add('run');
+        Event::add(EVENT_RUN);
         return self::dispatch(self::$env->is_cli ? join('/', self::$env->argv) : self::$request->path);
     }
 
@@ -121,7 +127,7 @@ class App
 
     public static function __error($type, $message, $file, $line)
     {
-        Event::add('error', array('type'=>$type, 'message'=>$message, 'file'=>$file, 'line'=>$line));
+        Event::add(EVENT_ERROR, array('type'=>$type, 'message'=>$message, 'file'=>$file, 'line'=>$line));
         $is_log = true;
         $is_display = false;
         switch ($type) {
@@ -154,8 +160,8 @@ class App
 
     public static function __exception(\Exception $exception)
     {
-        Event::add('exception', $exception);
-        $text = $exception->getTraceAsString() . " ({self::$request->url})";
+        Event::add(EVENT_EXCEPTION, $exception);
+        $text = 'Exception: ' . $exception->getMessage() . ' in ' . $exception->getFile() . ' on line ' . $exception->getLine() . ' (' . self::$request->url . ')';
         
         Logger::error($text);
         if ($contoller = self::$config->route['exception']) Controller::start($contoller, array($text));
@@ -163,7 +169,7 @@ class App
 
     public static function __shutdown()
     {
-        Event::add('shutdown');
+        Event::add(EVENT_SHUTDOWN);
         if ($error = error_get_last())
         {
             if (in_array($error['type'], array(E_ERROR, E_COMPILE_ERROR, E_CORE_ERROR, E_USER_ERROR)))
