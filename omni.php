@@ -15,17 +15,17 @@ const LOG_LEVEL_WARN = 2;
 const LOG_LEVEL_ERROR = 3;
 const LOG_LEVEL_CRITICAL = 4;
 
+const DEFAULT_TIMEZONE = 'UTC';
+const DEFAULT_LANG = 'en-US';
+
 /**
  * App Class
  */
 class App
 {
-    public static $config = array(
-        'timezone' => 'UTC',
-    );
+    public static $config = array();
     public static $request = array();
     public static $env = array();
-    public static $logs = array();
     
     private static $init = false;
 
@@ -33,17 +33,17 @@ class App
     {
         iconv_set_encoding("internal_encoding", "UTF-8");
         mb_internal_encoding('UTF-8');
-        self::$config = new ArrayObjectWrapper(array_merge(self::$config, $config));
-        date_default_timezone_set(self::$config->timezone);
+        self::$config = new ArrayObjectWrapper($config);
+        date_default_timezone_set(self::$config->timezone ? self::$config->timezone : DEFAULT_TIMEZONE);
         
         Event::add('init');
         self::__init();
         
         I18n::$lang = self::$env->lang;
         
-        if(!self::$config->apppath) throw new Exception('Config::apppath must be set before.');
+        if (!self::$config->apppath) throw new Exception('Config->apppath must be set before.');
         if (self::$config->error) self::register_error_handler();
-        if(self::$config->classpath) spl_autoload_register(array(__CLASS__, '__autoloader'));
+        if (self::$config->classpath) spl_autoload_register(array(__CLASS__, '__autoloader'));
         
         register_shutdown_function(array(__CLASS__, '__shutdown'));
         self::$init = true;
@@ -61,47 +61,41 @@ class App
     {
         list($controller, $route, $params) = self::route($path);
         
-        if(is_object($controller) && get_class($controller) == 'Closure') return call_user_func_array($controller, $params);
+        if (is_object($controller) && get_class($controller) == 'Closure') return call_user_func_array($controller, $params);
         else return Controller::start($controller, $params);
     }
 
     public static function route($path)
     {
         $routes = self::$config->route;
-        if(!is_array($routes) || empty($routes)) throw new Exception('Config::routes must be set before.');
+        if (!is_array($routes) || empty($routes)) throw new Exception('Config->routes must be set before.');
 
         $path = trim($path, '/');
-        if($path === '') return array($routes[''], '', array());
+        
+        if ($path === '') return array($routes[''], '', array());
+        if ($path AND ! preg_match('/^[\w\-~\/\.]{1,400}$/', $path)) $path = '404';
 
-        if($path AND ! preg_match('/^[\w\-~\/\.]{1,400}$/', $path)) $path = '404';
-
-        foreach($routes as $route => $controller)
+        foreach ($routes as $route => $controller)
         {
-            if(!$route) continue;
+            if (!$route) continue;
 
-            if($route{0} === '/')
+            if ($route{0} === '/')
             {
-                if(preg_match($route, $path, $matches))
+                if (preg_match($route, $path, $matches))
                 {
                     $complete = array_shift($matches);
                     $params = explode('/', trim(mb_substr($path, mb_strlen($complete)), '/'));
-                    if($params[0])
+                    if ($params[0])
                     {
-                        foreach($matches as $match)
-                        {
-                            array_unshift($params, $match);
-                        }
+                        foreach ($matches as $match) array_unshift($params, $match);
                     }
-                    else
-                  {
-                        $params = $matches;
-                    }
+                    else $params = $matches;
                     return array($controller, $complete, $params);
                 }
             }
             else
             {
-                if(mb_substr($path, 0, mb_strlen($route)) === $route)
+                if (mb_substr($path, 0, mb_strlen($route)) === $route)
                 {
                     $params = explode('/', trim(mb_substr($path, mb_strlen($route)), '/'));
                     return array($controller, $route, $params);
@@ -109,7 +103,7 @@ class App
             }
         }
         
-        if(!isset($routes['404'])) throw new Exception('Config::routes["404"] must be set before.');
+        if (!isset($routes['404'])) throw new Exception('Config->routes["404"] not set.');
         return array($routes['404'], $path, array($path));
     }
 
@@ -125,60 +119,37 @@ class App
         restore_exception_handler();
     }
 
-    public static function log($text, $level = LOG_LEVEL_NOTICE)
+    public static function __error($type, $message, $file, $line)
     {
-        if(!self::$config->log) trigger_error('Config::log not be set.', E_USER_NOTICE);
-        if($level < self::$config->log['level']) return;
-        
-        $log = array (
-            'id' => isset($_SERVER['HTTP_TRACK_ID']) ? $_SERVER['HTTP_TRACK_ID'] : '',
-            'time' => microtime(true),
-            'text' => $text,
-            'level' => $level,
-            'ip' => $_SERVER['REMOTE_ADDR'],
-            'memory' => memory_get_usage(),
-        );
-        self::$logs[] = $log;
-        Event::add('log', $log);
-    }
-
-    public static function __shutdown()
-    {
-        Event::add('shutdown');
-        self::__logSave();
-    }
-
-    public static function __error($errno, $errstr, $errfile, $errline)
-    {
-        Event::add('error', func_get_args());
+        Event::add('error', array('type'=>$type, 'message'=>$message, 'file'=>$file, 'line'=>$line));
         $is_log = true;
         $is_display = false;
-        switch ($errno) {
+        switch ($type) {
             case E_NOTICE:
             case E_USER_NOTICE:
                 $is_log = false;
-                $errtag = "Notice";
+                $tag = "Notice";
                 $level = LOG_LEVEL_NOTICE;
                 break;
             case E_WARNING:
             case E_USER_WARNING:
-                $errtag = "Warn";
+                $tag = "Warn";
                 $level = LOG_LEVEL_WARN;
                 break;
             case E_ERROR:
             case E_USER_ERROR:
                 $is_display = true;
-                $errtag = "Fatal";
+                $tag = "Error";
                 $level = LOG_LEVEL_ERROR;
                 break;
             default:
-                $errtag = "CRITICAL";
+                $tag = "Critical";
                 $level = LOG_LEVEL_CRITICAL;
         }
-        $text = sprintf("%s:  %s in %s on line %d (%s)", $errtag, $errstr, $errfile, $errline, self::$request->url);
+        $text = sprintf("%s: %s in %s on line %d (%s)", $tag, $message, $file, $line, self::$request->url);
 
-        if ($is_log) self::log($text, $level);
-        if($is_display && ($contoller = self::$config->route['error'])) Controller::start($contoller, array($text));
+        if ($is_log) Logger::error($text);
+        if ($is_display && ($contoller = self::$config->route['error'])) Controller::start($contoller, array($text));
     }
 
     public static function __exception(\Exception $exception)
@@ -186,14 +157,26 @@ class App
         Event::add('exception', $exception);
         $text = $exception->getTraceAsString() . " ({self::$request->url})";
         
-        self::log($text, LOG_LEVEL_ERROR);
-        if($contoller = self::$config->route['exception']) Controller::start($contoller, array($text));
+        Logger::error($text);
+        if ($contoller = self::$config->route['exception']) Controller::start($contoller, array($text));
+    }
+
+    public static function __shutdown()
+    {
+        Event::add('shutdown');
+        if ($error = error_get_last())
+        {
+            if (in_array($error['type'], array(E_ERROR, E_COMPILE_ERROR, E_CORE_ERROR, E_USER_ERROR)))
+                Logger::critical(sprintf("Critical: %s in %s on line %d (%s)", $error['message'], $error['file'], $error['line'], self::$request->url));
+        }
+         
+        Logger::save();
     }
     
     private static function __preferedLanguage()
     {
-        if(isset($_COOKIE['lang'])) return $_COOKIE['lang'];
-        if(!self::$config->lang || !is_array(self::$config->lang)) return 'en-US';
+        if (isset($_COOKIE['lang'])) return $_COOKIE['lang'];
+        if (!self::$config->lang || !is_array(self::$config->lang)) return DEFAULT_LANG;
         
         preg_match_all("/([[:alpha:]]{1,8})(-([[:alpha:]|-]{1,8}))?" . "(\s*;\s*q\s*=\s*(1\.0{0,3}|0\.\d{0,3}))?\s*(,|$)/i", $_SERVER['HTTP_ACCEPT_LANGUAGE'], $hits, PREG_SET_ORDER);
         $bestlang = self::$config->lang[0];
@@ -240,7 +223,7 @@ class App
         self::$env->timezone = date_default_timezone_get();
         self::$env->charset = 'UTF-8';
 
-        if(self::$env->is_cli)
+        if (self::$env->is_cli)
         {
             $argv = $GLOBALS['argv'];
             self::$env->_ = array_shift($argv);
@@ -250,7 +233,7 @@ class App
        {
             self::$env->_ = $_SERVER['SCRIPT_FILENAME'];
             // Request init
-            if(empty($_SERVER['HTTP_TRACK_ID'])) $_SERVER['HTTP_TRACK_ID'] = md5(uniqid());
+            if (empty($_SERVER['HTTP_TRACK_ID'])) $_SERVER['HTTP_TRACK_ID'] = md5(uniqid());
     
             self::$request->path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
             self::$request->url = 'http://' . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'];
@@ -274,34 +257,7 @@ class App
         }
         self::$env->basename = basename(self::$env->_); 
     }
-
-    private static function __logSave()
-    {
-        if(!empty(self::$logs))
-        {
-            if(!self::$config->log['dir'])
-            {
-                trigger_error('Config::log["dir"] not set.', E_USER_NOTICE);
-                return;
-            }
-            
-            $dir = self::$config->log['dir'] . '/' . date('Ymd');
-            if (!is_dir($dir))
-            {
-                mkdir($dir, 0777);
-                chmod($dir, 0777);
-            }
-            $logs_wraper = array();
-            foreach(self::$logs as $log) $logs_wraper[$log['level']][] = '[' . date('Y-m-d H:i:s', $log['time']) . '] ' . ($log['id'] ? "#{$log['id']} " : '') . $log['text'];
-
-            foreach ($logs_wraper as $level => $wraper)
-            {
-                $file = $dir . '/' . $level . '.log';
-                file_put_contents($file, join(PHP_EOL, $wraper) . PHP_EOL, FILE_APPEND);
-            }
-        }
-    }
-
+    
     private static function __autoloader($class_name)
     {
         Event::add('autoload', $class_name);
@@ -323,7 +279,7 @@ class View
 
     public function set($array)
     {
-        foreach($array as $k => $v) $this->$k = $v;
+        foreach ($array as $k => $v) $this->$k = $v;
     }
 
     public function __toString()
@@ -354,7 +310,7 @@ class ArrayObjectWrapper extends \ArrayObject
 
     public function &__get($name) 
     {
-        if(array_key_exists($name, $this)) $ret = &$this[$name];
+        if (array_key_exists($name, $this)) $ret = &$this[$name];
         else $ret = null;
         return $ret;
     }
@@ -377,7 +333,7 @@ abstract class Event
     public static function add($name, $params = array())
     {
         if (empty(App::$config->event[$name])) return;
-        foreach(App::$config->event[$name] as $runner) self::__excute($runner, $params);
+        foreach (App::$config->event[$name] as $runner) self::__excute($runner, $params);
     }
     
     private static function __excute($runner, $params)
@@ -451,11 +407,65 @@ class I18n
     }
 }
 
+class Logger
+{
+    public static $logs;
+    public static $path_format = '$date/$tag.log';
+    public static $log_format = '[$datetime] #$id $text';
+    
+    private static $_levels = array('debug'=>LOG_LEVEL_DEBUG, 'notice'=>LOG_LEVEL_NOTICE, 'warn' => LOG_LEVEL_WARN, 'error' => LOG_LEVEL_ERROR, 'critical' => LOG_LEVEL_CRITICAL);
+    
+    public static function __callstatic($name, $argments)
+    {
+        if (isset(self::$_levels[$name])) self::write($argments[0], self::$_levels[$name], $name);
+    }
+    
+    public static function write($text, $level = LOG_LEVEL_NOTICE, $tag = false)
+    {
+        if (!App::$config->log) return trigger_error('Config->log not set.', E_USER_NOTICE);
+        if ($level < App::$config->log['level']) return;
+    
+        $log = array (
+            'id' => isset($_SERVER['HTTP_TRACK_ID']) ? $_SERVER['HTTP_TRACK_ID'] : '',
+            'time' => microtime(true),
+            'text' => $text,
+            'level' => $level,
+            'tag' => $tag ? $tag : array_search($level, self::$_levels),
+            'ip' => $_SERVER['REMOTE_ADDR'],
+            'memory' => memory_get_usage(),
+        );
+        self::$logs[] = $log;
+    }
+    
+    public static function save()
+    {
+        if (empty(self::$logs)) return;
+        if (!App::$config->log['dir']) return trigger_error('Config->log["dir"] not set.', E_USER_NOTICE);
+        
+        $index = strrpos(self::$path_format, '/');
+        $dir_format = $index !== false ? substr(self::$path_format, 0, $index) : '';
+        $file_format = $index !== false ? substr(self::$path_format, $index+1) : self::$path_format;
+
+        $dir = App::$config->log['dir'] . '/' . strtr($dir_format, array('$date'=>date('Ymd')));
+        if (!is_dir($dir)) mkdir($dir, 0777, true);
+
+        $logs_wraper = array();
+        foreach (self::$logs as $log)
+        {
+            $replace = array();
+            $log['datetime'] = (date('Y-m-d H:i:s', $log['time'])) . substr($log['time'] - floor($log['time']), 1, 4); 
+            foreach ($log as $k=>$v) $replace['$' . $k] = $v; 
+            $logs_wraper[$log['tag']][] = strtr(self::$log_format, $replace);
+        }
+        foreach ($logs_wraper as $tag => $wraper) file_put_contents($dir . '/' . strtr($file_format, array('$tag'=>$tag)), join(PHP_EOL, $wraper) . PHP_EOL, FILE_APPEND);
+    }
+}
+
 }
 // global functions
 namespace {
     
-if(!function_exists('__'))
+if (!function_exists('__'))
 {
     function __($string, array $values = NULL, $lang = 'en')
     {
