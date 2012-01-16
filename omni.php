@@ -301,14 +301,14 @@ class Exception extends \Exception {
         <b style="color: #990000">'. get_class($e) .'[' . $e->getCode() . '] in ' . $e->getFile() .' [' . $e->getLine() . ']</b>
         <p>' . $e->getMessage() . '</p>';
         
-        if($backtrace = array_slice(debug_backtrace(), 1, 5))
+        if ($backtrace = array_slice(debug_backtrace(), 1, 5))
         {
-            foreach($backtrace as $id => $line)
+            foreach ($backtrace as $id => $line)
             {
                 if (!isset($line['file'])) continue;
         
                 $html .= '<div class="box" style="margin: 1em 0; background: #ebf2fa; padding: 10px; border: 1px solid #bedbeb;">';
-                if( $id !== 0 )
+                if ($id !== 0 )
                 {
                     $html .= '<b>Called by '. (isset($line['class']) ? $line['class']. $line['type'] : '');
                     $html .= $line['function']. '()</b>';
@@ -316,7 +316,7 @@ class Exception extends \Exception {
                 $html .= ' in '. $line['file']. ' ['. $line['line']. ']';
                 $html .= '<code class="source" style="white-space: pre; background: #fff; padding: 1em; display: block; margin: 1em 0; border: 1px solid #bedbeb;">'. $line['source']. '</code>';
         
-                if(isset($line['args']))
+                if (isset($line['args']))
                 {
                     $html .= '<b>Function Arguments</b><xmp>';
                     $html .= var_export($line['args'], true);
