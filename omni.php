@@ -60,57 +60,12 @@ class App
     public static function run()
     {
         Event::add(EVENT_RUN);
-        return self::dispatch(self::$env->is_cli ? join('/', self::$env->argv) : self::$request->path);
-    }
-
-    public static function dispatch($path)
-    {
-        list($controller, $route, $params) = self::route($path);
+        
+        $path = self::$env->is_cli ? join('/', self::$env->argv) : self::$request->path;
+        list($controller, $route, $params) = Route::parse($path);
         
         if (is_object($controller) && get_class($controller) == 'Closure') return call_user_func_array($controller, $params);
         else return Controller::start($controller, $params);
-    }
-
-    public static function route($path)
-    {
-        $routes = self::$config->route;
-        if (!is_array($routes) || empty($routes)) throw new Exception('Config->routes must be set before.');
-
-        $path = trim($path, '/');
-        
-        if ($path === '') return array($routes[''], '', array());
-        if ($path AND ! preg_match('/^[\w\-~\/\.]{1,400}$/', $path)) $path = '404';
-
-        foreach ($routes as $route => $controller)
-        {
-            if (!$route) continue;
-
-            if ($route{0} === '/')
-            {
-                if (preg_match($route, $path, $matches))
-                {
-                    $complete = array_shift($matches);
-                    $params = explode('/', trim(mb_substr($path, mb_strlen($complete)), '/'));
-                    if ($params[0])
-                    {
-                        foreach ($matches as $match) array_unshift($params, $match);
-                    }
-                    else $params = $matches;
-                    return array($controller, $complete, $params);
-                }
-            }
-            else
-            {
-                if (mb_substr($path, 0, mb_strlen($route)) === $route)
-                {
-                    $params = explode('/', trim(mb_substr($path, mb_strlen($route)), '/'));
-                    return array($controller, $route, $params);
-                }
-            }
-        }
-        
-        if (!isset($routes['404'])) throw new Exception('Config->routes["404"] not set.');
-        return array($routes['404'], $path, array($path));
     }
 
     public static function register_error_handler()
@@ -170,6 +125,7 @@ class App
     public static function __shutdown()
     {
         Event::add(EVENT_SHUTDOWN);
+        var_dump(error_get_last());
         if ($error = error_get_last())
         {
             if (in_array($error['type'], array(E_ERROR, E_COMPILE_ERROR, E_CORE_ERROR, E_USER_ERROR)))
@@ -269,6 +225,51 @@ class App
         Event::add('autoload', $class_name);
         $class_name = ltrim($class_name, '\\');
         require self::$config->classpath . '/' . strtolower(str_replace('\\', DIRECTORY_SEPARATOR, $class_name) . '.php');
+    }
+}
+
+class Route
+{
+    public static function parse($path)
+    {
+        $routes = App::$config->route;
+        if (!is_array($routes) || empty($routes)) throw new Exception('Config->routes must be set before.');
+    
+        $path = trim($path, '/');
+    
+        if ($path === '') return array($routes[''], '', array());
+        if ($path AND ! preg_match('/^[\w\-~\/\.]{1,400}$/', $path)) $path = '404';
+    
+        foreach ($routes as $route => $controller)
+        {
+            if (!$route) continue;
+    
+            if ($route{0} === '/')
+            {
+                if (preg_match($route, $path, $matches))
+                {
+                    $complete = array_shift($matches);
+                    $params = explode('/', trim(mb_substr($path, mb_strlen($complete)), '/'));
+                    if ($params[0])
+                    {
+                        foreach ($matches as $match) array_unshift($params, $match);
+                    }
+                    else $params = $matches;
+                    return array($controller, $complete, $params);
+                }
+            }
+            else
+            {
+                if (mb_substr($path, 0, mb_strlen($route)) === $route)
+                {
+                    $params = explode('/', trim(mb_substr($path, mb_strlen($route)), '/'));
+                    return array($controller, $route, $params);
+                }
+            }
+        }
+    
+        if (!isset($routes['404'])) throw new Exception('Config->routes["404"] not set.');
+        return array($routes['404'], $path, array($path));
     }
 }
 
