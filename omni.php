@@ -79,61 +79,6 @@ class App
         restore_error_handler();
         restore_exception_handler();
     }
-
-    public static function __error($type, $message, $file, $line)
-    {
-        Event::add(EVENT_ERROR, array('type'=>$type, 'message'=>$message, 'file'=>$file, 'line'=>$line));
-        $is_log = true;
-        $is_display = false;
-        switch ($type) {
-            case E_NOTICE:
-            case E_USER_NOTICE:
-                $is_log = false;
-                $tag = "Notice";
-                $level = LOG_LEVEL_NOTICE;
-                break;
-            case E_WARNING:
-            case E_USER_WARNING:
-                $tag = "Warn";
-                $level = LOG_LEVEL_WARN;
-                break;
-            case E_ERROR:
-            case E_USER_ERROR:
-                $is_display = true;
-                $tag = "Error";
-                $level = LOG_LEVEL_ERROR;
-                break;
-            default:
-                $tag = "Critical";
-                $level = LOG_LEVEL_CRITICAL;
-        }
-        $text = sprintf("%s: %s in %s on line %d (%s)", $tag, $message, $file, $line, self::$request->url);
-
-        if ($is_log) Logger::error($text);
-        if ($is_display && ($contoller = self::$config->route['error'])) Controller::start($contoller, array($text));
-    }
-
-    public static function __exception(\Exception $exception)
-    {
-        Event::add(EVENT_EXCEPTION, $exception);
-        $text = 'Exception: ' . $exception->getMessage() . ' in ' . $exception->getFile() . ' on line ' . $exception->getLine() . ' (' . self::$request->url . ')';
-        
-        Logger::error($text);
-        if ($contoller = self::$config->route['exception']) Controller::start($contoller, array($text));
-    }
-
-    public static function __shutdown()
-    {
-        Event::add(EVENT_SHUTDOWN);
-        var_dump(error_get_last());
-        if ($error = error_get_last())
-        {
-            if (in_array($error['type'], array(E_ERROR, E_COMPILE_ERROR, E_CORE_ERROR, E_USER_ERROR)))
-                Logger::critical(sprintf("Critical: %s in %s on line %d (%s)", $error['message'], $error['file'], $error['line'], self::$request->url));
-        }
-         
-        Logger::save();
-    }
     
     private static function __preferedLanguage()
     {
@@ -200,18 +145,18 @@ class App
             self::$request->path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
             self::$request->url = 'http://' . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'];
             self::$request->method = $_SERVER['REQUEST_METHOD'];
+            self::$request->protocol = $_SERVER['SERVER_PROTOCOL'];
             self::$request->is_ajax = !empty($_SERVER['X-Requested-With']) && 'XMLHttpRequest' == $_SERVER['X-Requested-With'];
     
             $headers = array();
-            foreach ($_SERVER as $key => $value) {
-                if ('HTTP_' === substr($key, 0, 5)) {
-                    $headers[strtolower(substr($key, 5))] = $value;
-                } elseif (in_array($key, array('CONTENT_LENGTH', 'CONTENT_MD5', 'CONTENT_TYPE'))) {
-                    $headers[strtolower($key)] = $value;
-                }
+            foreach ($_SERVER as $key => $value) 
+            {
+                if ('HTTP_' === substr($key, 0, 5)) $headers[strtolower(substr($key, 5))] = $value;
+                elseif (in_array($key, array('CONTENT_LENGTH', 'CONTENT_MD5', 'CONTENT_TYPE'))) $headers[strtolower($key)] = $value;
             }
     
-            if (isset($_SERVER['PHP_AUTH_USER'])) {
+            if (isset($_SERVER['PHP_AUTH_USER'])) 
+            {
                 $pass = isset($_SERVER['PHP_AUTH_PW']) ? $_SERVER['PHP_AUTH_PW'] : '';
                 $headers['authorization'] = 'Basic '.base64_encode($_SERVER['PHP_AUTH_USER'].':'.$pass);
             }
@@ -225,6 +170,55 @@ class App
         Event::add('autoload', $class_name);
         $class_name = ltrim($class_name, '\\');
         require self::$config->classpath . '/' . strtolower(str_replace('\\', DIRECTORY_SEPARATOR, $class_name) . '.php');
+    }
+
+    public static function __error($type, $message, $file, $line)
+    {
+        Event::add(EVENT_ERROR, $type, $message, $file, $line);
+        if (error_reporting() & $type) throw new \ErrorException($message, $type, 0, $file, $line);
+    }
+
+    public static function __exception(\Exception $e)
+    {
+        Event::add(EVENT_EXCEPTION, $e);
+        $type    = get_class($e);
+        $code    = $e->getCode();
+        $message = $e->getMessage();
+        $file    = $e->getFile();
+        $line    = $e->getLine();
+        $trace = $e->getTrace();
+        $text = sprintf('%s [ %s ]: %s ~ %s [ %d ]', $type, $code, $message, $file, $line);
+        Logger::error($text);
+        
+		if (!self::$env->is_cli AND !headers_sent()) header(self::$request->protocol . ' 500 Internal Server Error');
+		
+		if (self::$env->is_cli OR self::$request->is_ajax === TRUE)
+		{
+			echo "\n{$text}\n";
+			exit(1);
+		}
+
+		ob_start();
+		if (self::$config->errorview && file_exists(self::$config->errorview)) include self::$config->errorview;
+		else echo Exception::getView($e);
+
+		echo ob_get_clean();
+		exit(1);
+    }
+
+    public static function __shutdown()
+    {
+        Event::add(EVENT_SHUTDOWN);
+        Logger::save();
+        
+        if (!self::$init) return;
+        
+        if (self::$config->error AND $error = error_get_last() AND in_array($error['type'], array(E_PARSE, E_ERROR, E_USER_ERROR)))
+        {
+            ob_get_level() and ob_clean();
+            self::__exception(new \ErrorException($error['message'], $error['type'], 0, $error['file'], $error['line']));
+            exit(1);
+        }
     }
 }
 
@@ -283,7 +277,6 @@ class View
         $this->_view = $file;
     }
 
-
     public function set($array)
     {
         foreach ($array as $k => $v) $this->$k = $v;
@@ -298,15 +291,44 @@ class View
     }
 }
 
-class Model
-{
-    public function __construct()
+class Model {}
+
+class Exception extends \Exception {
+    
+    public static function getView(\Exception $e)
     {
-        //
+        $html = '<div style="border:1px solid #990000; padding:10px 20px; margin:10px; font: 13px/1.4em verdana; background: #fff;">
+        <b style="color: #990000">'. get_class($e) .'[' . $e->getCode() . '] in ' . $e->getFile() .' [' . $e->getLine() . ']</b>
+        <p>' . $e->getMessage() . '</p>';
+        
+        if($backtrace = array_slice(debug_backtrace(), 1, 5))
+        {
+            foreach($backtrace as $id => $line)
+            {
+                if (!isset($line['file'])) continue;
+        
+                $html .= '<div class="box" style="margin: 1em 0; background: #ebf2fa; padding: 10px; border: 1px solid #bedbeb;">';
+                if( $id !== 0 )
+                {
+                    $html .= '<b>Called by '. (isset($line['class']) ? $line['class']. $line['type'] : '');
+                    $html .= $line['function']. '()</b>';
+                }
+                $html .= ' in '. $line['file']. ' ['. $line['line']. ']';
+                $html .= '<code class="source" style="white-space: pre; background: #fff; padding: 1em; display: block; margin: 1em 0; border: 1px solid #bedbeb;">'. $line['source']. '</code>';
+        
+                if(isset($line['args']))
+                {
+                    $html .= '<b>Function Arguments</b><xmp>';
+                    $html .= var_export($line['args'], true);
+                    $html .= '</xmp>';
+                }
+                $html .= '</div>';
+            }
+        }
+        $html .= '</div>';
+        return $html;
     }
 }
-
-class Exception extends \Exception {}
 
 class ArrayObjectWrapper extends \ArrayObject
 {
@@ -330,27 +352,24 @@ class ArrayObjectWrapper extends \ArrayObject
 
 abstract class Event
 {
-    public static function on($name, $runner)
+    public static function on($name, \Closure $runner)
     {
         if (!App::isInit()) throw new Exception('App is not init.');
         if (!isset(App::$config->event[$name])) App::$config->event[$name] = array();
         App::$config->event[$name][] = $runner;
     }
     
-    public static function add($name, $params = array())
+    public static function add($name)
     {
+        $params = array_slice(func_get_args(), 1);
         if (empty(App::$config->event[$name])) return;
         foreach (App::$config->event[$name] as $runner) self::__excute($runner, $params);
     }
     
-    private static function __excute($runner, $params)
+    private static function __excute($runner, $params = array())
     {
-        if (is_object($runner) && get_class($runner) == 'Closure') return $runner($params);
-        else
-        {
-            $event = new $runner();
-            return $event->run($params);
-        }
+        if (is_object($runner) && get_class($runner) == 'Closure') return call_user_func_array($runner, $params);
+        else return call_user_func_array(array(new $runner(), 'run'), $params);
     }
     
     abstract function run();

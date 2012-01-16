@@ -2,10 +2,11 @@
 
 $config = array(
     'apppath' => APP_DIR,
-    'classpath' => APP_DIR . DIRECTORY_SEPARATOR . 'classes',
-    'viewpath' => APP_DIR . DIRECTORY_SEPARATOR . 'views',
+    'classpath' => APP_DIR . '/classes',
+    'viewpath' => APP_DIR . '/views',
     'lang' => array('zh-CN'),
     'error' => true,
+    'errorview' => APP_DIR . '/error.php',
 );
 
 $config['route'] = array(
@@ -23,12 +24,12 @@ $config['route'] = array(
 
 $config['event'] = array(
     'init' => array(
-        function(){var_dump('before init');}
+         function(){var_dump('before init');}
      ),
     'shutdown' => array(
-        function(){var_dump('shutdown0');},
-        function(){var_dump('shutdown1');},
-        function(){var_dump('shutdown2');},
+         function(){var_dump('shutdown0');},
+         function(){var_dump('shutdown1');},
+         function(){var_dump('shutdown2');},
      ),
 );
 
