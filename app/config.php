@@ -6,13 +6,11 @@ $config = array(
     'viewpath' => APP_DIR . '/views',
     'lang' => array('zh-CN'),
     'error' => true,
-    'errorview' => APP_DIR . '/error.php',
 );
 
 $config['route'] = array(
     '404' => '\Controller\Front\Page404',
     'error' => '\Controller\Front\Page404',
-	'exception' => '\Controller\Front\Page404',
 	
     '' => '\Controller\Front\Index',
 	'debug' => function(){
