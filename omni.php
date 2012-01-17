@@ -15,9 +15,6 @@ const LOG_LEVEL_WARN = 2;
 const LOG_LEVEL_ERROR = 3;
 const LOG_LEVEL_CRITICAL = 4;
 
-const DEFAULT_TIMEZONE = 'UTC';
-const DEFAULT_LANG = 'en-US';
-
 const EVENT_INIT = 'init';
 const EVENT_RUN = 'run';
 const EVENT_ERROR = 'error';
@@ -30,22 +27,28 @@ const EVENT_SHUTDOWN = 'shutdown';
 class App
 {
     public static $config = array();
-    public static $request = array();
+    public static $request;
     public static $env = array();
     
     private static $_init = false;
 
     public static function init($config = array())
     {
+        if (!empty($config['event'])) 
+        {
+            Event::init($config['event']);
+            unset($config['event']);
+        }
+        Event::add(EVENT_INIT);
+        
         iconv_set_encoding("internal_encoding", "UTF-8");
         mb_internal_encoding('UTF-8');
         self::$config = new ArrayObjectWrapper($config);
-        date_default_timezone_set(self::$config->timezone ? self::$config->timezone : DEFAULT_TIMEZONE);
-        if (self::$config->event) Event::init(self::$config->event);
+        date_default_timezone_set(self::$config->timezone ? self::$config->timezone : 'UTC');
         
-        Event::add(EVENT_INIT);
-        self::__init();
-        
+        self::$env = Env::instance();
+        self::$env->lang = Env::preferedLanguage(self::$config->lang);
+        if (!self::$env->is_cli) self::$request = Request::instance();
         I18n::$lang = self::$env->lang;
         
         if (!self::$config->apppath) throw new Exception('Config->apppath must be set before.');
@@ -80,92 +83,7 @@ class App
         restore_error_handler();
         restore_exception_handler();
     }
-    
-    private static function __preferedLanguage()
-    {
-        if (isset($_COOKIE['lang'])) return $_COOKIE['lang'];
-        if (!self::$config->lang || !is_array(self::$config->lang)) return DEFAULT_LANG;
-        
-        preg_match_all("/([[:alpha:]]{1,8})(-([[:alpha:]|-]{1,8}))?" . "(\s*;\s*q\s*=\s*(1\.0{0,3}|0\.\d{0,3}))?\s*(,|$)/i", $_SERVER['HTTP_ACCEPT_LANGUAGE'], $hits, PREG_SET_ORDER);
-        $bestlang = self::$config->lang[0];
-        $bestqval = 0;
-        
-        foreach ($hits as $arr)
-        {
-            $langprefix = strtolower ($arr[1]);
-            if (!empty($arr[3]))
-            {
-                $langrange = strtolower ($arr[3]);
-                $language = $langprefix . "-" . $langrange;
-            }
-            else $language = $langprefix;
-            $qvalue = 1.0;
-            if (!empty($arr[5])) $qvalue = floatval($arr[5]);
-             
-            if (in_array($language,self::$config->lang) && ($qvalue > $bestqval))
-            {
-                $bestlang = $language;
-                $bestqval = $qvalue;
-            }
-            else if (in_array($langprefix,self::$config->lang) && (($qvalue*0.9) > $bestqval))
-            {
-                $bestlang = $langprefix;
-                $bestqval = $qvalue*0.9;
-            }
-        }
-        return $bestlang;
-    }
 
-    private static function __init()
-    {
-        // Make objective
-        self::$env = new ArrayObjectWrapper(array());
-        self::$request = new ArrayObjectWrapper(array());
-        
-        // Env init
-        self::$env->lang = self::__preferedLanguage();
-        self::$env->is_cli = (PHP_SAPI == 'cli');
-        self::$env->is_win = (substr(PHP_OS, 0, 3) == 'WIN');
-        self::$env->start_time = microtime(true);
-        self::$env->start_memory = memory_get_usage();
-        self::$env->timezone = date_default_timezone_get();
-        self::$env->charset = 'UTF-8';
-
-        if (self::$env->is_cli)
-        {
-            $argv = $GLOBALS['argv'];
-            self::$env->_ = array_shift($argv);
-            self::$env->argv = $argv;
-        }
-        else
-       {
-            self::$env->_ = $_SERVER['SCRIPT_FILENAME'];
-            // Request init
-            if (empty($_SERVER['HTTP_TRACK_ID'])) $_SERVER['HTTP_TRACK_ID'] = md5(uniqid());
-    
-            self::$request->path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
-            self::$request->url = 'http://' . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'];
-            self::$request->method = $_SERVER['REQUEST_METHOD'];
-            self::$request->protocol = $_SERVER['SERVER_PROTOCOL'];
-            self::$request->is_ajax = !empty($_SERVER['X-Requested-With']) && 'XMLHttpRequest' == $_SERVER['X-Requested-With'];
-    
-            $headers = array();
-            foreach ($_SERVER as $key => $value) 
-            {
-                if ('HTTP_' === substr($key, 0, 5)) $headers[strtolower(substr($key, 5))] = $value;
-                elseif (in_array($key, array('CONTENT_LENGTH', 'CONTENT_MD5', 'CONTENT_TYPE'))) $headers[strtolower($key)] = $value;
-            }
-    
-            if (isset($_SERVER['PHP_AUTH_USER'])) 
-            {
-                $pass = isset($_SERVER['PHP_AUTH_PW']) ? $_SERVER['PHP_AUTH_PW'] : '';
-                $headers['authorization'] = 'Basic '.base64_encode($_SERVER['PHP_AUTH_USER'].':'.$pass);
-            }
-            self::$request->headers = $headers;
-        }
-        self::$env->basename = basename(self::$env->_); 
-    }
-    
     private static function __autoloader($class_name)
     {
         Event::add('autoload', $class_name);
@@ -217,6 +135,127 @@ class App
             catch (\Exception $e) { self::__exception(new \ErrorException($error['message'], $error['type'], 0, $error['file'], $error['line'])); }
             exit(1);
         }
+    }
+}
+
+ class Instance
+{
+    private static $_instance = array();
+    
+    public static function instance()
+    {
+        $class_name = get_called_class();
+        if (!isset(self::$_instance[$class_name])) self::$_instance[$class_name] = new $class_name();
+        return self::$_instance[$class_name];
+    }
+}
+
+class Request extends Instance
+{
+    public $path;
+    public $url;
+    public $method;
+    public $protocol;
+    public $is_ajax;
+    public $headers;
+    
+    public function __construct()
+    {
+        $this->path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+        $this->url = 'http://' . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'];
+        $this->method = $_SERVER['REQUEST_METHOD'];
+        $this->protocol = $_SERVER['SERVER_PROTOCOL'];
+        $this->is_ajax = !empty($_SERVER['X-Requested-With']) && 'XMLHttpRequest' == $_SERVER['X-Requested-With'];
+        
+        $headers = array();
+        foreach ($_SERVER as $key => $value)
+        {
+            if ('HTTP_' === substr($key, 0, 5)) $headers[strtolower(substr($key, 5))] = $value;
+            elseif (in_array($key, array('CONTENT_LENGTH', 'CONTENT_MD5', 'CONTENT_TYPE'))) $headers[strtolower($key)] = $value;
+        }
+        
+        if (isset($_SERVER['PHP_AUTH_USER']))
+        {
+            $pass = isset($_SERVER['PHP_AUTH_PW']) ? $_SERVER['PHP_AUTH_PW'] : '';
+            $headers['authorization'] = 'Basic '.base64_encode($_SERVER['PHP_AUTH_USER'].':'.$pass);
+        }
+        $this->headers = $headers;
+    }
+}
+
+class Response extends Instance
+{
+    public function __construct()
+    {
+        //
+    }
+}
+
+class Env extends Instance
+{
+    public $lang = 'en-US';
+    public $is_cli;
+    public $is_win;
+    public $start_time;
+    public $start_memory;
+    public $timezone = 'UTC';
+    public $charset = 'UTF-8';
+    public $basename;
+    public $argv;
+    public $_;
+    
+    public function __construct()
+    {
+        $this->is_cli = (PHP_SAPI == 'cli');
+        $this->is_win = (substr(PHP_OS, 0, 3) == 'WIN');
+        $this->start_time = microtime(true);
+        $this->start_memory = memory_get_usage();
+        $this->timezone = date_default_timezone_get();
+        
+        if ($this->is_cli)
+        {
+            $argv = $GLOBALS['argv'];
+            $this->_ = array_shift($argv);
+            $this->argv = $argv;
+        }
+        else $this->_ = $_SERVER['SCRIPT_FILENAME'];
+        
+        $this->basename = basename($this->_);
+    }
+    
+    public static function preferedLanguage($languages = array())
+    {
+        if (isset($_COOKIE['lang'])) return $_COOKIE['lang'];
+        if (!$languages) return 'en-US';
+        
+        preg_match_all("/([[:alpha:]]{1,8})(-([[:alpha:]|-]{1,8}))?" . "(\s*;\s*q\s*=\s*(1\.0{0,3}|0\.\d{0,3}))?\s*(,|$)/i", $_SERVER['HTTP_ACCEPT_LANGUAGE'], $hits, PREG_SET_ORDER);
+        $bestlang = $languages[0];
+        $bestqval = 0;
+        
+        foreach ($hits as $arr)
+        {
+            $langprefix = strtolower ($arr[1]);
+            if (!empty($arr[3]))
+            {
+                $langrange = strtolower ($arr[3]);
+                $language = $langprefix . "-" . $langrange;
+            }
+            else $language = $langprefix;
+            $qvalue = 1.0;
+            if (!empty($arr[5])) $qvalue = floatval($arr[5]);
+             
+            if (in_array($language,$languages) && ($qvalue > $bestqval))
+            {
+                $bestlang = $language;
+                $bestqval = $qvalue;
+            }
+            else if (in_array($langprefix,$languages) && (($qvalue*0.9) > $bestqval))
+            {
+                $bestlang = $langprefix;
+                $bestqval = $qvalue*0.9;
+            }
+        }
+        return $bestlang;
     }
 }
 
