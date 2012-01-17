@@ -198,11 +198,7 @@ class App
 			exit(1);
 		}
 
-		ob_start();
-		if (self::$config->errorview && file_exists(self::$config->errorview)) include self::$config->errorview;
-		else echo Exception::getView($e);
-
-		echo ob_get_clean();
+		echo Exception::getView($e);
 		exit(1);
     }
 
@@ -216,7 +212,8 @@ class App
         if (self::$config->error AND $error = error_get_last() AND in_array($error['type'], array(E_PARSE, E_ERROR, E_USER_ERROR)))
         {
             ob_get_level() and ob_clean();
-            self::__exception(new \ErrorException($error['message'], $error['type'], 0, $error['file'], $error['line']));
+            try { print new View(self::$config->route['error']); }
+            catch (\Exception $e) { self::__exception(new \ErrorException($error['message'], $error['type'], 0, $error['file'], $error['line'])); }
             exit(1);
         }
     }
@@ -270,11 +267,12 @@ class Route
 class View
 {
 
-    private $_view = NULL;
+    private $_file = NULL;
 
-    public function __construct($file)
+    public function __construct($view)
     {
-        $this->_view = $file;
+        $this->_file = (App::$config->viewpath ? App::$config->viewpath : App::$config->apppath) . '/' . strtolower($view) . '.php';
+        if (!is_file($this->_file)) throw new Exception('View file not exist: ' . $this->_file);
     }
 
     public function set($array)
@@ -286,7 +284,7 @@ class View
     {
         ob_start();
         extract((array) $this);
-        require (App::$config->viewpath ? App::$config->viewpath : App::$config->apppath) . '/' . strtolower($this->_view) . '.php';
+        require $this->_file;
         return ob_get_clean();
     }
 }
@@ -305,7 +303,7 @@ class Exception extends \Exception {
         {
             foreach ($backtrace as $id => $line)
             {
-                if (!isset($line['file'])) continue;
+                if (empty($line['file'])) continue;
         
                 $html .= '<div class="box" style="margin: 1em 0; background: #ebf2fa; padding: 10px; border: 1px solid #bedbeb;">';
                 if ($id !== 0 )
@@ -314,13 +312,13 @@ class Exception extends \Exception {
                     $html .= $line['function']. '()</b>';
                 }
                 $html .= ' in '. $line['file']. ' ['. $line['line']. ']';
-                $html .= '<code class="source" style="white-space: pre; background: #fff; padding: 1em; display: block; margin: 1em 0; border: 1px solid #bedbeb;">'. $line['source']. '</code>';
+                if (!empty($line['source']))$html .= '<code class="source" style="white-space: pre; background: #fff; padding: 1em; display: block; margin: 1em 0; border: 1px solid #bedbeb;">'. $line['source']. '</code>';
         
-                if (isset($line['args']))
+                if (!empty($line['args']))
                 {
-                    $html .= '<b>Function Arguments</b><xmp>';
-                    $html .= var_export($line['args'], true);
-                    $html .= '</xmp>';
+                    $html .= '<div><b>Function Arguments</b><xmp>';
+                    $html .= print_r($line['args'], true);
+                    $html .= '</xmp></div>';
                 }
                 $html .= '</div>';
             }
