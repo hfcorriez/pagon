@@ -120,16 +120,16 @@ class App
         $text = sprintf('%s [ %s ]: %s ~ %s [ %d ]', $type, $code, $message, $file, $line);
         Logger::error($text);
         
-		if (!self::$env->is_cli AND !headers_sent()) header(self::$request->protocol . ' 500 Internal Server Error');
-		
-		if (self::$env->is_cli OR self::$request->is_ajax === TRUE)
-		{
-			echo "\n{$text}\n";
-			exit(1);
-		}
-
-		echo Exception::getView($e);
-		exit(1);
+        if (!self::$env->is_cli AND !headers_sent()) header(self::$request->protocol . ' 500 Internal Server Error');
+        
+        if (self::$env->is_cli OR self::$request->is_ajax === TRUE)
+        {
+        	echo "\n{$text}\n";
+        	exit(1);
+        }
+        
+        echo Exception::getView($e);
+        exit(1);
     }
 
     public static function __shutdown()
