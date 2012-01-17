@@ -33,7 +33,7 @@ class App
     public static $request = array();
     public static $env = array();
     
-    private static $init = false;
+    private static $_init = false;
 
     public static function init($config = array())
     {
@@ -52,10 +52,10 @@ class App
         if (self::$config->classpath) spl_autoload_register(array(__CLASS__, '__autoloader'));
         
         register_shutdown_function(array(__CLASS__, '__shutdown'));
-        self::$init = true;
+        self::$_init = true;
     }
     
-    public static function isInit(){ return self::$init; }
+    public static function isInit(){ return self::$_init; }
 
     public static function run()
     {
@@ -211,7 +211,7 @@ class App
         Event::add(EVENT_SHUTDOWN);
         Logger::save();
         
-        if (!self::$init) return;
+        if (!self::$_init) return;
         
         if (self::$config->error AND $error = error_get_last() AND in_array($error['type'], array(E_PARSE, E_ERROR, E_USER_ERROR)))
         {
