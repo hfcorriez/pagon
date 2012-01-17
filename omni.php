@@ -26,9 +26,9 @@ const EVENT_SHUTDOWN = 'shutdown';
  */
 class App
 {
-    public static $config = array();
+    public static $config;
     public static $request;
-    public static $env = array();
+    public static $env;
     
     private static $_init = false;
 
@@ -43,7 +43,7 @@ class App
         
         iconv_set_encoding("internal_encoding", "UTF-8");
         mb_internal_encoding('UTF-8');
-        self::$config = new ArrayObjectWrapper($config);
+        self::$config = new Config($config);
         date_default_timezone_set(self::$config->timezone ? self::$config->timezone : 'UTC');
         
         self::$env = Env::instance();
@@ -138,7 +138,23 @@ class App
     }
 }
 
- class Instance
+class ArrayObjectWrapper extends \ArrayObject
+{
+    public function __set($name, $val) { $this[$name] = $val; }
+
+    public function &__get($name) 
+    {
+        if (array_key_exists($name, $this)) $ret = &$this[$name];
+        else $ret = null;
+        return $ret;
+    }
+    
+    public function __isset($name) { return isset($this[$name]); }
+    
+    public function __unset($name) { unset($this[$name]); }
+}
+
+class Instance
 {
     private static $_instance = array();
     
@@ -258,6 +274,8 @@ class Env extends Instance
         return $bestlang;
     }
 }
+
+class Config extends ArrayObjectWrapper {}
 
 class Route
 {
@@ -436,26 +454,6 @@ class Logger
             $logs_wraper[$log['tag']][] = strtr(self::$log_format, $replace);
         }
         foreach ($logs_wraper as $tag => $wraper) file_put_contents($dir . '/' . strtr($file_format, array('$tag'=>$tag)), join(PHP_EOL, $wraper) . PHP_EOL, FILE_APPEND);
-    }
-}
-
-class ArrayObjectWrapper extends \ArrayObject
-{
-    public function __set($name, $val) 
-    {
-        $this[$name] = $val;
-    }
-
-    public function &__get($name) 
-    {
-        if (array_key_exists($name, $this)) $ret = &$this[$name];
-        else $ret = null;
-        return $ret;
-    }
-    
-    public function __isset($name)
-    {
-        return isset($this[$name]);
     }
 }
 
