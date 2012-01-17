@@ -41,6 +41,7 @@ class App
         mb_internal_encoding('UTF-8');
         self::$config = new ArrayObjectWrapper($config);
         date_default_timezone_set(self::$config->timezone ? self::$config->timezone : DEFAULT_TIMEZONE);
+        if (self::$config->event) Event::init(self::$config->event);
         
         Event::add(EVENT_INIT);
         self::__init();
@@ -264,114 +265,7 @@ class Route
     }
 }
 
-class View
-{
-
-    private $_file = NULL;
-
-    public function __construct($view)
-    {
-        $this->_file = (App::$config->viewpath ? App::$config->viewpath : App::$config->apppath) . '/' . strtolower($view) . '.php';
-        if (!is_file($this->_file)) throw new Exception('View file not exist: ' . $this->_file);
-    }
-
-    public function set($array)
-    {
-        foreach ($array as $k => $v) $this->$k = $v;
-    }
-
-    public function __toString()
-    {
-        ob_start();
-        extract((array) $this);
-        require $this->_file;
-        return ob_get_clean();
-    }
-}
-
 class Model {}
-
-class Exception extends \Exception {
-    
-    public static function getView(\Exception $e)
-    {
-        $html = '<div style="border:1px solid #990000; padding:10px 20px; margin:10px; font: 13px/1.4em verdana; background: #fff;">
-        <b style="color: #990000">'. get_class($e) .'[' . $e->getCode() . '] in ' . $e->getFile() .' [' . $e->getLine() . ']</b>
-        <p>' . $e->getMessage() . '</p>';
-        
-        if ($backtrace = array_slice(debug_backtrace(), 1, 5))
-        {
-            foreach ($backtrace as $id => $line)
-            {
-                if (empty($line['file'])) continue;
-        
-                $html .= '<div class="box" style="margin: 1em 0; background: #ebf2fa; padding: 10px; border: 1px solid #bedbeb;">';
-                if ($id !== 0 )
-                {
-                    $html .= '<b>Called by '. (isset($line['class']) ? $line['class']. $line['type'] : '');
-                    $html .= $line['function']. '()</b>';
-                }
-                $html .= ' in '. $line['file']. ' ['. $line['line']. ']';
-                if (!empty($line['source']))$html .= '<code class="source" style="white-space: pre; background: #fff; padding: 1em; display: block; margin: 1em 0; border: 1px solid #bedbeb;">'. $line['source']. '</code>';
-        
-                if (!empty($line['args']))
-                {
-                    $html .= '<div><b>Function Arguments</b><xmp>';
-                    $html .= print_r($line['args'], true);
-                    $html .= '</xmp></div>';
-                }
-                $html .= '</div>';
-            }
-        }
-        $html .= '</div>';
-        return $html;
-    }
-}
-
-class ArrayObjectWrapper extends \ArrayObject
-{
-    public function __set($name, $val) 
-    {
-        $this[$name] = $val;
-    }
-
-    public function &__get($name) 
-    {
-        if (array_key_exists($name, $this)) $ret = &$this[$name];
-        else $ret = null;
-        return $ret;
-    }
-    
-    public function __isset($name)
-    {
-        return isset($this[$name]);
-    }
-}
-
-abstract class Event
-{
-    public static function on($name, \Closure $runner)
-    {
-        if (!App::isInit()) throw new Exception('App is not init.');
-        if (!isset(App::$config->event[$name])) App::$config->event[$name] = array();
-        App::$config->event[$name][] = $runner;
-    }
-    
-    public static function add($name)
-    {
-        $params = array_slice(func_get_args(), 1);
-        if (empty(App::$config->event[$name])) return;
-        foreach (App::$config->event[$name] as $runner) self::__excute($runner, $params);
-    }
-    
-    private static function __excute($runner, $params = array())
-    {
-        if (is_object($runner) && get_class($runner) == 'Closure') return call_user_func_array($runner, $params);
-        else return call_user_func_array(array(new $runner(), 'run'), $params);
-    }
-    
-    abstract function run();
-}
 
 abstract class Controller
 {
@@ -398,37 +292,58 @@ abstract class Controller
     }
 }
 
-class I18n 
+class View
 {
-    public static $lang = 'en-US';
-    protected static $_cache = array();
+    private $_file = NULL;
 
-    public static function lang($lang = NULL)
+    public function __construct($view)
     {
-        if ($lang) I18n::$lang = strtolower(str_replace(array(' ', '_'), '-', $lang));
-        return I18n::$lang;
+        $this->_file = (App::$config->viewpath ? App::$config->viewpath : App::$config->apppath) . '/' . strtolower($view) . '.php';
+        if (!is_file($this->_file)) throw new Exception('View file not exist: ' . $this->_file);
+    }
+
+    public function set($array)
+    {
+        foreach ($array as $k => $v) $this->$k = $v;
+    }
+
+    public function __toString()
+    {
+        ob_start();
+        extract((array) $this);
+        require $this->_file;
+        return ob_get_clean();
+    }
+}
+
+abstract class Event
+{
+    private static $_events = array();
+    
+    public static function init($events = array())
+    {
+        foreach ($events as $name => $event) self::$_events[$name] = !empty(self::$_events[$name]) ? array_merge(self::$_events[$name], $event) : $event;
     }
     
-    public static function get($string, $lang = NULL)
+    public static function on($name, $runner)
     {
-        if (!$lang) $lang = I18n::$lang;
-        $table = I18n::load($lang);
-        return isset($table[$string]) ? $table[$string] : $string;
+        self::$_events[$name][] = $runner;
     }
     
-    public static function load($lang)
+    public static function add($name)
     {
-        if (isset(I18n::$_cache[$lang])) return I18n::$_cache[$lang];
-
-        $table = array();
-        $parts = explode('-', $lang);
-        $path = implode(DIRECTORY_SEPARATOR, $parts);
-
-        $file = App::$config->langpath . '/' . $path . '.php';
-        if (file_exists($file)) $table = include($file);
-
-        return I18n::$_cache[$lang] = $table;
+        $params = array_slice(func_get_args(), 1);
+        if (empty(self::$_events[$name])) return;
+        foreach (self::$_events[$name] as $runner) self::__excute($runner, $params);
     }
+    
+    private static function __excute($runner, $params = array())
+    {
+        if (is_object($runner) && get_class($runner) == 'Closure') return call_user_func_array($runner, $params);
+        else return call_user_func_array(array(new $runner(), 'run'), $params);
+    }
+    
+    abstract function run();
 }
 
 class Logger
@@ -482,6 +397,96 @@ class Logger
             $logs_wraper[$log['tag']][] = strtr(self::$log_format, $replace);
         }
         foreach ($logs_wraper as $tag => $wraper) file_put_contents($dir . '/' . strtr($file_format, array('$tag'=>$tag)), join(PHP_EOL, $wraper) . PHP_EOL, FILE_APPEND);
+    }
+}
+
+class ArrayObjectWrapper extends \ArrayObject
+{
+    public function __set($name, $val) 
+    {
+        $this[$name] = $val;
+    }
+
+    public function &__get($name) 
+    {
+        if (array_key_exists($name, $this)) $ret = &$this[$name];
+        else $ret = null;
+        return $ret;
+    }
+    
+    public function __isset($name)
+    {
+        return isset($this[$name]);
+    }
+}
+
+class Exception extends \Exception {
+    
+    public static function getView(\Exception $e)
+    {
+        $html = '<div style="border:1px solid #990000; padding:10px 20px; margin:10px; font: 13px/1.4em verdana; background: #fff;">
+        <b style="color: #990000">'. get_class($e) .'[' . $e->getCode() . '] in ' . $e->getFile() .' [' . $e->getLine() . ']</b>
+        <p>' . $e->getMessage() . '</p>';
+        
+        if ($backtrace = array_slice(debug_backtrace(), 1, 5))
+        {
+            foreach ($backtrace as $id => $line)
+            {
+                if (empty($line['file'])) continue;
+        
+                $html .= '<div class="box" style="margin: 1em 0; background: #ebf2fa; padding: 10px; border: 1px solid #bedbeb;">';
+                if ($id !== 0 )
+                {
+                    $html .= '<b>Called by '. (isset($line['class']) ? $line['class']. $line['type'] : '');
+                    $html .= $line['function']. '()</b>';
+                }
+                $html .= ' in '. $line['file']. ' ['. $line['line']. ']';
+                if (!empty($line['source']))$html .= '<code class="source" style="white-space: pre; background: #fff; padding: 1em; display: block; margin: 1em 0; border: 1px solid #bedbeb;">'. $line['source']. '</code>';
+        
+                if (!empty($line['args']))
+                {
+                    $html .= '<div><b>Function Arguments</b><xmp>';
+                    $html .= print_r($line['args'], true);
+                    $html .= '</xmp></div>';
+                }
+                $html .= '</div>';
+            }
+        }
+        $html .= '</div>';
+        return $html;
+    }
+}
+
+class I18n 
+{
+    public static $lang = 'en-US';
+    protected static $_cache = array();
+
+    public static function lang($lang = NULL)
+    {
+        if ($lang) self::$lang = strtolower(str_replace(array(' ', '_'), '-', $lang));
+        return self::$lang;
+    }
+    
+    public static function get($string, $lang = NULL)
+    {
+        if (!$lang) $lang = self::$lang;
+        $table = self::load($lang);
+        return isset($table[$string]) ? $table[$string] : $string;
+    }
+    
+    public static function load($lang)
+    {
+        if (isset(self::$_cache[$lang])) return self::$_cache[$lang];
+
+        $table = array();
+        $parts = explode('-', $lang);
+        $path = implode(DIRECTORY_SEPARATOR, $parts);
+
+        $file = App::$config->langpath . '/' . $path . '.php';
+        if (file_exists($file)) $table = include($file);
+
+        return self::$_cache[$lang] = $table;
     }
 }
 
