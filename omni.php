@@ -26,8 +26,19 @@ const EVENT_SHUTDOWN = 'shutdown';
  */
 class App
 {
+    /**
+     * @var Config
+     */
     public static $config;
+    
+    /**
+     * @var Request
+     */
     public static $request;
+    
+    /**
+     * @var Env
+     */
     public static $env;
     
     private static $_init = false;
