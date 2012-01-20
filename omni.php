@@ -20,6 +20,7 @@ const EVENT_RUN = 'run';
 const EVENT_ERROR = 'error';
 const EVENT_EXCEPTION = 'exception';
 const EVENT_SHUTDOWN = 'shutdown';
+const EVENT_AUTOLOAD = 'autoload';
 
 /**
  * App Class
@@ -97,7 +98,7 @@ class App
 
     private static function __autoloader($class_name)
     {
-        Event::add('autoload', $class_name);
+        Event::add(EVENT_AUTOLOAD, $class_name);
         $class_name = ltrim($class_name, '\\');
         require self::$config->classpath . '/' . strtolower(str_replace('\\', DIRECTORY_SEPARATOR, $class_name) . '.php');
     }
