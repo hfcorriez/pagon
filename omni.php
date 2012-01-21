@@ -81,7 +81,7 @@ class App
         list($controller, $route, $params) = Route::parse($path);
         
         if (is_object($controller) && get_class($controller) == 'Closure') return call_user_func_array($controller, $params);
-        else return Controller::start($controller, $params);
+        else return Controller::factory($controller, $params);
     }
 
     public static function register_error_handler()
@@ -347,7 +347,7 @@ abstract class Controller
     abstract function before();
     abstract function after();
     
-    public static function start($controller, $params = array())
+    public static function factory($controller, $params = array())
     {
         $controller = new $controller();
         $request_methods = array('GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'HEAD');
