@@ -186,6 +186,9 @@ class Request extends Instance
     public $protocol;
     public $is_ajax;
     public $headers;
+    public $referer;
+    public $track_id;
+    public $domain;
     
     public function __construct()
     {
@@ -194,6 +197,9 @@ class Request extends Instance
         $this->method = $_SERVER['REQUEST_METHOD'];
         $this->protocol = $_SERVER['SERVER_PROTOCOL'];
         $this->is_ajax = !empty($_SERVER['X-Requested-With']) && 'XMLHttpRequest' == $_SERVER['X-Requested-With'];
+        $this->referer = $_SERVER['HTTP_REFERER'];
+        $this->track_id = !empty($_SERVER['HTTP_TRACK_ID']) ? $_SERVER['HTTP_TRACK_ID'] : md5(uniqid());
+        $this->domain = $_SERVER['HTTP_HOST'];
         
         $headers = array();
         foreach ($_SERVER as $key => $value)
