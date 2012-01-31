@@ -23,7 +23,7 @@ define('APP_DIR', __DIR__);
     ),
     
     'log' => array(
-        'level' => \OMni\LOG_LEVEL_DEBUG,
+        'level' => \OMni\LOG_DEBUG,
         'dir' => APP_DIR . '/logs',
     ),
 ));

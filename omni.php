@@ -9,11 +9,11 @@
 namespace OMni
 {
 
-const LOG_LEVEL_DEBUG = 0;
-const LOG_LEVEL_NOTICE = 1;
-const LOG_LEVEL_WARN = 2;
-const LOG_LEVEL_ERROR = 3;
-const LOG_LEVEL_CRITICAL = 4;
+const LOG_DEBUG = 0;
+const LOG_NOTICE = 1;
+const LOG_WARN = 2;
+const LOG_ERROR = 3;
+const LOG_CRITICAL = 4;
 
 const EVENT_INIT = 'init';
 const EVENT_RUN = 'run';
@@ -427,14 +427,14 @@ class Logger
     public static $path_format = '$date/$tag.log';
     public static $log_format = '[$datetime] #$id $text';
     
-    private static $_levels = array('debug'=>LOG_LEVEL_DEBUG, 'notice'=>LOG_LEVEL_NOTICE, 'warn' => LOG_LEVEL_WARN, 'error' => LOG_LEVEL_ERROR, 'critical' => LOG_LEVEL_CRITICAL);
+    private static $_levels = array('debug'=>LOG_DEBUG, 'notice'=>LOG_NOTICE, 'warn' => LOG_WARN, 'error' => LOG_ERROR, 'critical' => LOG_CRITICAL);
     
     public static function __callstatic($name, $argments)
     {
         if (isset(self::$_levels[$name])) self::write($argments[0], self::$_levels[$name], $name);
     }
     
-    public static function write($text, $level = LOG_LEVEL_NOTICE, $tag = false)
+    public static function write($text, $level = LOG_NOTICE, $tag = false)
     {
         if (!App::$config->log) return trigger_error('Config->log not set.', E_USER_NOTICE);
         if ($level < App::$config->log['level']) return;
