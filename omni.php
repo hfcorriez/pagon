@@ -5,6 +5,7 @@
 * @package		OmniApp
 * @author		Corrie Zhao <hfcorriez@gmail.com>
 * @copyright	(c) 2011 OmniApp Framework
+* @todo			分离一些可选加载类和方法
 */
 namespace OMni
 {
@@ -46,6 +47,10 @@ class App
 
     public static function init($config = array())
     {
+        /**
+         * @todo	优化Event配置
+         * @todo	配置自动加载
+         */
         if (!empty($config['event'])) 
         {
             Event::init($config['event']);
@@ -475,6 +480,11 @@ class Logger
     }
 }
 
+/**
+ * 核心异常
+ * @author hfcorriez
+ * @todo	分离getView，可以自己配置和控制
+ */
 class Exception extends \Exception {
     
     public static function getView(\Exception $e)
@@ -512,6 +522,12 @@ class Exception extends \Exception {
     }
 }
 
+/**
+ * 多语言支持
+ * 
+ * @author corriezhao
+ * @todo	提取并采用事件绑定方式加载
+ */
 class I18n 
 {
     public static $lang = 'en-US';
