@@ -20,17 +20,6 @@ $config['route'] = array(
 	 },
 );
 
-$config['event'] = array(
-    'init' => array(
-         function(){var_dump('before init');}
-     ),
-    'shutdown' => array(
-         function(){var_dump('shutdown0');},
-         function(){var_dump('shutdown1');},
-         function(){var_dump('shutdown2');},
-     ),
-);
-
 $config['log'] = array(
     'level' => \OMni\LOG_DEBUG,
     'dir' => APP_DIR . '/logs',

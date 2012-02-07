@@ -3,6 +3,8 @@
 require dirname(__DIR__) . '/omni.php';
 
 define('APP_DIR', __DIR__);
+
+\OMni\Event::init(include('event.php'));
 \OMni\Event::on(\Omni\EVENT_INIT, function(){var_dump('init.');});
 
 \OMni\App::init(include('config.php'));
