@@ -1,6 +1,6 @@
 ## What's OmniApp?
 
-It's a very simple [php.net](http://www.php.net) framework.
+It's a very simple [PHP](http://www.php.net) framework.
 
 ## How to use?
 
