@@ -70,7 +70,7 @@ class App
         
         if (!self::$config->apppath) throw new Exception('Config->apppath must be set before.');
         if (self::$config->error) self::register_error_handler();
-        if (self::$config->classpath) spl_autoload_register(array(__CLASS__, '__autoloader'));
+        if (self::$config->classpath) spl_autoload_register(array(__CLASS__, '__autoload'));
         
         register_shutdown_function(array(__CLASS__, '__shutdown'));
         self::$_init = true;
@@ -101,7 +101,7 @@ class App
         restore_exception_handler();
     }
 
-    private static function __autoloader($class_name)
+    private static function __autoload($class_name)
     {
         Event::add(EVENT_AUTOLOAD, $class_name);
         $class_name = ltrim($class_name, '\\');
