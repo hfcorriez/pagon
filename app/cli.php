@@ -4,7 +4,7 @@ require dirname(__DIR__) . '/omni.php';
 
 define('APP_DIR', __DIR__);
 
-\OMni\App::init(array(
+\Omni\App::init(array(
     'apppath' => APP_DIR,
     'classpath' => APP_DIR . '/classes',
     'viewpath' => APP_DIR . '/views',
@@ -23,8 +23,8 @@ define('APP_DIR', __DIR__);
     ),
     
     'log' => array(
-        'level' => \OMni\LOG_DEBUG,
+        'level' => \Omni\LOG_DEBUG,
         'dir' => APP_DIR . '/logs',
     ),
 ));
-\OMni\App::run();
+\Omni\App::run();

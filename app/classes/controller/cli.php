@@ -2,7 +2,7 @@
 
 namespace Controller;
 
-class Cli extends \OMni\Controller
+class Cli extends \Omni\Controller
 {
     protected $params;
     

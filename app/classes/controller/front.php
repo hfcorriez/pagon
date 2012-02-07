@@ -2,7 +2,7 @@
 
 namespace Controller;
 
-class Front extends \OMni\Controller
+class Front extends \Omni\Controller
 {
     protected $params;
     

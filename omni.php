@@ -7,7 +7,7 @@
 * @copyright	(c) 2011 OmniApp Framework
 * @todo			分离一些可选加载类和方法
 */
-namespace OMni
+namespace Omni
 {
 
 const LOG_DEBUG = 0;
@@ -47,17 +47,8 @@ class App
 
     public static function init($config = array())
     {
-        /**
-         * @todo	优化Event配置
-         * @todo	配置自动加载
-         */
-        if (!empty($config['event'])) 
-        {
-            Event::init($config['event']);
-            unset($config['event']);
-        }
-        Event::add(EVENT_INIT);
-        
+        Event::add(EVENT_INIT, $config);
+
         iconv_set_encoding("internal_encoding", "UTF-8");
         mb_internal_encoding('UTF-8');
         self::$config = new Config($config);
