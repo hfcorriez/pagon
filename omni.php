@@ -107,7 +107,7 @@ class App
     {
         Event::add(EVENT_AUTOLOAD, $class_name);
         $class_name = ltrim($class_name, '\\');
-        require self::$config->classpath . '/' . strtolower(str_replace('\\', DIRECTORY_SEPARATOR, $class_name) . '.php');
+        require self::$config->classpath . '/' . strtolower(str_replace('\\', '/', $class_name) . '.php');
     }
 
     public static function __error($type, $message, $file, $line)
@@ -125,7 +125,7 @@ class App
         $file    = $e->getFile();
         $line    = $e->getLine();
         $text = sprintf('%s [ %s ]: %s ~ %s [ %d ]', $type, $code, $message, $file, $line);
-        Logger::error($text);
+        Log::error($text);
         
         if (!self::$env->is_cli AND !headers_sent()) header(self::$request->protocol . ' 500 Internal Server Error');
         
@@ -142,7 +142,7 @@ class App
     public static function __shutdown()
     {
         Event::add(EVENT_SHUTDOWN);
-        Logger::save();
+        Log::save();
         
         if (!self::$_init) return;
         
@@ -523,7 +523,7 @@ abstract class Event
     abstract function run();
 }
 
-class Logger
+class Log
 {
     public static $logs;
     public static $path_format = '$date/$tag.log';
