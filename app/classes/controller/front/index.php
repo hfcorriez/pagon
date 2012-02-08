@@ -6,6 +6,6 @@ class Index extends \Controller\Front
 {
     public function get()
     {
-        $this->body = 'Welcome to omniapp';
+        $this->body = 'Welcome to OmniApp.';
     }
 }

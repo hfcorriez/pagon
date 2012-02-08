@@ -4,11 +4,11 @@ namespace Controller;
 
 class Front extends \Omni\Controller
 {
-    protected $params;
-    
+    protected $body;
+
     public function __construct()
     {
-        //todo something
+        //doing something on init
     }
     
     public function before()
@@ -18,6 +18,6 @@ class Front extends \Omni\Controller
     
     public function after()
     {
-        echo $this->body;
+        echo \Omni\App::$response->send_headers()->body($this->body);
     }
 }
