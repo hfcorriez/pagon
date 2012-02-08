@@ -1,9 +1,9 @@
 <?php
 
 $config = array(
-    'apppath' => APP_DIR,
-    'classpath' => APP_DIR . '/classes',
-    'viewpath' => APP_DIR . '/views',
+    'apppath' => APPPATH,
+    'classpath' => APPPATH . '/classes',
+    'viewpath' => APPPATH . '/views',
     'lang' => array('zh-CN'),
     'error' => true,
 );
@@ -22,7 +22,7 @@ $config['route'] = array(
 
 $config['log'] = array(
     'level' => \Omni\LOG_DEBUG,
-    'dir' => APP_DIR . '/logs',
+    'dir' => APPPATH . '/logs',
 );
 
 return $config;

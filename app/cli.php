@@ -2,12 +2,12 @@
 
 require dirname(__DIR__) . '/omni.php';
 
-define('APP_DIR', __DIR__);
+define('APPPATH', __DIR__);
 
 \Omni\App::init(array(
-    'apppath' => APP_DIR,
-    'classpath' => APP_DIR . '/classes',
-    'viewpath' => APP_DIR . '/views',
+    'apppath' => APPPATH,
+    'classpath' => APPPATH . '/classes',
+    'viewpath' => APPPATH . '/views',
 
     'route' => array(
         '404' => '\Controller\Cli\Unknown',
@@ -24,7 +24,7 @@ define('APP_DIR', __DIR__);
     
     'log' => array(
         'level' => \Omni\LOG_DEBUG,
-        'dir' => APP_DIR . '/logs',
+        'dir' => APPPATH . '/logs',
     ),
 ));
 \Omni\App::run();
