@@ -2,7 +2,7 @@
 
 namespace Controller\Cli;
 
-class Unknown extends \Controller\Front
+class Unknown extends \Controller\Cli
 {
     public function run()
     {

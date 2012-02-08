@@ -2,7 +2,7 @@
 
 namespace Controller\Cli;
 
-class Help extends \Controller\Front
+class Help extends \Controller\Cli
 {
     public function run()
     {

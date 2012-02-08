@@ -453,10 +453,9 @@ abstract class Controller
     public static function factory($controller, $params = array())
     {
         $controller = new $controller();
-        $request_methods = array('GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'HEAD');
-        $method = App::$request->method;
-        
-        if (!in_array($method, $request_methods) || !method_exists($controller, $method))
+        $method = App::$request ? App::$request->method : null;
+
+        if (!$method || !method_exists($controller, $method))
         {
             if (!method_exists($controller, 'run')) throw new Exception('Contoller::run not exist.');
             $method = 'run';
