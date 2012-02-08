@@ -373,14 +373,16 @@ class Env extends Instance
     public $timezone = 'UTC';
     public $charset = 'UTF-8';
     public $basename;
+    public $user;
+    public $userdir;
     public $argv;
     public $_;
-    
+
     public function __construct()
     {
         $this->is_cli = (PHP_SAPI == 'cli');
         $this->is_win = (substr(PHP_OS, 0, 3) == 'WIN');
-        $this->start_time = microtime(true);
+        $this->start_time = $_SERVER['REQUEST_TIME'];
         $this->start_memory = memory_get_usage();
         $this->timezone = date_default_timezone_get();
         
@@ -391,6 +393,17 @@ class Env extends Instance
             $this->argv = $argv;
         }
         else $this->_ = $_SERVER['SCRIPT_FILENAME'];
+
+        if ($this->is_win)
+        {
+            $this->user = $_SERVER['USERNAME'];
+            $this->userdir = $_SERVER['HOMEDRIVE'] . $_SERVER['HOMEPATH'];
+        }
+        else
+        {
+            $this->user = $_SERVER['USER'];
+            $this->userdir = $_SERVER['HOME'];
+        }
         
         $this->basename = basename($this->_);
     }
