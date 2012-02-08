@@ -62,7 +62,7 @@ class App
         date_default_timezone_set(self::$config->timezone ? self::$config->timezone : 'UTC');
         
         self::$env = Env::instance();
-        self::$env->lang = Env::preferedLanguage(self::$config->lang);
+        self::$env->lang = I18n::preferedLanguage(self::$config->lang);
         if (!self::$env->is_cli)
         {
             self::$request = Request::instance();
@@ -71,7 +71,7 @@ class App
         I18n::$lang = self::$env->lang;
         
         if (!self::$config->apppath) throw new Exception('Config->apppath must be set before.');
-        if (self::$config->error) self::register_error_handler();
+        if (self::$config->error) self::register_error_handlers();
         if (self::$config->classpath) spl_autoload_register(array(__CLASS__, '__autoload'));
         
         register_shutdown_function(array(__CLASS__, '__shutdown'));
@@ -91,13 +91,13 @@ class App
         else return Controller::factory($controller, $params);
     }
 
-    public static function register_error_handler()
+    public static function register_error_handlers()
     {
         set_error_handler(array(__CLASS__, '__error'));
         set_exception_handler(array(__CLASS__, '__exception'));
     }
     
-    public static function restore_error_handler()
+    public static function restore_error_handlers()
     {
         restore_error_handler();
         restore_exception_handler();
@@ -346,7 +346,7 @@ class Response extends Instance
         return strlen($this->body());
     }
 
-    public function send_headers($replace = FALSE)
+    public function sendHeaders($replace = FALSE)
     {
         header($this->_protocol.' '.$this->_status.' '.self::$messages[$this->_status]);
         foreach ($this->_headers as $key => $value) header($key . ': ' . $value, $replace);
@@ -393,41 +393,6 @@ class Env extends Instance
         else $this->_ = $_SERVER['SCRIPT_FILENAME'];
         
         $this->basename = basename($this->_);
-    }
-    
-    public static function preferedLanguage($languages = array())
-    {
-        if (isset($_COOKIE['lang'])) return $_COOKIE['lang'];
-        if (!$languages) return 'en-US';
-        
-        preg_match_all("/([[:alpha:]]{1,8})(-([[:alpha:]|-]{1,8}))?" . "(\s*;\s*q\s*=\s*(1\.0{0,3}|0\.\d{0,3}))?\s*(,|$)/i", $_SERVER['HTTP_ACCEPT_LANGUAGE'], $hits, PREG_SET_ORDER);
-        $bestlang = $languages[0];
-        $bestqval = 0;
-        
-        foreach ($hits as $arr)
-        {
-            $langprefix = strtolower ($arr[1]);
-            if (!empty($arr[3]))
-            {
-                $langrange = strtolower ($arr[3]);
-                $language = $langprefix . "-" . $langrange;
-            }
-            else $language = $langprefix;
-            $qvalue = 1.0;
-            if (!empty($arr[5])) $qvalue = floatval($arr[5]);
-             
-            if (in_array($language,$languages) && ($qvalue > $bestqval))
-            {
-                $bestlang = $language;
-                $bestqval = $qvalue;
-            }
-            else if (in_array($langprefix,$languages) && (($qvalue*0.9) > $bestqval))
-            {
-                $bestlang = $langprefix;
-                $bestqval = $qvalue*0.9;
-            }
-        }
-        return $bestlang;
     }
 }
 
@@ -691,6 +656,41 @@ class I18n
         if (file_exists($file)) $table = include($file);
 
         return self::$_cache[$lang] = $table;
+    }
+
+    public static function preferedLanguage($languages = array())
+    {
+        if (isset($_COOKIE['lang'])) return $_COOKIE['lang'];
+        if (!$languages) return 'en-US';
+
+        preg_match_all("/([[:alpha:]]{1,8})(-([[:alpha:]|-]{1,8}))?" . "(\s*;\s*q\s*=\s*(1\.0{0,3}|0\.\d{0,3}))?\s*(,|$)/i", $_SERVER['HTTP_ACCEPT_LANGUAGE'], $hits, PREG_SET_ORDER);
+        $bestlang = $languages[0];
+        $bestqval = 0;
+
+        foreach ($hits as $arr)
+        {
+            $langprefix = strtolower ($arr[1]);
+            if (!empty($arr[3]))
+            {
+                $langrange = strtolower ($arr[3]);
+                $language = $langprefix . "-" . $langrange;
+            }
+            else $language = $langprefix;
+            $qvalue = 1.0;
+            if (!empty($arr[5])) $qvalue = floatval($arr[5]);
+
+            if (in_array($language,$languages) && ($qvalue > $bestqval))
+            {
+                $bestlang = $language;
+                $bestqval = $qvalue;
+            }
+            else if (in_array($langprefix,$languages) && (($qvalue*0.9) > $bestqval))
+            {
+                $bestlang = $langprefix;
+                $bestqval = $qvalue*0.9;
+            }
+        }
+        return $bestlang;
     }
 }
 

@@ -18,6 +18,6 @@ class Front extends \Omni\Controller
     
     public function after()
     {
-        echo \Omni\App::$response->send_headers()->body($this->body);
+        echo \Omni\App::$response->sendHeaders()->body($this->body);
     }
 }
