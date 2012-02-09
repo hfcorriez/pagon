@@ -5,6 +5,7 @@ $config = array(
     'classpath' => APPPATH . '/classes',
     'viewpath' => APPPATH . '/views',
     'lang' => array('zh-CN'),
+    'langpath' => APPPATH . '/langs',
     'error' => true,
 );
 
@@ -21,7 +22,7 @@ $config['route'] = array(
 );
 
 $config['log'] = array(
-    'level' => \Omni\LOG_DEBUG,
+    'level' => 0,
     'dir' => APPPATH . '/logs',
 );
 

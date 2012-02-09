@@ -12,12 +12,6 @@ namespace Omni
 
 const VERSION = '0.1';
 
-const LOG_DEBUG = 0;
-const LOG_NOTICE = 1;
-const LOG_WARN = 2;
-const LOG_ERROR = 3;
-const LOG_CRITICAL = 4;
-
 const EVENT_INIT = 'init';
 const EVENT_RUN = 'run';
 const EVENT_ERROR = 'error';
@@ -62,15 +56,14 @@ class App
         date_default_timezone_set(self::$config->timezone ? self::$config->timezone : 'UTC');
         
         self::$env = Env::instance();
-        self::$env->lang = I18n::preferedLanguage(self::$config->lang);
         if (!self::$env->is_cli)
         {
             self::$request = Request::instance();
             self::$response = Response::instance();
         }
-        I18n::$lang = self::$env->lang;
-        
+
         if (!self::$config->apppath) throw new Exception('Config->apppath must be set before.');
+
         if (self::$config->error) self::register_error_handlers();
         if (self::$config->classpath) spl_autoload_register(array(__CLASS__, '__autoload'));
         
@@ -119,13 +112,7 @@ class App
     public static function __exception(\Exception $e)
     {
         Event::add(EVENT_EXCEPTION, $e);
-        $type    = get_class($e);
-        $code    = $e->getCode();
-        $message = $e->getMessage();
-        $file    = $e->getFile();
-        $line    = $e->getLine();
-        $text = sprintf('%s [ %s ]: %s ~ %s [ %d ]', $type, $code, $message, $file, $line);
-        Log::error($text);
+        $text = sprintf('%s [%s]: %s ~ %s[%d]', get_class($e), $e->getCode(), $e->getMessage(), $e->getFile(), $e->getLine());
         
         if (!self::$env->is_cli AND !headers_sent()) header(self::$request->protocol . ' 500 Internal Server Error');
         
@@ -142,8 +129,7 @@ class App
     public static function __shutdown()
     {
         Event::add(EVENT_SHUTDOWN);
-        Log::save();
-        
+
         if (!self::$_init) return;
         
         if (self::$config->error AND $error = error_get_last() AND in_array($error['type'], array(E_PARSE, E_ERROR, E_USER_ERROR)))
@@ -506,6 +492,24 @@ class View
     }
 }
 
+abstract class Module
+{
+    abstract static function init();
+
+    /**
+     * @static
+     * @param Module[] $modules
+     */
+    public static function load($modules = array())
+    {
+        foreach ($modules as $module)
+        {
+            if ($module{0} !== '\\') $module = '\\' . __NAMESPACE__ . '\\' . $module;
+            $module::init();
+        }
+    }
+}
+
 abstract class Event
 {
     private static $_events = array();
@@ -534,60 +538,6 @@ abstract class Event
     }
     
     abstract function run();
-}
-
-class Log
-{
-    public static $logs;
-    public static $path_format = '$date/$tag.log';
-    public static $log_format = '[$datetime] #$id $text';
-    
-    private static $_levels = array('debug'=>LOG_DEBUG, 'notice'=>LOG_NOTICE, 'warn' => LOG_WARN, 'error' => LOG_ERROR, 'critical' => LOG_CRITICAL);
-    
-    public static function __callstatic($name, $argments)
-    {
-        if (isset(self::$_levels[$name])) self::write($argments[0], self::$_levels[$name], $name);
-    }
-    
-    public static function write($text, $level = LOG_NOTICE, $tag = false)
-    {
-        if (!App::$config->log) return trigger_error('Config->log not set.', E_USER_NOTICE);
-        if ($level < App::$config->log['level']) return;
-    
-        $log = array (
-            'id' => isset($_SERVER['HTTP_TRACK_ID']) ? $_SERVER['HTTP_TRACK_ID'] : '',
-            'time' => microtime(true),
-            'text' => $text,
-            'level' => $level,
-            'tag' => $tag ? $tag : array_search($level, self::$_levels),
-            'ip' => $_SERVER['REMOTE_ADDR'],
-            'memory' => memory_get_usage(),
-        );
-        self::$logs[] = $log;
-    }
-    
-    public static function save()
-    {
-        if (empty(self::$logs)) return;
-        if (!App::$config->log['dir']) return trigger_error('Config->log["dir"] not set.', E_USER_NOTICE);
-        
-        $index = strrpos(self::$path_format, '/');
-        $dir_format = $index !== false ? substr(self::$path_format, 0, $index) : '';
-        $file_format = $index !== false ? substr(self::$path_format, $index+1) : self::$path_format;
-
-        $dir = App::$config->log['dir'] . '/' . strtr($dir_format, array('$date'=>date('Ymd')));
-        if (!is_dir($dir)) mkdir($dir, 0777, true);
-
-        $logs_wraper = array();
-        foreach (self::$logs as $log)
-        {
-            $replace = array();
-            $log['datetime'] = (date('Y-m-d H:i:s', $log['time'])) . substr($log['time'] - floor($log['time']), 1, 4); 
-            foreach ($log as $k=>$v) $replace['$' . $k] = $v; 
-            $logs_wraper[$log['tag']][] = strtr(self::$log_format, $replace);
-        }
-        foreach ($logs_wraper as $tag => $wraper) file_put_contents($dir . '/' . strtr($file_format, array('$tag'=>$tag)), join(PHP_EOL, $wraper) . PHP_EOL, FILE_APPEND);
-    }
 }
 
 /**
@@ -629,93 +579,6 @@ class Exception extends \Exception {
         }
         $html .= '</div>';
         return $html;
-    }
-}
-
-/**
- * 多语言支持
- * 
- * @author corriezhao
- * @todo	提取并采用事件绑定方式加载
- */
-class I18n 
-{
-    public static $lang = 'en-US';
-    protected static $_cache = array();
-
-    public static function lang($lang = NULL)
-    {
-        if ($lang) self::$lang = strtolower(str_replace(array(' ', '_'), '-', $lang));
-        return self::$lang;
-    }
-    
-    public static function get($string, $lang = NULL)
-    {
-        if (!$lang) $lang = self::$lang;
-        $table = self::load($lang);
-        return isset($table[$string]) ? $table[$string] : $string;
-    }
-    
-    public static function load($lang)
-    {
-        if (isset(self::$_cache[$lang])) return self::$_cache[$lang];
-
-        $table = array();
-        $parts = explode('-', $lang);
-        $path = implode(DIRECTORY_SEPARATOR, $parts);
-
-        $file = App::$config->langpath . '/' . $path . '.php';
-        if (file_exists($file)) $table = include($file);
-
-        return self::$_cache[$lang] = $table;
-    }
-
-    public static function preferedLanguage($languages = array())
-    {
-        if (isset($_COOKIE['lang'])) return $_COOKIE['lang'];
-        if (!$languages) return 'en-US';
-
-        preg_match_all("/([[:alpha:]]{1,8})(-([[:alpha:]|-]{1,8}))?" . "(\s*;\s*q\s*=\s*(1\.0{0,3}|0\.\d{0,3}))?\s*(,|$)/i", $_SERVER['HTTP_ACCEPT_LANGUAGE'], $hits, PREG_SET_ORDER);
-        $bestlang = $languages[0];
-        $bestqval = 0;
-
-        foreach ($hits as $arr)
-        {
-            $langprefix = strtolower ($arr[1]);
-            if (!empty($arr[3]))
-            {
-                $langrange = strtolower ($arr[3]);
-                $language = $langprefix . "-" . $langrange;
-            }
-            else $language = $langprefix;
-            $qvalue = 1.0;
-            if (!empty($arr[5])) $qvalue = floatval($arr[5]);
-
-            if (in_array($language,$languages) && ($qvalue > $bestqval))
-            {
-                $bestlang = $language;
-                $bestqval = $qvalue;
-            }
-            else if (in_array($langprefix,$languages) && (($qvalue*0.9) > $bestqval))
-            {
-                $bestlang = $langprefix;
-                $bestqval = $qvalue*0.9;
-            }
-        }
-        return $bestlang;
-    }
-}
-
-}
-// global functions
-namespace {
-    
-if (!function_exists('__'))
-{
-    function __($string, array $values = NULL, $lang = 'en')
-    {
-        if ($lang !== \Omni\I18n::$lang) $string = \Omni\I18n::get($string);
-        return empty($values) ? $string : strtr($string, $values);
     }
 }
 

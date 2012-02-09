@@ -8,6 +8,7 @@ define('APPPATH', __DIR__);
 \Omni\Event::on(\Omni\EVENT_INIT, function(){/*init event*/});
 
 \Omni\App::init(include('config.php'));
-\Omni\App::run();
+\Omni\Module::load(array('Log', 'I18n'));
 
 \Omni\Event::on(\Omni\EVENT_SHUTDOWN, function(){/*shutdown event*/});
+\Omni\App::run();
