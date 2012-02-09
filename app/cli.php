@@ -23,8 +23,9 @@ define('APPPATH', __DIR__);
     ),
     
     'log' => array(
-        'level' => \Omni\LOG_DEBUG,
+        'level' => 0,
         'dir' => APPPATH . '/logs',
     ),
 ));
+
 \Omni\App::run();
