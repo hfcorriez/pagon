@@ -352,7 +352,6 @@ class Response extends Instance
 
 class Env extends Instance
 {
-    public $lang = 'en-US';
     public $is_cli;
     public $is_win;
     public $start_time;
