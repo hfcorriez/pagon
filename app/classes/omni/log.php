@@ -10,22 +10,29 @@ const LOG_CRITICAL = 4;
 
 class Log extends Module
 {
-    public static $logs;
-    public static $path_format = '$date/$tag.log';
-    public static $log_format = '[$datetime] #$id $text';
+    public static $messages = array();
+    public static $filename = ':date/:level.log';
+    public static $message = '[:datetime] :text #:id';
 
     private static $_levels = array(
-        'debug'     => LOG_DEBUG,
-        'notice'    => LOG_NOTICE,
-        'warn'      => LOG_WARN,
-        'error'     => LOG_ERROR,
-        'critical'  => LOG_CRITICAL
+        'debug' => LOG_DEBUG,
+        'notice' => LOG_NOTICE,
+        'warn' => LOG_WARN,
+        'error' => LOG_ERROR,
+        'critical' => LOG_CRITICAL
     );
 
     public static function init()
     {
-        Event::on(EVENT_SHUTDOWN, function(){ Log::save(); });
-        Event::on(EVENT_EXCEPTION, function($e){ Log::error($e); });
+        Event::on(EVENT_SHUTDOWN, function()
+        {
+            Log::save();
+        });
+
+        Event::on(EVENT_EXCEPTION, function(\Exception $e)
+        {
+            Log::write($e, LOG_ERROR);
+        });
     }
 
     public static function __callstatic($name, $argments)
@@ -36,40 +43,46 @@ class Log extends Module
     public static function write($text, $level = LOG_NOTICE, $tag = false)
     {
         if (!App::$config->log) return trigger_error('Config->log not set.', E_USER_NOTICE);
-        if ($level < App::$config->log['level']) return;
+        if ($level < App::$config->log['level']) return false;
 
-        $log = array (
-            'id' => isset($_SERVER['HTTP_TRACK_ID']) ? $_SERVER['HTTP_TRACK_ID'] : '',
-            'time' => microtime(true),
+        $microtime = microtime(true);
+        $message = array(
+            'id' => isset($_SERVER['HTTP_TRACKING_ID']) ? $_SERVER['HTTP_TRACKING_ID'] : '',
+            'time' => $microtime,
             'text' => $text,
-            'level' => $level,
-            'tag' => $tag ? $tag : array_search($level, self::$_levels),
+            'level' => $tag ? $tag : array_search($level, self::$_levels),
             'ip' => $_SERVER['REMOTE_ADDR'],
             'memory' => memory_get_usage(),
+            'datetime' => date('Y-m-d H:i:s', $microtime) . substr($microtime - floor($microtime), 1, 4),
+            'date' => date('Y-m-d', floor($microtime)),
         );
-        self::$logs[] = $log;
+        self::$messages[] = $message;
     }
 
     public static function save()
     {
-        if (empty(self::$logs)) return false;
+        if (empty(self::$messages)) return false;
         if (!App::$config->log['dir']) return trigger_error('Config->log["dir"] not set.', E_USER_NOTICE);
 
-        $index = strrpos(self::$path_format, '/');
-        $dir_format = $index !== false ? substr(self::$path_format, 0, $index) : '';
-        $file_format = $index !== false ? substr(self::$path_format, $index+1) : self::$path_format;
+        $log = App::$config->log;
+        $log_filename = empty($log['filename']) ? self::$filename : $log['filename'];
 
-        $dir = App::$config->log['dir'] . '/' . strtr($dir_format, array('$date'=>date('Ymd')));
-        if (!is_dir($dir)) mkdir($dir, 0777, true);
+        $dirname_exists = array();
 
-        $logs_wraper = array();
-        foreach (self::$logs as $log)
+        foreach (self::$messages as $message)
         {
             $replace = array();
-            $log['datetime'] = (date('Y-m-d H:i:s', $log['time'])) . substr($log['time'] - floor($log['time']), 1, 4);
-            foreach ($log as $k=>$v) $replace['$' . $k] = $v;
-            $logs_wraper[$log['tag']][] = strtr(self::$log_format, $replace);
+            foreach ($message as $k => $v) $replace[':' . $k] = $v;
+
+            $message_text = strtr(self::$message, $replace);
+            $filename = $log['dir'] . '/' . strtr($log_filename, $replace);
+            $dirname = dirname($filename);
+            if (!in_array($dirname, $dirname_exists) && !is_dir($dirname)) {
+                mkdir($dirname, 0777, true);
+                $dirname_exists[] = $dirname;
+            }
+
+            file_put_contents($filename, $message_text . PHP_EOL, FILE_APPEND);
         }
-        foreach ($logs_wraper as $tag => $wraper) file_put_contents($dir . '/' . strtr($file_format, array('$tag'=>$tag)), join(PHP_EOL, $wraper) . PHP_EOL, FILE_APPEND);
     }
 }

@@ -62,6 +62,7 @@ class App
             self::$request = Request::instance();
             self::$response = Response::instance();
         }
+        if (empty($_SERVER['HTTP_TRACKING_ID'])) $_SERVER['HTTP_TRACKING_ID'] = md5(uniqid());
 
         if (!self::$config->apppath) throw new Exception('Config->apppath must be set before.');
 
