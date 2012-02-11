@@ -62,7 +62,7 @@ class App
         iconv_set_encoding("internal_encoding", "UTF-8");
         mb_internal_encoding('UTF-8');
         self::$config = new Config($config);
-        date_default_timezone_set(self::$config->timezone ? self::$config->timezone : 'UTC');
+        if (self::$config->timezone) date_default_timezone_set(self::$config->timezone);
         
         self::$env = Env::instance();
         if (!self::$env->is_cli)
@@ -534,11 +534,6 @@ abstract class Event
 {
     private static $_events = array();
     
-    public static function init($events = array())
-    {
-        foreach ($events as $name => $event) self::$_events[$name] = !empty(self::$_events[$name]) ? array_merge(self::$_events[$name], $event) : $event;
-    }
-    
     public static function on($name, $runner)
     {
         self::$_events[$name][] = $runner;
@@ -547,8 +542,15 @@ abstract class Event
     public static function add($name)
     {
         $params = array_slice(func_get_args(), 1);
-        if (empty(self::$_events[$name])) return;
-        foreach (self::$_events[$name] as $runner) self::__excute($runner, $params);
+        if (!empty(self::$_events[$name]))
+        {
+            foreach (self::$_events[$name] as $runner) self::__excute($runner, $params);
+        }
+
+        if (!empty(App::$config->event[$name]))
+        {
+            foreach (App::$config->event[$name] as $runner) self::__excute($runner, $params);
+        }
     }
     
     private static function __excute($runner, $params = array())
