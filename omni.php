@@ -6,6 +6,14 @@
  * @author		Corrie Zhao <hfcorriez@gmail.com>
  * @copyright   (c) 2011 - 2012 OmniApp Framework
  * @license     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * @todo        优化Module的加载方式
+ * @todo        实现通用Model
+ * @todo        优化配置使用方式
+ * @todo        优化Module配置的使用和装载
+ * @todo        优化几种事件
+ * @todo        统一内核几种对象的配置使用方式
+ * @todo        考虑是否将对象统一到App管理，开发者只需记住App一个对象即可？
  */
 
 namespace Omni
@@ -434,14 +442,19 @@ class Route
     }
 }
 
-class Model {}
+class Model {
+    public static function factory($model)
+    {
+        throw new Exception('Model is not implements.');
+    }
+}
 
 abstract class Controller
 {
     abstract function before();
     abstract function after();
     
-    public static function factory($controller, $params = array())
+    final public static function factory($controller, $params = array())
     {
         $controller = new $controller();
         $method = App::$request ? App::$request->method : null;
@@ -464,6 +477,11 @@ class View
 {
     private $_file = NULL;
 
+    final public static function factory($view)
+    {
+        return new self($view);
+    }
+
     public function __construct($view)
     {
         if (!App::$config->viewpath) throw new Exception('Config->viewpath not set.');
@@ -473,7 +491,8 @@ class View
 
     public function set($array)
     {
-        foreach ($array as $k => $v) $this->$k = $v;
+        foreach ($array as $key => $value) $this->$key = $value;
+        return $this;
     }
 
     public function __set($key, $value)
@@ -495,12 +514,7 @@ class View
     }
 }
 
-interface IModule
-{
-    static function init();
-}
-
-abstract class Module implements IModule
+abstract class Module
 {
     /**
      * @static
