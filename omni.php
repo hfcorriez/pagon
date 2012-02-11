@@ -475,7 +475,8 @@ class View
 
     public function __construct($view)
     {
-        $this->_file = (App::$config->viewpath ? App::$config->viewpath : App::$config->apppath) . '/' . strtolower($view) . '.php';
+        if (!App::$config->viewpath) throw new Exception('Config->viewpath not set.');
+        $this->_file = App::$config->viewpath . '/' . strtolower(trim($view, '/')) . '.php';
         if (!is_file($this->_file)) throw new Exception('View file not exist: ' . $this->_file);
     }
 
@@ -484,11 +485,21 @@ class View
         foreach ($array as $k => $v) $this->$k = $v;
     }
 
+    public function __set($key, $value)
+    {
+        $this->$key = $value;
+    }
+
+    public function __get($key)
+    {
+        return $this->$key;
+    }
+
     public function __toString()
     {
         ob_start();
         extract((array) $this);
-        require $this->_file;
+        include($this->_file);
         return ob_get_clean();
     }
 }
@@ -501,7 +512,7 @@ abstract class Module
      * @static
      * @param Module[] $modules
      */
-    public static function load($modules = array())
+    final public static function load($modules = array())
     {
         foreach ($modules as $module)
         {

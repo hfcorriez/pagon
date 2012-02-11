@@ -14,7 +14,10 @@ namespace Omni
 
         public static function init()
         {
-            Event::on(EVENT_RUN, function() {
+            if (!App::$config->lang || !App::$config->langpath) throw new Exception('Config->lang and Config->langpath must be set.');
+
+            Event::on(EVENT_RUN, function()
+            {
                 I18n::lang(I18n::preferedLanguage(App::$config->lang));
             });
         }
@@ -28,34 +31,8 @@ namespace Omni
         public static function get($string, $lang = NULL)
         {
             if (!$lang) $lang = self::$lang;
-            $table = self::load($lang);
+            $table = self::_load($lang);
             return isset($table[$string]) ? $table[$string] : $string;
-        }
-
-        public static function load($lang)
-        {
-            if (isset(self::$_cache[$lang])) return self::$_cache[$lang];
-
-            $table = array();
-            $parts = explode('-', $lang);
-            $path = implode('/', $parts);
-
-            $files = array(
-                App::$config->langpath . '/' . $path . '.php',
-                App::$config->langpath . '/' . $lang . '.php',
-                App::$config->langpath . '/' . strstr($lang, '-', true) . '.php',
-            );
-
-            foreach ($files as $file)
-            {
-                if (file_exists($file))
-                {
-                    $table = include($file);
-                    break;
-                }
-            }
-
-            return self::$_cache[$lang] = $table;
         }
 
         public static function preferedLanguage($languages = array())
@@ -88,6 +65,31 @@ namespace Omni
                 }
             }
             return $bestlang;
+        }
+
+        private static function _load($lang)
+        {
+            if (isset(self::$_cache[$lang])) return self::$_cache[$lang];
+
+            $table = array();
+            $parts = explode('-', $lang);
+            $path = implode('/', $parts);
+
+            $files = array(
+                App::$config->langpath . '/' . $path . '.php',
+                App::$config->langpath . '/' . $lang . '.php',
+                App::$config->langpath . '/' . strstr($lang, '-', true) . '.php',
+            );
+
+            foreach ($files as $file)
+            {
+                if (file_exists($file)) {
+                    $table = include($file);
+                    break;
+                }
+            }
+
+            return self::$_cache[$lang] = $table;
         }
     }
 
