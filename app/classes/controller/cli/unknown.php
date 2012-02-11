@@ -6,7 +6,7 @@ class Unknown extends \Controller\Cli
 {
     public function run()
     {
-        $this->body = 
+        $this->_body =
 '
 Please use ' . \Omni\App::$env->_ . ' help.
 ';

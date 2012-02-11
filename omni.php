@@ -369,20 +369,20 @@ class Env extends Instance
             $argv = $GLOBALS['argv'];
             $this->_ = array_shift($argv);
             $this->argv = $argv;
+
+            if ($this->is_win)
+            {
+                $this->user = $_SERVER['USERNAME'];
+                $this->userdir = $_SERVER['HOMEDRIVE'] . $_SERVER['HOMEPATH'];
+            }
+            else
+            {
+                $this->user = $_SERVER['USER'];
+                $this->userdir = $_SERVER['HOME'];
+            }
+
         }
         else $this->_ = $_SERVER['SCRIPT_FILENAME'];
-
-        if ($this->is_win)
-        {
-            $this->user = $_SERVER['USERNAME'];
-            $this->userdir = $_SERVER['HOMEDRIVE'] . $_SERVER['HOMEPATH'];
-        }
-        else
-        {
-            $this->user = $_SERVER['USER'];
-            $this->userdir = $_SERVER['HOME'];
-        }
-        
         $this->basename = basename($this->_);
     }
 }
@@ -495,10 +495,13 @@ class View
     }
 }
 
-abstract class Module
+interface IModule
 {
-    abstract static function init();
+    static function init();
+}
 
+abstract class Module implements IModule
+{
     /**
      * @static
      * @param Module[] $modules

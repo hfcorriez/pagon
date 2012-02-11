@@ -4,7 +4,7 @@ namespace Controller;
 
 class Front extends \Omni\Controller
 {
-    protected $body;
+    protected $_body;
 
     public function __construct()
     {
@@ -18,6 +18,6 @@ class Front extends \Omni\Controller
     
     public function after()
     {
-        echo \Omni\App::$response->sendHeaders()->body($this->body);
+        echo \Omni\App::$response->sendHeaders()->body($this->_body);
     }
 }

@@ -4,7 +4,7 @@ namespace Controller;
 
 class Cli extends \Omni\Controller
 {
-    protected $params;
+    protected $_body;
     
     public function __construct()
     {
@@ -18,6 +18,6 @@ class Cli extends \Omni\Controller
     
     public function after()
     {
-        echo $this->body;
+        echo $this->_body;
     }
 }

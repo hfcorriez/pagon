@@ -6,7 +6,7 @@ class Help extends \Controller\Cli
 {
     public function run()
     {
-        $this->body = 
+        $this->_body =
 'Welcome to omniapp:
 
 debug	Test and debug.
