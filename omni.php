@@ -340,15 +340,6 @@ class Response extends Instance
         foreach ($this->_headers as $key => $value) header($key . ': ' . $value, $replace);
         return $this;
     }
-
-    public function render()
-    {
-        $output = $this->_protocol.' '.$this->_status.' '.self::$messages[$this->_status]."\r\n";
-        foreach ($this->_headers as $key => $value) $output .= $key . ':' . $value . "\r\n";
-        $output .= "\r\n" . $this->_body;
-
-        return $output;
-    }
 }
 
 class Env extends Instance
