@@ -38,7 +38,7 @@
         }
 
         h1 {
-            font-size: 600%;
+            font-size: 400%;
             line-height: 100%;
             font-weight: normal;
             font-family: times new roman;
@@ -54,7 +54,7 @@
 
 <div id="main">
 
-    <h1>Omniapp<sub style="font-size: 12px;"> v<?php echo $version; ?></sub></h1>
+    <h1><?php echo __('Welcome to OmniApp!'); ?><sub style="font-size: 12px;"> v<?php echo $version; ?></sub></h1>
     <b>A blazing fast Model View Controller framework</b>
 
     <p>Omniapp is a module-based MVC that is currently in active development.

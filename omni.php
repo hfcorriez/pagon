@@ -13,7 +13,6 @@
  * @todo        优化Module配置的使用和装载
  * @todo        优化几种事件
  * @todo        统一内核几种对象的配置使用方式
- * @todo        考虑是否将对象统一到App管理，开发者只需记住App一个对象即可？
  */
 
 namespace Omni
@@ -63,7 +62,7 @@ class App
         mb_internal_encoding('UTF-8');
         self::$config = new Config($config);
         if (self::$config->timezone) date_default_timezone_set(self::$config->timezone);
-        
+
         self::$env = Env::instance();
         if (!self::$env->is_cli)
         {
@@ -76,7 +75,9 @@ class App
 
         if (self::$config->error) self::register_error_handlers();
         if (self::$config->classpath) spl_autoload_register(array(__CLASS__, '__autoload'));
-        
+
+        if (!empty(self::$config->module)) Module::load(self::$config->module);
+
         register_shutdown_function(array(__CLASS__, '__shutdown'));
         self::$_init = true;
     }
@@ -356,8 +357,7 @@ class Env extends Instance
     public $is_win;
     public $start_time;
     public $start_memory;
-    public $timezone = 'UTC';
-    public $charset = 'UTF-8';
+    public $timezone;
     public $basename;
     public $user;
     public $userdir;
@@ -437,7 +437,7 @@ class Route
             }
         }
     
-        if (!isset($routes['404'])) throw new Exception('Config->routes["404"] not set.');
+        if (!isset($routes['404'])) throw new Exception('Config->route["404"] not set.');
         return array($routes['404'], $path, array($path));
     }
 }

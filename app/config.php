@@ -21,6 +21,19 @@ $config['route'] = array(
 	 },
 );
 
+$config['event'] = array(
+    'init' => array(
+        function(){var_dump('before init');}
+    ),
+    'shutdown' => array(
+        function(){var_dump('shutdown0');},
+        function(){var_dump('shutdown1');},
+        function(){var_dump('shutdown2');},
+    ),
+);
+
+$config['module'] = array('Log', 'I18n');
+
 $config['log'] = array(
     'level' => 0,
     'dir' => APPPATH . '/logs',
