@@ -7,12 +7,8 @@
  * @copyright   (c) 2011 - 2012 OmniApp Framework
  * @license     http://www.apache.org/licenses/LICENSE-2.0
  *
- * @todo        优化Module的加载方式
  * @todo        实现通用Model
- * @todo        优化配置使用方式
- * @todo        优化Module配置的使用和装载
  * @todo        优化几种事件
- * @todo        统一内核几种对象的配置使用方式
  */
 
 namespace Omni
