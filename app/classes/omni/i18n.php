@@ -10,11 +10,14 @@ namespace Omni
     class I18n extends Module
     {
         public static $lang = 'en-US';
-        protected static $_cache = array();
 
-        public static function init()
+        private static $_cache = array();
+        private static $_config;
+
+        public static function init($config = array())
         {
-            if (!App::$config->lang || !App::$config->langpath) throw new Exception('Config->lang and Config->langpath must be set.');
+            self::$_config = $config;
+            if (!self::$_config['lang'] || !self::$_config['langpath']) throw new Exception('Config->lang and Config->langpath must be set.');
 
             Event::on(EVENT_RUN, function()
             {
@@ -76,9 +79,9 @@ namespace Omni
             $path = implode('/', $parts);
 
             $files = array(
-                App::$config->langpath . '/' . $path . '.php',
-                App::$config->langpath . '/' . $lang . '.php',
-                App::$config->langpath . '/' . strstr($lang, '-', true) . '.php',
+                self::$_config['langpath'] . '/' . $path . '.php',
+                self::$_config['langpath'] . '/' . $lang . '.php',
+                self::$_config['langpath'] . '/' . strstr($lang, '-', true) . '.php',
             );
 
             foreach ($files as $file)

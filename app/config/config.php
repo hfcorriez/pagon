@@ -4,8 +4,6 @@ $config = array(
     'apppath' => APPPATH,
     'classpath' => APPPATH . '/classes',
     'viewpath' => APPPATH . '/views',
-    'lang' => array('zh-CN'),
-    'langpath' => APPPATH . '/langs',
     'error' => true,
 );
 
@@ -32,11 +30,12 @@ $config['event'] = array(
     ),
 );
 
-$config['module'] = array('Log', 'I18n');
-
-$config['log'] = array(
-    'level' => 0,
-    'dir' => APPPATH . '/logs',
+$config['module'] = array(
+    'log' => APPPATH . '/config/log.php',
+    'i18n' => array(
+        'lang' => array('zh-CN'),
+        'langpath' => APPPATH . '/langs',
+    ),
 );
 
 return $config;

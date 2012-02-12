@@ -522,10 +522,14 @@ abstract class Module
      */
     final public static function load($modules = array())
     {
-        foreach ($modules as $module)
+        foreach ($modules as $module => $config)
         {
-            if ($module{0} !== '\\') $module = '\\' . __NAMESPACE__ . '\\' . $module;
-            $module::init();
+            if ($module{0} !== '\\') $module = '\\' . __NAMESPACE__ . '\\' . ucfirst($module);
+            if (class_exists($module))
+            {
+                if ($config && is_string($config)) $config = include($config);
+                $module::init($config);
+            }
         }
     }
 }

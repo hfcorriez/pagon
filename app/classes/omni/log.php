@@ -14,6 +14,8 @@ class Log extends Module
     public static $filename = ':date/:level.log';
     public static $message = '[:datetime] :text #:id';
 
+    private static $_config;
+
     private static $_levels = array(
         'debug' => LOG_DEBUG,
         'notice' => LOG_NOTICE,
@@ -22,8 +24,9 @@ class Log extends Module
         'critical' => LOG_CRITICAL
     );
 
-    public static function init()
+    public static function init($config)
     {
+        self::$_config = $config;
         Event::on(EVENT_SHUTDOWN, function()
         {
             Log::save();
@@ -42,8 +45,7 @@ class Log extends Module
 
     public static function write($text, $level = LOG_NOTICE, $tag = false)
     {
-        if (!App::$config->log) return trigger_error('Config->log not set.', E_USER_NOTICE);
-        if ($level < App::$config->log['level']) return false;
+        if ($level < self::$_config['level']) return false;
 
         $microtime = microtime(true);
         $message = array(
@@ -62,11 +64,8 @@ class Log extends Module
     public static function save()
     {
         if (empty(self::$messages)) return false;
-        if (!App::$config->log['dir']) return trigger_error('Config->log["dir"] not set.', E_USER_NOTICE);
 
-        $log = App::$config->log;
-        $log_filename = empty($log['filename']) ? self::$filename : $log['filename'];
-
+        $log_filename = empty(self::$_config['filename']) ? self::$filename : self::$_config['filename'];
         $dirname_exists = array();
 
         foreach (self::$messages as $message)
@@ -75,7 +74,7 @@ class Log extends Module
             foreach ($message as $k => $v) $replace[':' . $k] = $v;
 
             $message_text = strtr(self::$message, $replace);
-            $filename = $log['dir'] . '/' . strtr($log_filename, $replace);
+            $filename = self::$_config['dir'] . '/' . strtr($log_filename, $replace);
             $dirname = dirname($filename);
             if (!in_array($dirname, $dirname_exists) && !is_dir($dirname)) {
                 mkdir($dirname, 0777, true);
