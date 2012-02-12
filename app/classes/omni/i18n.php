@@ -19,9 +19,9 @@ namespace Omni
             self::$_config = $config;
             if (!self::$_config['lang'] || !self::$_config['langpath']) throw new Exception('Config->lang and Config->langpath must be set.');
 
-            Event::on(EVENT_RUN, function()
+            Event::on(EVENT_RUN, function() use ($config)
             {
-                I18n::lang(I18n::preferedLanguage(App::$config->lang));
+                I18n::lang(I18n::preferedLanguage($config['lang']));
             });
         }
 
