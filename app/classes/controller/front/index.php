@@ -6,6 +6,8 @@ class Index extends \Controller\Front
 {
     public function get()
     {
-        $this->_body = \Omni\View::factory('index')->set(array('version' => \Omni\VERSION));
+        $this->_body = new \Omni\View('index');
+        $this->_body->set(array('version' => \Omni\VERSION));
+        trigger_error('e', E_USER_NOTICE);
     }
 }

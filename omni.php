@@ -438,10 +438,10 @@ class Route
     }
 }
 
-class Model {
+abstract class Model {
     public static function factory($model)
     {
-        throw new Exception('Model is not implements.');
+        return new $model;
     }
 }
 
@@ -475,7 +475,7 @@ class View
 
     final public static function factory($view)
     {
-        return new self($view);
+        return new $view();
     }
 
     public function __construct($view)

@@ -4,6 +4,9 @@ namespace Controller;
 
 class Front extends \Omni\Controller
 {
+    /**
+     * @var \Omni\View
+     */
     protected $_body;
 
     public function __construct()
