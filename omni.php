@@ -7,8 +7,8 @@
  * @copyright   (c) 2011 - 2012 OmniApp Framework
  * @license     http://www.apache.org/licenses/LICENSE-2.0
  *
- * @todo        实现通用Model
  * @todo        优化几种事件
+ * @todo        REQUEST解析相对路径
  */
 
 namespace Omni
@@ -83,7 +83,7 @@ class App
     public static function run()
     {
         Event::add(EVENT_RUN);
-        
+
         $path = self::$env->is_cli ? join('/', self::$env->argv) : self::$request->path;
         list($controller, $route, $params) = Route::parse($path);
         
