@@ -119,17 +119,9 @@ class App
     public static function __exception(\Exception $e)
     {
         Event::add(EVENT_EXCEPTION, $e);
-        $text = sprintf('%s [%s]: %s ~ %s[%d]', get_class($e), $e->getCode(), $e->getMessage(), $e->getFile(), $e->getLine());
-        
         if (!self::$env->is_cli AND !headers_sent()) header(self::$request->protocol . ' 500 Internal Server Error');
-        
-        if (self::$env->is_cli OR self::$request->is_ajax === TRUE)
-        {
-        	echo "\n{$text}\n";
-        	exit(1);
-        }
-        
-        echo Exception::getView($e);
+
+        echo $e;
         exit(1);
     }
 
@@ -565,43 +557,7 @@ abstract class Event
 /**
  * 核心异常
  * @author hfcorriez
- * @todo	分离getView，可以自己配置和控制
  */
-class Exception extends \Exception {
-    
-    public static function getView(\Exception $e)
-    {
-        $html = '<div style="border:1px solid #990000; padding:10px 20px; margin:10px; font: 13px/1.4em verdana; background: #fff;">
-        <b style="color: #990000">'. get_class($e) .'[' . $e->getCode() . '] in ' . $e->getFile() .' [' . $e->getLine() . ']</b>
-        <p>' . $e->getMessage() . '</p>';
-        
-        if ($backtrace = array_slice(debug_backtrace(), 1, 5))
-        {
-            foreach ($backtrace as $id => $line)
-            {
-                if (empty($line['file'])) continue;
-        
-                $html .= '<div class="box" style="margin: 1em 0; background: #ebf2fa; padding: 10px; border: 1px solid #bedbeb;">';
-                if ($id !== 0 )
-                {
-                    $html .= '<b>Called by '. (isset($line['class']) ? $line['class']. $line['type'] : '');
-                    $html .= $line['function']. '()</b>';
-                }
-                $html .= ' in '. $line['file']. ' ['. $line['line']. ']';
-                if (!empty($line['source']))$html .= '<code class="source" style="white-space: pre; background: #fff; padding: 1em; display: block; margin: 1em 0; border: 1px solid #bedbeb;">'. $line['source']. '</code>';
-        
-                if (!empty($line['args']))
-                {
-                    $html .= '<div><b>Function Arguments</b><xmp>';
-                    $html .= print_r($line['args'], true);
-                    $html .= '</xmp></div>';
-                }
-                $html .= '</div>';
-            }
-        }
-        $html .= '</div>';
-        return $html;
-    }
-}
+class Exception extends \Exception {}
 
 }

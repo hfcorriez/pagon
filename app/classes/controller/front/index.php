@@ -8,6 +8,6 @@ class Index extends \Controller\Front
     {
         $this->_body = new \Omni\View('index');
         $this->_body->set(array('version' => \Omni\VERSION));
-        trigger_error('e', E_USER_NOTICE);
+        throw new \Omni\Exception('dd');
     }
 }
