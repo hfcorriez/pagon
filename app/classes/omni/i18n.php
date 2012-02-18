@@ -12,16 +12,14 @@ namespace Omni
         public static $lang = 'en-US';
 
         private static $_cache = array();
-        private static $_config;
 
-        public static function init($config = array())
+        public static function init()
         {
-            self::$_config = $config;
-            if (!self::$_config['lang'] || !self::$_config['langpath']) throw new Exception('Config->lang and Config->langpath must be set.');
+            if (!self::$config['lang'] || !self::$config['langpath']) throw new Exception('Config->lang and Config->langpath must be set.');
 
-            Event::on(EVENT_RUN, function() use ($config)
+            Event::on(EVENT_RUN, function()
             {
-                I18n::lang(I18n::preferedLanguage($config['lang']));
+                I18n::lang(I18n::preferedLanguage(I18n::$config['lang']));
             });
         }
 
@@ -79,9 +77,9 @@ namespace Omni
             $path = implode('/', $parts);
 
             $files = array(
-                self::$_config['langpath'] . '/' . $path . '.php',
-                self::$_config['langpath'] . '/' . $lang . '.php',
-                self::$_config['langpath'] . '/' . strstr($lang, '-', true) . '.php',
+                self::$config['langpath'] . '/' . $path . '.php',
+                self::$config['langpath'] . '/' . $lang . '.php',
+                self::$config['langpath'] . '/' . strstr($lang, '-', true) . '.php',
             );
 
             foreach ($files as $file)

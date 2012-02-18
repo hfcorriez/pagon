@@ -14,8 +14,6 @@ class Log extends Module
     public static $filename = ':date/:level.log';
     public static $message = '[:datetime] :text #:id';
 
-    private static $_config;
-
     private static $_levels = array(
         'debug' => LOG_DEBUG,
         'notice' => LOG_NOTICE,
@@ -24,9 +22,8 @@ class Log extends Module
         'critical' => LOG_CRITICAL
     );
 
-    public static function init($config)
+    public static function init()
     {
-        self::$_config = $config;
         Event::on(EVENT_SHUTDOWN, function()
         {
             Log::save();
@@ -45,7 +42,7 @@ class Log extends Module
 
     public static function write($text, $level = LOG_NOTICE, $tag = false)
     {
-        if ($level < self::$_config['level']) return false;
+        if ($level < self::$config['level']) return false;
 
         $microtime = microtime(true);
         $message = array(
@@ -65,7 +62,7 @@ class Log extends Module
     {
         if (empty(self::$messages)) return false;
 
-        $log_filename = empty(self::$_config['filename']) ? self::$filename : self::$_config['filename'];
+        $log_filename = empty(self::$config['filename']) ? self::$filename : self::$config['filename'];
         $dirname_exists = array();
 
         foreach (self::$messages as $message)
@@ -74,7 +71,7 @@ class Log extends Module
             foreach ($message as $k => $v) $replace[':' . $k] = $v;
 
             $message_text = strtr(self::$message, $replace);
-            $filename = self::$_config['dir'] . '/' . strtr($log_filename, $replace);
+            $filename = self::$config['dir'] . '/' . strtr($log_filename, $replace);
             $dirname = dirname($filename);
             if (!in_array($dirname, $dirname_exists) && !is_dir($dirname)) {
                 mkdir($dirname, 0777, true);
