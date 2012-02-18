@@ -11,7 +11,6 @@
  * @license		http://micromvc.com/license
  ********************************** 80 Columns *********************************
  */
-namespace Omni;
 
 class Database
 {
@@ -27,11 +26,6 @@ class Database
 	public $statements = array();
 
 	protected $_config = array();
-
-    public static function instance($name = 'default')
-    {
-        return new self(\Omni\Database\Module::$config[$name]);
-    }
 
 	/**
 	 * Set the database type and save the config for later.

@@ -8,8 +8,5 @@ class Index extends \Controller\Front
     {
         $this->_body = new \Omni\View('index');
         $this->_body->set(array('version' => \Omni\VERSION));
-
-        $db = \Omni\Database::instance();
-        $rs = $db->fetch('show tables;');
     }
 }
