@@ -5,9 +5,7 @@ namespace Omni\Orm;
 
 class Module extends \Omni\Module
 {
-    public static $config;
-
-    public static function init()
+    public static function init($config)
     {
         require_once __DIR__ . '/orm.php';
     }

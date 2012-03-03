@@ -1,6 +1,6 @@
 <?php
 
-require dirname(__DIR__) . '/omni.php';
+require __DIR__ . '/classes/omni/runtime.php';
 
 define('APPPATH', __DIR__);
 

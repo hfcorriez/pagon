@@ -1,6 +1,7 @@
 <?php
 
-require dirname(__DIR__) . '/omni.php';
+error_reporting(E_ALL & ~E_NOTICE);
+require __DIR__ . '/classes/omni/runtime.php';
 
 define('APPPATH', __DIR__);
 
@@ -17,8 +18,6 @@ define('APPPATH', __DIR__);
         '' => '\Controller\Cli\Help',
     	'debug' => function(){
             print_r(func_get_args());
-            print_r(\Omni\App::$env);
-            print_r(__('ddd'));
         },
     ),
     

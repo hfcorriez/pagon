@@ -21,7 +21,7 @@ $config['route'] = array(
 
 $config['event'] = array(
     'init' => array(
-        function(){var_dump('before init');}
+        function(){/*var_dump('before init');*/}
     ),
     'shutdown' => array(
         function(){

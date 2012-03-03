@@ -13,7 +13,12 @@ class Cli extends \Omni\Controller
     
     public function before()
     {
-        
+        //do something before run
+    }
+
+    public function run()
+    {
+        echo 'dd';
     }
     
     public function after()

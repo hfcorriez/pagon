@@ -23,8 +23,9 @@ class Log extends Module
         'critical' => LOG_CRITICAL
     );
 
-    public static function init()
+    public static function init($config)
     {
+        self::$config = $config;
         Event::on(EVENT_SHUTDOWN, function()
         {
             Log::save();

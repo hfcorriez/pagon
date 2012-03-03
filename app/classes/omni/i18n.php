@@ -14,8 +14,9 @@ namespace Omni
 
         private static $_cache = array();
 
-        public static function init()
+        public static function init($config)
         {
+            self::$config = $config;
             if (!self::$config['lang'] || !self::$config['langpath']) throw new Exception('Config->lang and Config->langpath must be set.');
 
             Event::on(EVENT_RUN, function()

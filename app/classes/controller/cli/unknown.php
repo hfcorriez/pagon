@@ -8,7 +8,7 @@ class Unknown extends \Controller\Cli
     {
         $this->_body =
 '
-Please use ' . \Omni\App::$env->_ . ' help.
+Please use ' . $GLOBALS['argv'][0] . ' help.
 ';
     }
 }
