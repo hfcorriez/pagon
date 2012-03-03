@@ -8,5 +8,10 @@ class Index extends \Controller\Front
     {
         $this->_body = new \Omni\View('index');
         $this->_body->set(array('version' => \Omni\VERSION));
+
+        $test = \Model\Test::load(1);
+        $test->title = 'ddd';
+
+        var_dump($test->isChanged());
     }
 }

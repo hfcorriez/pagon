@@ -9,6 +9,7 @@ namespace Omni
      */
     class I18n extends Module
     {
+        public static $config;
         public static $lang = 'en-US';
 
         private static $_cache = array();

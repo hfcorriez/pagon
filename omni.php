@@ -504,7 +504,6 @@ class View
 
 abstract class Module
 {
-    public static $config;
     /**
      * @static
      * @param Module[] $modules

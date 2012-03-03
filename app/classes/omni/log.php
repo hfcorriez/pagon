@@ -10,6 +10,7 @@ const LOG_CRITICAL = 4;
 
 class Log extends Module
 {
+    public static $config;
     public static $messages = array();
     public static $filename = ':date/:level.log';
     public static $message = '[:datetime] :text #:id';

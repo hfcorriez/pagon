@@ -49,6 +49,7 @@ $config['module'] = array(
             'params' => array()
         ),
     ),
+    'orm\module' => array(),
 );
 
 return $config;
