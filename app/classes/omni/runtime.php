@@ -82,7 +82,6 @@ Event::on(EVENT_SHUTDOWN, function()
         {
             App::__exception(new \ErrorException($error['message'], $error['type'], 0, $error['file'], $error['line']));
         }
-        exit(1);
     }
 });
 

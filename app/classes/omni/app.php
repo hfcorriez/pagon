@@ -133,7 +133,10 @@ abstract class Event
 
     public static function init($config)
     {
-        self::$_events += $config;
+        foreach ($config as $name => $runners)
+        {
+            self::$_events[$name] = array_merge(self::$_events[$name], $runners);
+        }
     }
 
     public static function on($name, $runner)
@@ -146,7 +149,10 @@ abstract class Event
         $params = array_slice(func_get_args(), 1);
         if (!empty(self::$_events[$name]))
         {
-            foreach (self::$_events[$name] as $runner) self::_excute($runner, $params);
+            foreach (self::$_events[$name] as $runner)
+            {
+                self::_excute($runner, $params);
+            }
         }
     }
 
@@ -159,7 +165,7 @@ abstract class Event
         }
         else
         {
-            return call_user_func_array($runner, $params);
+            $a = call_user_func_array($runner, $params);
         }
     }
 

@@ -22,19 +22,11 @@ $config['route'] = array(
 );
 
 $config['event'] = array(
-    'init' => array(
-        function()
-        { /*var_dump('before init');*/
-        }
-    ),
     'shutdown' => array(
         function()
         {
-            echo '<div style="height: 20px; line-height: 20px; background-color: #ccc;"> Modules: ';
-            foreach (\Omni\App::$config['module'] as $module => $config)
-            {
-                echo $module . ' ';
-            }
+            echo '<div style="height: 20px; line-height: 20px; background-color: #ccc; text-align: center">';
+            echo 'Copyright (c) 2012 Omniapp';
             echo '</div>';
         },
     ),
