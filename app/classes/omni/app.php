@@ -165,7 +165,7 @@ abstract class Event
         }
         else
         {
-            $a = call_user_func_array($runner, $params);
+            call_user_func_array($runner, $params);
         }
     }
 
