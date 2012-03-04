@@ -4,14 +4,30 @@ namespace Omni;
 
 require 'app.php';
 
-Event::on(EVENT_INIT, function($config)
+class Runtime
+{
+    public static function init(array $configs)
+    {
+        foreach ($configs as $module => $config)
+        {
+            $module = '\\' . __NAMESPACE__ . '\\' . ucfirst($module);
+            $module::init($config);
+        }
+    }
+
+    public static function run()
+    {
+        App::run();
+    }
+}
+
+Event::on(EVENT_INIT, function(array $config)
 {
     iconv_set_encoding("internal_encoding", "UTF-8");
     mb_internal_encoding('UTF-8');
     if ($config['timezone']) date_default_timezone_set($config['timezone']);
-    if (!$config['apppath']) throw new Exception('config["apppath"] must be set before.');
+    if (!$config['apppath']) throw new \Exception('config["apppath"] must be set before.');
     if ($config['error']) App::register_error_handlers();
-    if (!empty($config['module'])) Module::load($config['module']);
 });
 
 Event::on(EVENT_RUN, function()

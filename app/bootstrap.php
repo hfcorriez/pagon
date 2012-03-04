@@ -4,7 +4,7 @@ require __DIR__ . '/classes/omni/runtime.php';
 
 define('APPPATH', __DIR__);
 
-\Omni\App::init(include('config/config.php'));
+\Omni\Runtime::init(include('config/config.php'));
 
 \Omni\Route::on('about', function()
 {
@@ -17,4 +17,4 @@ define('APPPATH', __DIR__);
     print_r($_SERVER);
 });
 
-\Omni\App::run();
+\Omni\Runtime::run();

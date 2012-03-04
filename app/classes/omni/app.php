@@ -131,6 +131,11 @@ abstract class Event
 {
     private static $_events = array();
 
+    public static function init($config)
+    {
+        self::$_events += $config;
+    }
+
     public static function on($name, $runner)
     {
         self::$_events[$name][] = $runner;

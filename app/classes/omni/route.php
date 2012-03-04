@@ -6,6 +6,11 @@ class Route
 {
     private static $_routes = array();
 
+    public static function init($config)
+    {
+        self::$_routes += $config;
+    }
+
     public static function on($path, $runner)
     {
         self::$_routes[$path] = $runner;
@@ -13,15 +18,13 @@ class Route
 
     public static function parse($path)
     {
-        $routes = App::$config['route'] + self::$_routes;
-        if (!is_array($routes) || empty($routes)) throw new Exception('config["routes"] must be set before.');
+        if (!is_array(self::$_routes) || empty(self::$_routes)) throw new Exception('config["routes"] must be set before.');
 
         $path = trim($path, '/');
-
-        if ($path === '') return array($routes[''], '', array());
+        if ($path === '') return array(self::$_routes[''], '', array());
         if ($path AND !preg_match('/^[\w\-~\/\.]{1,400}$/', $path)) $path = '404';
 
-        foreach ($routes as $route => $controller)
+        foreach (self::$_routes as $route => $controller)
         {
             if (!$route) continue;
 
@@ -49,7 +52,7 @@ class Route
             }
         }
 
-        if (!isset($routes['404'])) throw new Exception('config["route"]["404"] not set.');
-        return array($routes['404'], $path, array($path));
+        if (!isset(self::$_routes['404'])) throw new Exception('config["route"]["404"] not set.');
+        return array(self::$_routes['404'], $path, array($path));
     }
 }

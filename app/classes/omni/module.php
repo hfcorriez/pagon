@@ -15,7 +15,11 @@ abstract class Module
             if ($module{0} !== '\\') $module = '\\' . __NAMESPACE__ . '\\' . $module;
             if (class_exists($module))
             {
-                if ($config && is_string($config)) $config = include($config);
+                if (!$config) continue;
+                if (is_string($config))
+                {
+                    $config = include($config);
+                }
                 $module::init($config);
             }
         }
