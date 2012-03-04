@@ -4,9 +4,17 @@ require __DIR__ . '/classes/omni/runtime.php';
 
 define('APPPATH', __DIR__);
 
-\Omni\Event::on(\Omni\EVENT_INIT, function(){/*init event*/});
-
 \Omni\App::init(include('config/config.php'));
 
-\Omni\Event::on(\Omni\EVENT_SHUTDOWN, function(){/*shutdown event*/});
+\Omni\Route::on('about', function()
+{
+    echo 'OmniApp is very simple framework';
+});
+
+\Omni\Route::on('serverinfo', function()
+{
+    echo '<xmp>';
+    print_r($_SERVER);
+});
+
 \Omni\App::run();

@@ -16,7 +16,8 @@ Event::on(EVENT_INIT, function($config)
 
 Event::on(EVENT_RUN, function()
 {
-    $path = App::$is_cli ? join('/', array_slice($GLOBALS['argv'], 1)) : parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+    $path = App::$is_cli ? join('/', array_slice($GLOBALS['argv'], 1)) : parse_url($_SERVER['REQUEST_URI'],
+                                                                                   PHP_URL_PATH);
     list($controller, $route, $params) = Route::parse($path);
 
     if (is_string($controller))
@@ -52,8 +53,8 @@ Event::on(EVENT_SHUTDOWN, function()
     if (!App::isInit()) return;
 
     if (App::$config['error'] &&
-        $error = error_get_last() &&
-            in_array($error['type'], array(E_PARSE, E_ERROR, E_USER_ERROR))
+        ($error = error_get_last()) &&
+        in_array($error['type'], array(E_PARSE, E_ERROR, E_USER_ERROR))
     )
     {
         ob_get_level() and ob_clean();
@@ -68,7 +69,6 @@ Event::on(EVENT_SHUTDOWN, function()
         exit(1);
     }
 });
-
 
 
 abstract class Model

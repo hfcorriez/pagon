@@ -143,11 +143,6 @@ abstract class Event
         {
             foreach (self::$_events[$name] as $runner) self::_excute($runner, $params);
         }
-
-        if (!empty(App::$config['event'][$name]))
-        {
-            foreach (App::$config['event'][$name] as $runner) self::_excute($runner, $params);
-        }
     }
 
     private static function _excute($runner, $params = array())

@@ -4,9 +4,16 @@ namespace Omni;
 
 class Route
 {
+    private static $_routes = array();
+
+    public static function on($path, $runner)
+    {
+        self::$_routes[$path] = $runner;
+    }
+
     public static function parse($path)
     {
-        $routes = &App::$config['route'];
+        $routes = App::$config['route'] + self::$_routes;
         if (!is_array($routes) || empty($routes)) throw new Exception('config["routes"] must be set before.');
 
         $path = trim($path, '/');
