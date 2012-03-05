@@ -1,11 +1,29 @@
 <?php
+/**
+ * OmniApp Framework
+ *
+ * @package OmniApp
+ * @author Corrie Zhao <hfcorriez@gmail.com>
+ * @copyright (c) 2011 - 2012 OmniApp Framework
+ * @license http://www.apache.org/licenses/LICENSE-2.0
+ *
+ */
 
 namespace Omni;
 
 require 'app.php';
 
+/**
+ * Runtime for omniapp
+ */
 class Runtime
 {
+    /**
+     * Init runtime
+     *
+     * @static
+     * @param array $configs
+     */
     public static function init(array $configs)
     {
         foreach ($configs as $module => $config)
@@ -15,12 +33,21 @@ class Runtime
         }
     }
 
+    /**
+     * Runtime excute
+     *
+     * @static
+     *
+     */
     public static function run()
     {
         App::run();
     }
 }
 
+/**
+ * init app by config
+ */
 Event::on(EVENT_INIT, function(array $config)
 {
     iconv_set_encoding("internal_encoding", "UTF-8");
@@ -30,6 +57,9 @@ Event::on(EVENT_INIT, function(array $config)
     if ($config['error']) App::register_error_handlers();
 });
 
+/**
+ * run app
+ */
 Event::on(EVENT_RUN, function()
 {
     $path = App::$is_cli ? join('/', array_slice($GLOBALS['argv'], 1)) : parse_url($_SERVER['REQUEST_URI'],
@@ -46,6 +76,9 @@ Event::on(EVENT_RUN, function()
     }
 });
 
+/**
+ * load class when autoload
+ */
 Event::on(EVENT_AUTOLOAD, function($class)
 {
     $class = ltrim($class, '\\');
@@ -53,17 +86,26 @@ Event::on(EVENT_AUTOLOAD, function($class)
     is_file($file) && require $file;
 });
 
+/**
+ * handle exception for app
+ */
 Event::on(EVENT_EXCEPTION, function($e)
 {
     echo $e;
     exit(1);
 });
 
+/**
+ * handle error for app
+ */
 Event::on(EVENT_ERROR, function($type, $message, $file, $line)
 {
     if (error_reporting() & $type) throw new \ErrorException($message, $type, 0, $file, $line);
 });
 
+/**
+ * handle shutdown for app
+ */
 Event::on(EVENT_SHUTDOWN, function()
 {
     if (!App::isInit()) return;
@@ -86,20 +128,53 @@ Event::on(EVENT_SHUTDOWN, function()
 });
 
 
+/**
+ * Abstract model
+ */
 abstract class Model
 {
+    /**
+     * factory a model
+     *
+     * @static
+     * @param $model
+     * @return mixed
+     */
     public static function factory($model)
     {
         return new $model;
     }
 }
 
+/**
+ * Abstract Controller
+ */
 abstract class Controller
 {
+    /**
+     * abstract before run
+     *
+     * @abstract
+     *
+     */
     abstract function before();
 
+    /**
+     * abstract after run
+     *
+     * @abstract
+     *
+     */
     abstract function after();
 
+    /**
+     * Factory a controller
+     *
+     * @static
+     * @param $controller
+     * @param array $params
+     * @return mixed
+     */
     final public static function factory($controller, $params = array())
     {
         $controller = new $controller();
@@ -112,15 +187,30 @@ abstract class Controller
     }
 }
 
+/**
+ * Abstract view
+ */
 class View
 {
     private $_file = NULL;
 
+    /**
+     * Factory a view
+     *
+     * @static
+     * @param $view
+     * @return mixed|View
+     */
     final public static function factory($view)
     {
         return new $view();
     }
 
+    /**
+     * Constrct a view
+     *
+     * @param $view
+     */
     public function __construct($view)
     {
         if (!App::$config['viewpath']) throw new Exception('config["viewpath"] not set.');
@@ -128,22 +218,45 @@ class View
         if (!is_file($this->_file)) throw new Exception('View file not exist: ' . $this->_file);
     }
 
+    /**
+     * Set variable for view
+     *
+     * @param $array
+     * @return View
+     */
     public function set($array)
     {
         foreach ($array as $key => $value) $this->$key = $value;
         return $this;
     }
 
+    /**
+     * Assign value for view
+     *
+     * @param $key
+     * @param $value
+     */
     public function __set($key, $value)
     {
         $this->$key = $value;
     }
 
+    /**
+     * Get assign value for view
+     *
+     * @param $key
+     * @return mixed
+     */
     public function __get($key)
     {
         return $this->$key;
     }
 
+    /**
+     * Support output
+     *
+     * @return string
+     */
     public function __toString()
     {
         ob_start();

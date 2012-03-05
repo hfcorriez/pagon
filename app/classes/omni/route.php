@@ -1,21 +1,57 @@
 <?php
+/**
+ * OmniApp Framework
+ *
+ * @package OmniApp
+ * @author Corrie Zhao <hfcorriez@gmail.com>
+ * @copyright (c) 2011 - 2012 OmniApp Framework
+ * @license http://www.apache.org/licenses/LICENSE-2.0
+ *
+ */
 
 namespace Omni;
 
+/**
+ * Route
+ */
 class Route
 {
-    private static $_routes = array();
+    /**
+     * @var array routes list
+     */
+    protected static $_routes = array();
 
+    /**
+     * Init route list
+     *
+     * @static
+     * @param $config
+     */
     public static function init($config)
     {
         self::$_routes += $config;
     }
 
+    /**
+     * Register a route for path
+     *
+     * @static
+     * @param $path
+     * @param $runner
+     */
     public static function on($path, $runner)
     {
         self::$_routes[$path] = $runner;
     }
 
+    /**
+     * Parse site path
+     *
+     * @static
+     * @param $path
+     * @return array
+     * @throws Exception
+     */
     public static function parse($path)
     {
         if (!is_array(self::$_routes) || empty(self::$_routes)) throw new Exception('config["routes"] must be set before.');

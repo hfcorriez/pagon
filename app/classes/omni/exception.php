@@ -1,9 +1,18 @@
 <?php
+/**
+ * OmniApp Framework
+ *
+ * @package OmniApp
+ * @author Corrie Zhao <hfcorriez@gmail.com>
+ * @copyright (c) 2011 - 2012 OmniApp Framework
+ * @license http://www.apache.org/licenses/LICENSE-2.0
+ *
+ */
 
 namespace Omni;
+
 /**
- * 核心异常
- * @author hfcorriez
+ * Omni Exception
  */
 class Exception extends \Exception
 {

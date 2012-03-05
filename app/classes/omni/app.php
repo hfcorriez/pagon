@@ -25,15 +25,32 @@ const EVENT_AUTOLOAD = 'autoload';
  */
 class App
 {
+    /**
+     * App config
+     * @var
+     */
     public static $config;
 
+    // is cli mode?
     public static $is_cli;
+
+    // is windows platform
     public static $is_win;
+
+    // app start time
     public static $start_time;
+
+    // app start memory
     public static $start_memory;
 
+    // is init?
     private static $_init = false;
 
+    /**
+     * App init
+     * @static
+     * @param array $config
+     */
     public static function init($config = array())
     {
         self::$is_cli = PHP_SAPI == 'cli';
@@ -47,49 +64,103 @@ class App
         Event::add(EVENT_INIT, $config);
     }
 
+    /**
+     * Is init?
+     *
+     * @static
+     * @return bool
+     */
     public static function isInit()
     {
         return self::$_init;
     }
 
+    /**
+     * App run
+     *
+     * @static
+     *
+     */
     public static function run()
     {
         Event::add(EVENT_RUN);
     }
 
+    /**
+     * Register error and exception handlers
+     *
+     * @static
+     *
+     */
     public static function register_error_handlers()
     {
         set_error_handler(array(__CLASS__, '__error'));
         set_exception_handler(array(__CLASS__, '__exception'));
     }
 
+    /**
+     * Restore error and exception hanlders
+     *
+     * @static
+     *
+     */
     public static function restore_error_handlers()
     {
         restore_error_handler();
         restore_exception_handler();
     }
 
-    public static function __autoload($class_name)
+    /**
+     * Auto load class
+     *
+     * @static
+     * @param $class
+     */
+    public static function __autoload($class)
     {
-        Event::add(EVENT_AUTOLOAD, $class_name);
+        Event::add(EVENT_AUTOLOAD, $class);
     }
 
+    /**
+     * Error handler for app
+     *
+     * @static
+     * @param $type
+     * @param $message
+     * @param $file
+     * @param $line
+     */
     public static function __error($type, $message, $file, $line)
     {
         Event::add(EVENT_ERROR, $type, $message, $file, $line);
     }
 
+    /**
+     * Exception handler for app
+     *
+     * @static
+     * @param \Exception $e
+     */
     public static function __exception(\Exception $e)
     {
         Event::add(EVENT_EXCEPTION, $e);
     }
 
+    /**
+     * Shutdown handler for app
+     *
+     * @static
+     *
+     */
     public static function __shutdown()
     {
         Event::add(EVENT_SHUTDOWN);
     }
 }
 
+/**
+ * Omni ArrayObject implements object get and set.
+ */
 class ArrayObject extends \ArrayObject
 {
     public function __set($name, $val)
@@ -115,6 +186,9 @@ class ArrayObject extends \ArrayObject
     }
 }
 
+/**
+ * Base instance
+ */
 class Instance
 {
     private static $_instance = array();
@@ -127,10 +201,22 @@ class Instance
     }
 }
 
+/**
+ * Event
+ */
 abstract class Event
 {
+    /**
+     * @var array events list
+     */
     private static $_events = array();
 
+    /**
+     * Event init for event list
+     *
+     * @static
+     * @param $config
+     */
     public static function init($config)
     {
         foreach ($config as $name => $runners)
@@ -139,11 +225,24 @@ abstract class Event
         }
     }
 
+    /**
+     * Register event on $name
+     *
+     * @static
+     * @param $name
+     * @param $runner
+     */
     public static function on($name, $runner)
     {
         self::$_events[$name][] = $runner;
     }
 
+    /**
+     * Add event trigger
+     *
+     * @static
+     * @param $name
+     */
     public static function add($name)
     {
         $params = array_slice(func_get_args(), 1);
@@ -156,6 +255,13 @@ abstract class Event
         }
     }
 
+    /**
+     * Excute runner for event point
+     *
+     * @static
+     * @param $runner
+     * @param array $params
+     */
     private static function _excute($runner, $params = array())
     {
         if (is_string($runner))
@@ -169,5 +275,13 @@ abstract class Event
         }
     }
 
+    /**
+     * Run method for event runner object
+     *
+     *  if u reigseter a class name for runner, u must implements run method.
+     *
+     * @abstract
+     *
+     */
     abstract function run();
 }

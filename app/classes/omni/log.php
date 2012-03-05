@@ -1,4 +1,13 @@
 <?php
+/**
+ * OmniApp Framework
+ *
+ * @package OmniApp
+ * @author Corrie Zhao <hfcorriez@gmail.com>
+ * @copyright (c) 2011 - 2012 OmniApp Framework
+ * @license http://www.apache.org/licenses/LICENSE-2.0
+ *
+ */
 
 namespace Omni;
 
@@ -8,13 +17,26 @@ const LOG_WARN = 2;
 const LOG_ERROR = 3;
 const LOG_CRITICAL = 4;
 
+/**
+ * Log
+ */
 class Log extends Module
 {
-    public static $config;
-    public static $messages = array();
-    public static $filename = ':date/:level.log';
-    public static $message = '[:datetime] :text #:id';
+    /**
+     * @var array log config
+     */
+    protected static $_config;
 
+    // log messages
+    protected static $_messages = array();
+
+    // log filename format
+    protected static $_filename = ':date/:level.log';
+
+    // log message format
+    protected static $_message = '[:datetime] :text #:id';
+
+    // level map
     private static $_levels = array(
         'debug' => LOG_DEBUG,
         'notice' => LOG_NOTICE,
@@ -23,9 +45,15 @@ class Log extends Module
         'critical' => LOG_CRITICAL
     );
 
+    /**
+     * Init log config
+     *
+     * @static
+     * @param $config
+     */
     public static function init($config)
     {
-        self::$config = $config;
+        self::$_config = $config;
         Event::on(EVENT_SHUTDOWN, function()
         {
             Log::save();
@@ -37,14 +65,30 @@ class Log extends Module
         });
     }
 
+    /**
+     * call level name as method
+     *
+     * @static
+     * @param $name
+     * @param $argments
+     */
     public static function __callstatic($name, $argments)
     {
         if (isset(self::$_levels[$name])) self::write($argments[0], self::$_levels[$name], $name);
     }
 
+    /**
+     * Record log
+     *
+     * @static
+     * @param $text
+     * @param int $level
+     * @param bool $tag
+     * @return bool
+     */
     public static function write($text, $level = LOG_NOTICE, $tag = false)
     {
-        if ($level < self::$config['level']) return false;
+        if ($level < self::$_config['level']) return false;
 
         $microtime = microtime(true);
         $message = array(
@@ -57,23 +101,30 @@ class Log extends Module
             'datetime' => date('Y-m-d H:i:s', $microtime) . substr($microtime - floor($microtime), 1, 4),
             'date' => date('Y-m-d', floor($microtime)),
         );
-        self::$messages[] = $message;
+        self::$_messages[] = $message;
+        return true;
     }
 
+    /**
+     * Save log message
+     *
+     * @static
+     * @return bool
+     */
     public static function save()
     {
-        if (empty(self::$messages)) return false;
+        if (empty(self::$_messages)) return false;
 
-        $log_filename = empty(self::$config['filename']) ? self::$filename : self::$config['filename'];
+        $log_filename = empty(self::$_config['filename']) ? self::$_filename : self::$_config['filename'];
         $dirname_exists = array();
 
-        foreach (self::$messages as $message)
+        foreach (self::$_messages as $message)
         {
             $replace = array();
             foreach ($message as $k => $v) $replace[':' . $k] = $v;
 
-            $message_text = strtr(self::$message, $replace);
-            $filename = self::$config['dir'] . '/' . strtr($log_filename, $replace);
+            $message_text = strtr(self::$_message, $replace);
+            $filename = self::$_config['dir'] . '/' . strtr($log_filename, $replace);
             $dirname = dirname($filename);
             if (!in_array($dirname, $dirname_exists) && !is_dir($dirname)) {
                 mkdir($dirname, 0777, true);
