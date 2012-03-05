@@ -5,7 +5,7 @@ require __DIR__ . '/classes/omni/runtime.php';
 
 define('APPPATH', __DIR__);
 
-\Omni\App::init(array(
+\Omni\Runtime::init(array(
     'apppath' => APPPATH,
     'classpath' => APPPATH . '/classes',
     'viewpath' => APPPATH . '/views',
@@ -27,4 +27,4 @@ define('APPPATH', __DIR__);
     ),
 ));
 
-\Omni\App::run();
+\Omni\Runtime::run();
