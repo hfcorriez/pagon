@@ -18,7 +18,7 @@ class Cli
      * @param   ...
      * @return  array
      */
-    public static function options($options)
+    public static function options()
     {
         // Get all of the requested options
         $options = func_get_args();
@@ -74,7 +74,7 @@ class Cli
      * @param string $color of text
      * @param string $background color
      */
-    function colorize($text, $color, $bold = FALSE)
+    public static function colorize($text, $color, $bold = FALSE)
     {
         // Standard CLI colors
         $colors = array_flip(array(30 => 'gray', 'red', 'green', 'yellow', 'blue', 'purple', 'cyan', 'white', 'black'));
