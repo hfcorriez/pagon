@@ -31,18 +31,6 @@ class App
      */
     public static $config;
 
-    // is cli mode?
-    public static $is_cli;
-
-    // is windows platform
-    public static $is_win;
-
-    // app start time
-    public static $start_time;
-
-    // app start memory
-    public static $start_memory;
-
     // is init?
     private static $_init = false;
 
@@ -53,10 +41,6 @@ class App
      */
     public static function init($config = array())
     {
-        self::$is_cli = PHP_SAPI == 'cli';
-        self::$is_win = substr(PHP_OS, 0, 3) == 'WIN';
-        self::$start_time = $_SERVER['REQUEST_TIME'];
-        self::$start_memory = memory_get_usage();
         self::$config = $config;
         self::$_init = true;
         spl_autoload_register(array(__CLASS__, '__autoload'));

@@ -2,10 +2,10 @@
 /**
  * OmniApp Framework
  *
- * @package OmniApp
- * @author Corrie Zhao <hfcorriez@gmail.com>
+ * @package   OmniApp
+ * @author    Corrie Zhao <hfcorriez@gmail.com>
  * @copyright (c) 2011 - 2012 OmniApp Framework
- * @license http://www.apache.org/licenses/LICENSE-2.0
+ * @license   http://www.apache.org/licenses/LICENSE-2.0
  *
  */
 
@@ -18,18 +18,38 @@ require 'app.php';
  */
 class Runtime
 {
+    // is cli mode?
+    public static $is_cli;
+
+    // is windows platform
+    public static $is_win;
+
+    // app start time
+    public static $start_time;
+
+    // app start memory
+    public static $start_memory;
+
     /**
      * Init runtime
      *
      * @static
+     *
      * @param array $configs
      */
     public static function init(array $configs)
     {
+        self::$is_cli = PHP_SAPI == 'cli';
+        self::$is_win = substr(PHP_OS, 0, 3) == 'WIN';
+        self::$start_time = $_SERVER['REQUEST_TIME'];
+        self::$start_memory = memory_get_usage();
         foreach ($configs as $module => $config)
         {
-            $module = '\\' . __NAMESPACE__ . '\\' . ucfirst($module);
-            $module::init($config);
+            if (!$config) continue;
+            $class = '\\' . __NAMESPACE__ . '\\' . ucfirst($module);
+            if (!class_exists($class)) trigger_error("Error {$module}.", E_USER_NOTICE);
+            if (is_string($config)) $config = include($config);
+            $class::init($config);
         }
     }
 
@@ -62,8 +82,8 @@ Event::on(EVENT_INIT, function(array $config)
  */
 Event::on(EVENT_RUN, function()
 {
-    $path = App::$is_cli ? join('/', array_slice($GLOBALS['argv'], 1)) : parse_url($_SERVER['REQUEST_URI'],
-                                                                                   PHP_URL_PATH);
+    $path = Runtime::$is_cli ? join('/', array_slice($GLOBALS['argv'], 1)) : parse_url($_SERVER['REQUEST_URI'],
+                                                                                       PHP_URL_PATH);
     list($controller, $route, $params) = Route::parse($path);
 
     if (is_string($controller))
@@ -92,7 +112,6 @@ Event::on(EVENT_AUTOLOAD, function($class)
 Event::on(EVENT_EXCEPTION, function($e)
 {
     echo $e;
-    exit(1);
 });
 
 /**
@@ -110,9 +129,9 @@ Event::on(EVENT_SHUTDOWN, function()
 {
     if (!App::isInit()) return;
 
-    if (App::$config['error'] &&
-        ($error = error_get_last()) &&
-        in_array($error['type'], array(E_PARSE, E_ERROR, E_USER_ERROR))
+    if (App::$config['error']
+        && ($error = error_get_last())
+        && in_array($error['type'], array(E_PARSE, E_ERROR, E_USER_ERROR))
     )
     {
         ob_get_level() and ob_clean();
@@ -137,7 +156,9 @@ abstract class Model
      * factory a model
      *
      * @static
+     *
      * @param $model
+     *
      * @return mixed
      */
     public static function factory($model)
@@ -171,8 +192,10 @@ abstract class Controller
      * Factory a controller
      *
      * @static
-     * @param $controller
+     *
+     * @param       $controller
      * @param array $params
+     *
      * @return mixed
      */
     final public static function factory($controller, $params = array())
@@ -198,7 +221,9 @@ class View
      * Factory a view
      *
      * @static
+     *
      * @param $view
+     *
      * @return mixed|View
      */
     final public static function factory($view)
@@ -222,6 +247,7 @@ class View
      * Set variable for view
      *
      * @param $array
+     *
      * @return View
      */
     public function set($array)
@@ -245,6 +271,7 @@ class View
      * Get assign value for view
      *
      * @param $key
+     *
      * @return mixed
      */
     public function __get($key)
