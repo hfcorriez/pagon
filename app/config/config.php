@@ -2,7 +2,10 @@
 
 $config = array(
     'apppath'   => APPPATH,
-    'classpath' => APPPATH . '/classes',
+    'classpath' => array(
+        ''     => APPPATH . '/classes',
+        'Abc' => APPPATH . '/classes/omni',
+    ),
     'viewpath'  => APPPATH . '/views',
     'lang'      => array('zh-CN'),
     'langpath'  => APPPATH . '/langs',

@@ -135,8 +135,37 @@ class App
     public static function __autoload($class)
     {
         $class = ltrim($class, '\\');
-        $file = self::$config['classpath'] . '/' . strtolower(str_replace('\\', '/', $class) . '.php');
-        is_file($file) && require $file;
+
+        if (is_array(self::$config['classpath']))
+        {
+            $available_path = array(self::$config['classpath']['']);
+
+            foreach (self::$config['classpath'] as $prefix => $path)
+            {
+                if ($prefix == '') continue;
+
+                if (strtolower(substr($class, 0, strlen($prefix))) == strtolower($prefix))
+                {
+                    array_unshift($available_path, $path);
+                    break;
+                }
+            }
+        }
+        else
+        {
+            $available_path = array(self::$config['classpath']);
+        }
+
+        foreach ($available_path as $path)
+        {
+            $file = stream_resolve_include_path($path . '/' . strtolower(str_replace('\\', '/', $class) . '.php'));
+            if ($file)
+            {
+                require $file;
+                break;
+            }
+        }
+
         Event::add(EVENT_AUTOLOAD, $class);
     }
 
