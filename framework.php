@@ -36,11 +36,8 @@ class App
 
     // is init?
     private static $_init = false;
-
-    public static $is_cli = null;
-    public static $is_win = null;
-    public static $start_time = null;
-    public static $start_memory = null;
+    private static $start_time = null;
+    private static $start_memory = null;
 
     /**
      * App init
@@ -51,22 +48,75 @@ class App
      */
     public static function init($config = array())
     {
+        foreach (array('route', 'event') as $m)
+        {
+            if (!isset($config[$m])) $config[$m] = array();
+        }
+
         self::$config = $config;
 
         spl_autoload_register(array(__CLASS__, '__autoload'));
         register_shutdown_function(array(__CLASS__, '__shutdown'));
+
         iconv_set_encoding("internal_encoding", "UTF-8");
         mb_internal_encoding('UTF-8');
         if (!empty($config['timezone'])) date_default_timezone_set($config['timezone']);
-        if (!empty($config['error'])) self::register_error_handlers();
+        if (!empty($config['error'])) self::registerErrorHandler();
 
-        self::$is_cli = PHP_SAPI == 'cli';
-        self::$is_win = substr(PHP_OS, 0, 3) == 'WIN';
         self::$start_time = $_SERVER['REQUEST_TIME'];
         self::$start_memory = memory_get_usage();
 
         self::$_init = true;
         Event::add(EVENT_INIT, $config);
+    }
+
+    /**
+     * Check sapi
+     *
+     * @static
+     * @return bool
+     */
+    public static function isCli()
+    {
+        return PHP_SAPI == 'cli';
+    }
+
+    /**
+     * Check if windows, if not, it must be *unix
+     *
+     * @static
+     * @return bool
+     */
+    public static function isWin()
+    {
+        static $is_win = null;
+        if ($is_win === null)
+        {
+            $is_win = substr(PHP_OS, 0, 3) == 'WIN';
+        }
+        return $is_win;
+    }
+
+    /**
+     * Get app start time
+     *
+     * @static
+     * @return int
+     */
+    public static function startTime()
+    {
+        return self::$start_time;
+    }
+
+    /**
+     * Get app start memory usage
+     *
+     * @static
+     * @return int
+     */
+    public static function startMemory()
+    {
+        return self::$start_memory;
     }
 
     /**
@@ -88,7 +138,7 @@ class App
      */
     public static function run()
     {
-        $path = self::$is_cli ? join('/', array_slice($GLOBALS['argv'], 1)) : Request::path();
+        $path = self::isCli() ? join('/', array_slice($GLOBALS['argv'], 1)) : Request::path();
         list($controller, $route, $params) = Route::parse($path);
 
         if (is_string($controller))
@@ -108,7 +158,7 @@ class App
      * @static
 
      */
-    public static function register_error_handlers()
+    public static function registerErrorHandler()
     {
         set_error_handler(array(__CLASS__, '__error'));
         set_exception_handler(array(__CLASS__, '__exception'));
@@ -120,7 +170,7 @@ class App
      * @static
 
      */
-    public static function restore_error_handlers()
+    public static function restoreErrorHandler()
     {
         restore_error_handler();
         restore_exception_handler();
@@ -207,7 +257,7 @@ class App
      */
     public static function __shutdown()
     {
-        if (!self::$_init) return;
+        if (!self::isInit()) return;
 
         if (self::$config['error']
             && ($error = error_get_last())
@@ -422,7 +472,7 @@ class View
      */
     public function __construct($view)
     {
-        if (!App::$config['viewpath']) throw new Exception('config["viewpath"] not set.');
+        if (!App::$config['viewpath']) throw new Exception('No viewpath found.');
         $this->file = App::$config['viewpath'] . '/' . strtolower(trim($view, '/')) . '.php';
         if (!is_file($this->file)) throw new Exception('View file not exist: ' . $this->file);
     }
@@ -508,7 +558,7 @@ class Route
      */
     public static function parse($path)
     {
-        if (empty(App::$config['route'])) throw new Exception('config["route"] must be set before.');
+        if (empty(App::$config['route'])) throw new Exception('No routes found.');
 
         $path = trim($path, '/');
         if ($path === '') return array(App::$config['route'][''], '', array());
@@ -542,7 +592,7 @@ class Route
             }
         }
 
-        if (!isset(App::$config['route']['404'])) throw new Exception('config["route"]["404"] not set.');
+        if (!isset(App::$config['route']['404'])) throw new Exception('404 page found, but no 404 route found.');
         return array(App::$config['route']['404'], $path, array($path));
     }
 }
@@ -813,7 +863,7 @@ class Response
         {
             return self::$status = (int)$status;
         }
-        else throw new Exception(__METHOD__ . ' unknown status :value', array(':value' => $status));
+        else throw new Exception('Unknown status :value', array(':value' => $status));
     }
 
     /**
