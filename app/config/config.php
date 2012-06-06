@@ -32,17 +32,9 @@ $config['event'] = array(
     ),
 );
 
-$config['log'] = APPPATH . '/config/log.php';
-
-$config['database\module'] = array(
-    'default' => array(
-        'dns'      => "mysql:host=127.0.0.1;port=3306;dbname=test",
-        'username' => 'root',
-        'password' => '',
-        'params'   => array()
-    ),
+$config['log'] = array(
+    'level' => LOG_DEBUG,
+    'dir'   => APPPATH . '/logs',
 );
-
-$config['orm\module'] = true;
 
 return $config;
