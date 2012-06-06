@@ -757,13 +757,13 @@ class I18n
      * @var array config
      */
     // language config
-    protected static $_lang = 'en-US';
+    protected static $lang = 'en-US';
 
     // cache config
-    protected static $_cache = array();
+    protected static $cache = array();
 
     // Enabled?
-    protected static $_enable = false;
+    protected static $enable = false;
 
     /**
      * Init i18n config
@@ -774,7 +774,7 @@ class I18n
      */
     public static function init()
     {
-        if (App::$config['lang'] && App::$config['langpath']) self::$_enable = true;
+        if (App::$config['lang'] && App::$config['langpath']) self::$enable = true;
         self::lang(I18n::preferedLanguage(App::$config['lang']));
     }
 
@@ -787,8 +787,8 @@ class I18n
      */
     public static function lang($lang = NULL)
     {
-        if ($lang) self::$_lang = strtolower(str_replace(array(' ', '_'), '-', $lang));
-        return self::$_lang;
+        if ($lang) self::$lang = strtolower(str_replace(array(' ', '_'), '-', $lang));
+        return self::$lang;
     }
 
     /**
@@ -801,7 +801,7 @@ class I18n
      */
     public static function get($string, $lang = NULL)
     {
-        if (!$lang) $lang = self::$_lang;
+        if (!$lang) $lang = self::$lang;
         $table = self::_load($lang);
         return isset($table[$string]) ? $table[$string] : $string;
     }
@@ -858,8 +858,8 @@ class I18n
      */
     private static function _load($lang)
     {
-        if (isset(self::$_cache[$lang])) return self::$_cache[$lang];
-        if (!self::$_enable) return false;
+        if (isset(self::$cache[$lang])) return self::$cache[$lang];
+        if (!self::$enable) return false;
 
 
         $table = array();
@@ -881,7 +881,7 @@ class I18n
             }
         }
 
-        return self::$_cache[$lang] = $table;
+        return self::$cache[$lang] = $table;
     }
 }
 
