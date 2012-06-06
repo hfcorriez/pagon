@@ -2,34 +2,54 @@
 <?php
 
 error_reporting(E_ALL & ~E_NOTICE);
-require __DIR__ . '/classes/omni/runtime.php';
+require __DIR__ . '/../framework.php';
 
 define('APPPATH', __DIR__);
 
-\Omni\Runtime::init(array(
-    'app'   => array(
-        'apppath'   => APPPATH,
-        'classpath' => APPPATH . '/classes',
-        'viewpath'  => APPPATH . '/views',
-    ),
+App::init(
+    array(
+         'classpath' => APPPATH . '/classes',
+    )
+);
 
-    'route' => array(
-        '404'       => '\Controller\Cli\Unknown',
-        'error'     => '\Controller\Cli\Unknown',
-        'exception' => '\Controller\Cli\Unknown',
+Route::on('', function(){
+    Controller::factory('\Controller\Cli\Help');
+});
 
-        ''          => '\Controller\Cli\Help',
-        'debug'     => function()
-        {
-            echo '[Debug mode] args:' . PHP_EOL;
-            print_r(func_get_args());
-        },
-    ),
+Route::on('404', function()
+{
+    Controller::factory('\Controller\Cli\Unknown');
+});
 
-    'log'   => array(
-        'level' => 0,
-        'dir'   => APPPATH . '/logs',
-    ),
-));
+Route::on('debug', function()
+{
+    echo '[Debug mode] args:' . PHP_EOL;
+    print_r(func_get_args());
+});
 
-\Omni\Runtime::run();
+Route::on('help', function()
+{
+    print 'debug   To debug system
+404     Show 404 output
+test    To test application
+server  To show server environments';
+});
+
+Route::on('server', function(){
+    print_r($_SERVER);
+});
+
+Event::on(EVENT_SHUTDOWN, function(){
+   print '
+
+copyright (c) 2011-2012 Omniapp framework.
+';
+});
+
+Event::on(EVENT_RUN, function(){
+    print 'Welcome to omniapp cli mode:
+
+';
+});
+
+App::run();
