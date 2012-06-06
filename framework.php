@@ -230,25 +230,6 @@ class ArrayObjectWrapper extends \ArrayObject
 abstract class Event
 {
     /**
-     * @var array events list
-     */
-    private static $_events = array();
-
-    /**
-     * Event init for event list
-     *
-     * @static
-     * @param $config
-     */
-    public static function init($config)
-    {
-        foreach ($config as $name => $runners)
-        {
-            self::$_events[$name] = array_merge(self::$_events[$name], $runners);
-        }
-    }
-
-    /**
      * Register event on $name
      *
      * @static
@@ -257,7 +238,7 @@ abstract class Event
      */
     public static function on($name, $runner)
     {
-        self::$_events[$name][] = $runner;
+        App::$config['event'][$name][] = $runner;
     }
 
     /**
@@ -269,11 +250,11 @@ abstract class Event
     public static function add($name)
     {
         $params = array_slice(func_get_args(), 1);
-        if (!empty(self::$_events[$name]))
+        if (!empty(App::$config['event'][$name]))
         {
-            foreach (self::$_events[$name] as $runner)
+            foreach (App::$config['event'][$name] as $runner)
             {
-                self::_excute($runner, $params);
+                self::excute($runner, $params);
             }
         }
     }
@@ -285,7 +266,7 @@ abstract class Event
      * @param       $runner
      * @param array $params
      */
-    private static function _excute($runner, $params = array())
+    private static function excute($runner, $params = array())
     {
         if (is_string($runner))
         {
@@ -381,7 +362,7 @@ abstract class Controller
  */
 class View
 {
-    private $_file = NULL;
+    private $file = NULL;
 
     /**
      * Factory a view
@@ -405,8 +386,8 @@ class View
     public function __construct($view)
     {
         if (!App::$config['viewpath']) throw new Exception('config["viewpath"] not set.');
-        $this->_file = App::$config['viewpath'] . '/' . strtolower(trim($view, '/')) . '.php';
-        if (!is_file($this->_file)) throw new Exception('View file not exist: ' . $this->_file);
+        $this->file = App::$config['viewpath'] . '/' . strtolower(trim($view, '/')) . '.php';
+        if (!is_file($this->file)) throw new Exception('View file not exist: ' . $this->file);
     }
 
     /**
@@ -454,7 +435,7 @@ class View
     {
         ob_start();
         extract((array)$this);
-        include($this->_file);
+        include($this->file);
         return ob_get_clean();
     }
 }
@@ -687,12 +668,13 @@ class Response
     protected static $content_type = 'text/html';
     protected static $charset = 'UTF-8';
 
-    public function __construct()
-    {
-        $this->protocol = Request::protocol();
-        self::$headers['x-powered-by'] = 'OmniApp ' . VERSION;
-    }
-
+    /**
+     * Set body
+     *
+     * @static
+     * @param string $content
+     * @return string
+     */
     public static function body($content = NULL)
     {
         if ($content === NULL) return self::$body;
@@ -700,18 +682,33 @@ class Response
         return self::$body = (string)$content;
     }
 
-    public function status($status = NULL)
+    /**
+     * Set status code
+     *
+     * @static
+     * @param int $status
+     * @return int|Response
+     * @throws Exception
+     */
+    public static function status($status = NULL)
     {
         if ($status === NULL) return self::$status;
         elseif (array_key_exists($status, self::$messages))
         {
-            self::$status = (int)$status;
-            return $this;
+            return self::$status = (int)$status;
         }
         else throw new Exception(__METHOD__ . ' unknown status :value', array(':value' => $status));
     }
 
-    public function header($key = NULL, $value = NULL)
+    /**
+     * Set header
+     *
+     * @static
+     * @param null $key
+     * @param null $value
+     * @return array
+     */
+    public static function header($key = NULL, $value = NULL)
     {
         if ($key === NULL) return self::$headers;
         elseif ($value === NULL) return self::$headers[$key];
@@ -721,22 +718,45 @@ class Response
         }
     }
 
-    public function length()
+    /**
+     * Get lenth of body
+     *
+     * @static
+     * @return int
+     */
+    public static function length()
     {
-        return strlen($this->body());
+        return strlen(self::$body);
     }
 
-    public function sendHeaders($replace = FALSE)
+    /**
+     * Send headers
+     *
+     * @static
+     * @param bool $replace
+     */
+    public static function sendHeaders($replace = FALSE)
     {
-        header($this->protocol . ' ' . self::$status . ' ' . self::$messages[self::$status]);
+
+        header(Request::protocol() . ' ' . self::$status . ' ' . self::$messages[self::$status]);
         foreach (self::$headers as $key => $value) header($key . ': ' . $value, $replace);
     }
 
+    /**
+     * Send body
+     *
+     * @static
+     */
     public static function sendBody()
     {
         echo self::$body;
     }
 
+    /**
+     * Send all
+     *
+     * @static
+     */
     public static function send()
     {
         self::sendHeaders();
