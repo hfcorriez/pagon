@@ -1,20 +1,21 @@
 <?php
 
-require __DIR__ . '/classes/omni/runtime.php';
+require __DIR__ . '/../framework.php';
 
 define('APPPATH', __DIR__);
 
-\Omni\Runtime::init(include('config/config.php'));
+App::init(include('config/config.php'));
+I18n::init();
 
-\Omni\Route::on('about', function()
+Route::on('about', function()
 {
     echo 'OmniApp is very simple framework';
 });
 
-\Omni\Route::on('serverinfo', function()
+Route::on('serverinfo', function()
 {
     echo '<xmp>';
     print_r($_SERVER);
 });
 
-\Omni\Runtime::run();
+App::run();

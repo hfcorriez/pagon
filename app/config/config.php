@@ -1,19 +1,19 @@
 <?php
 
-$config = array();
-
-$config['app'] = array(
-    'apppath' => APPPATH,
+$config = array(
+    'apppath'   => APPPATH,
     'classpath' => APPPATH . '/classes',
-    'viewpath' => APPPATH . '/views',
-    'error' => true,
+    'viewpath'  => APPPATH . '/views',
+    'lang'      => array('zh-CN'),
+    'langpath'  => APPPATH . '/langs',
+    'error'     => true,
 );
 
 $config['route'] = array(
-    '404' => '\Controller\Front\Page404',
+    '404'   => '\Controller\Front\Page404',
     'error' => '\Controller\Front\Page404',
 
-    '' => '\Controller\Front\Index',
+    ''      => '\Controller\Front\Index',
     'debug' => function()
     {
         var_dump(func_get_args());
@@ -34,17 +34,12 @@ $config['event'] = array(
 
 $config['log'] = APPPATH . '/config/log.php';
 
-$config['i18n'] = array(
-    'lang' => array('zh-CN'),
-    'langpath' => APPPATH . '/langs',
-);
-
 $config['database\module'] = array(
     'default' => array(
-        'dns' => "mysql:host=127.0.0.1;port=3306;dbname=test",
+        'dns'      => "mysql:host=127.0.0.1;port=3306;dbname=test",
         'username' => 'root',
         'password' => '',
-        'params' => array()
+        'params'   => array()
     ),
 );
 

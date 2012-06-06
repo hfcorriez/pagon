@@ -2,18 +2,18 @@
 
 namespace Controller;
 
-class Front extends \Omni\Controller
+class Front extends \Controller
 {
     /**
-     * @var \Omni\View
+     * @var \View
      */
     protected $_body;
     /**
-     * @var \Omni\Request
+     * @var \Request
      */
     protected $_request;
     /**
-     * @var \Omni\Response
+     * @var \Response
      */
     protected $_response;
 
@@ -26,8 +26,6 @@ class Front extends \Omni\Controller
     {
         $method = strtolower($_SERVER['REQUEST_METHOD']);
         $this->{$method}();
-        $this->_request = \Omni\Request::instance();
-        $this->_response = \Omni\Response::instance();
     }
     
     public function before()
@@ -37,6 +35,6 @@ class Front extends \Omni\Controller
     
     public function after()
     {
-        echo $this->_response->sendHeaders()->body($this->_body);
+        echo $this->_body;
     }
 }
