@@ -56,7 +56,6 @@ class App
         register_shutdown_function(array(__CLASS__, '__shutdown'));
         iconv_set_encoding("internal_encoding", "UTF-8");
         mb_internal_encoding('UTF-8');
-        if (empty($config['apppath'])) throw new \Exception('config["apppath"] must be set before.');
         if (!empty($config['timezone'])) date_default_timezone_set($config['timezone']);
         if (!empty($config['error'])) self::register_error_handlers();
 

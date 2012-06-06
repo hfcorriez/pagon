@@ -1,7 +1,6 @@
 <?php
 
 $config = array(
-    'apppath'   => APPPATH,
     'classpath' => array(
         ''     => APPPATH . '/classes',
         'Abc' => APPPATH . '/classes/omni',
