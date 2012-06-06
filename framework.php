@@ -6,7 +6,7 @@
  * @author    Corrie Zhao <hfcorriez@gmail.com>
  * @copyright (c) 2011 - 2012 OmniApp Framework
  * @license   http://www.apache.org/licenses/LICENSE-2.0
- *
+
  */
 
 const VERSION = '0.1';
@@ -46,6 +46,7 @@ class App
      * App init
      *
      * @static
+     *
      * @param array $config
      */
     public static function init($config = array())
@@ -83,7 +84,7 @@ class App
      * App run
      *
      * @static
-     *
+
      */
     public static function run()
     {
@@ -105,7 +106,7 @@ class App
      * Register error and exception handlers
      *
      * @static
-     *
+
      */
     public static function register_error_handlers()
     {
@@ -117,7 +118,7 @@ class App
      * Restore error and exception hanlders
      *
      * @static
-     *
+
      */
     public static function restore_error_handlers()
     {
@@ -129,6 +130,7 @@ class App
      * Auto load class
      *
      * @static
+     *
      * @param $class
      */
     public static function __autoload($class)
@@ -172,6 +174,7 @@ class App
      * Error handler for app
      *
      * @static
+     *
      * @param $type
      * @param $message
      * @param $file
@@ -187,6 +190,7 @@ class App
      * Exception handler for app
      *
      * @static
+     *
      * @param \Exception $e
      */
     public static function __exception(\Exception $e)
@@ -199,7 +203,7 @@ class App
      * Shutdown handler for app
      *
      * @static
-     *
+
      */
     public static function __shutdown()
     {
@@ -236,7 +240,10 @@ class ArrayObjectWrapper extends \ArrayObject
 
     public function &__get($name)
     {
-        if (array_key_exists($name, $this)) $ret = &$this[$name];
+        if (array_key_exists($name, $this))
+        {
+            $ret = &$this[$name];
+        }
         else $ret = null;
         return $ret;
     }
@@ -261,6 +268,7 @@ abstract class Event
      * Register event on $name
      *
      * @static
+     *
      * @param $name
      * @param $runner
      */
@@ -273,6 +281,7 @@ abstract class Event
      * Add event trigger
      *
      * @static
+     *
      * @param $name
      */
     public static function add($name)
@@ -291,6 +300,7 @@ abstract class Event
      * Excute runner for event point
      *
      * @static
+     *
      * @param       $runner
      * @param array $params
      */
@@ -309,11 +319,10 @@ abstract class Event
 
     /**
      * Run method for event runner object
-     *
      *  if u register a class name for runner, u must implements run method.
      *
      * @abstract
-     *
+
      */
     abstract function run();
 }
@@ -351,7 +360,7 @@ abstract class Controller
      * abstract before run
      *
      * @abstract
-     *
+
      */
     abstract function before();
 
@@ -359,7 +368,7 @@ abstract class Controller
      * abstract after run
      *
      * @abstract
-     *
+
      */
     abstract function after();
 
@@ -478,6 +487,7 @@ class Route
      * Register a route for path
      *
      * @static
+     *
      * @param $path
      * @param $runner
      */
@@ -490,7 +500,9 @@ class Route
      * Parse site path
      *
      * @static
+     *
      * @param $path
+     *
      * @return array
      * @throws Exception
      */
@@ -549,11 +561,23 @@ class Request
     protected static $track_id;
     protected static $headers;
 
+    /**
+     * Get protocol
+     *
+     * @static
+     * @return string
+     */
     public static function protocol()
     {
         return getenv('SERVER_PROTOCOL');
     }
 
+    /**
+     * Get path
+     *
+     * @static
+     * @return mixed
+     */
     public static function path()
     {
         if (!self::$path) self::$path = parse_url(getenv('REQUEST_URI'), PHP_URL_PATH);
@@ -561,6 +585,12 @@ class Request
         return self::$path;
     }
 
+    /**
+     * Get url
+     *
+     * @static
+     * @return mixed
+     */
     public static function url()
     {
         if (!self::$url)
@@ -571,21 +601,45 @@ class Request
         return self::$url;
     }
 
+    /**
+     * Get method
+     *
+     * @static
+     * @return string
+     */
     public static function method()
     {
         return getenv('REQUEST_METHOD');
     }
 
+    /**
+     * Is ajax
+     *
+     * @static
+     * @return bool
+     */
     public static function isAjax()
     {
         return !getenv('X-Requested-With') && 'XMLHttpRequest' == getenv('X-Requested-With');
     }
 
+    /**
+     * Get refer url
+     *
+     * @static
+     * @return string
+     */
     public static function refer()
     {
         return getenv('HTTP_REFERER');
     }
 
+    /**
+     * Get track id
+     *
+     * @static
+     * @return mixed
+     */
     public static function trackId()
     {
         if (!self::$track_id)
@@ -596,16 +650,37 @@ class Request
         return self::$track_id;
     }
 
+    /**
+     * Get domain
+     *
+     * @static
+     * @return string
+     */
     public static function domain()
     {
         return getenv('HTTP_HOST');
     }
 
+    /**
+     * Get user agent
+     *
+     * @static
+     * @return string
+     */
     public static function userAgent()
     {
         return getenv('HTTP_USER_AGENT');
     }
 
+    /**
+     * Get header or headers
+     *
+     * @static
+     *
+     * @param null $key
+     *
+     * @return mixed
+     */
     public static function header($key = null)
     {
         if (!self::$headers)
@@ -613,11 +688,17 @@ class Request
             $headers = array();
             foreach ($_SERVER as $key => $value)
             {
-                if ('HTTP_' === substr($key, 0, 5)) $headers[strtolower(substr($key, 5))] = $value;
+                if ('HTTP_' === substr($key, 0, 5))
+                {
+                    $headers[strtolower(substr($key, 5))] = $value;
+                }
                 elseif (in_array($key, array('CONTENT_LENGTH',
                                              'CONTENT_MD5',
                                              'CONTENT_TYPE'))
-                ) $headers[strtolower($key)] = $value;
+                )
+                {
+                    $headers[strtolower($key)] = $value;
+                }
             }
 
             if (isset($_SERVER['PHP_AUTH_USER']))
@@ -700,7 +781,9 @@ class Response
      * Set body
      *
      * @static
+     *
      * @param string $content
+     *
      * @return string
      */
     public static function body($content = NULL)
@@ -714,13 +797,18 @@ class Response
      * Set status code
      *
      * @static
+     *
      * @param int $status
+     *
      * @return int|Response
      * @throws Exception
      */
     public static function status($status = NULL)
     {
-        if ($status === NULL) return self::$status;
+        if ($status === NULL)
+        {
+            return self::$status;
+        }
         elseif (array_key_exists($status, self::$messages))
         {
             return self::$status = (int)$status;
@@ -732,13 +820,18 @@ class Response
      * Set header
      *
      * @static
+     *
      * @param null $key
      * @param null $value
+     *
      * @return array
      */
     public static function header($key = NULL, $value = NULL)
     {
-        if ($key === NULL) return self::$headers;
+        if ($key === NULL)
+        {
+            return self::$headers;
+        }
         elseif ($value === NULL) return self::$headers[$key];
         else
         {
@@ -761,6 +854,7 @@ class Response
      * Send headers
      *
      * @static
+     *
      * @param bool $replace
      */
     public static function sendHeaders($replace = FALSE)
@@ -817,20 +911,24 @@ class I18n
      * Init i18n config
      *
      * @static
+     *
      * @param $config
+     *
      * @throws Exception
      */
     public static function init()
     {
         if (App::$config['lang'] && App::$config['langpath']) self::$enable = true;
-        self::lang(I18n::preferedLanguage(App::$config['lang']));
+        self::lang(I18n::preferLanguage(App::$config['lang']));
     }
 
     /**
      * Get or set language
      *
      * @static
+     *
      * @param null|string $lang
+     *
      * @return string
      */
     public static function lang($lang = NULL)
@@ -843,14 +941,16 @@ class I18n
      * Get words tranlation
      *
      * @static
+     *
      * @param             $string
      * @param null|string $lang
+     *
      * @return string
      */
     public static function get($string, $lang = NULL)
     {
         if (!$lang) $lang = self::$lang;
-        $table = self::_load($lang);
+        $table = self::load($lang);
         return isset($table[$string]) ? $table[$string] : $string;
     }
 
@@ -858,10 +958,12 @@ class I18n
      * Automatic match best language
      *
      * @static
+     *
      * @param array $languages
+     *
      * @return string
      */
-    public static function preferedLanguage($languages = array())
+    public static function preferLanguage($languages = array())
     {
         if (isset($_COOKIE['lang'])) return $_COOKIE['lang'];
         if (!$languages) return 'en-US';
@@ -888,10 +990,13 @@ class I18n
                 $best_lang = $language;
                 $best_q_val = $q_value;
             }
-            else if (in_array($lang_prefix, $languages) && (($q_value * 0.9) > $best_q_val))
+            else
             {
-                $best_lang = $lang_prefix;
-                $best_q_val = $q_value * 0.9;
+                if (in_array($lang_prefix, $languages) && (($q_value * 0.9) > $best_q_val))
+                {
+                    $best_lang = $lang_prefix;
+                    $best_q_val = $q_value * 0.9;
+                }
             }
         }
         return $best_lang;
@@ -901,14 +1006,15 @@ class I18n
      * Load language table
      *
      * @static
+     *
      * @param $lang
+     *
      * @return array
      */
-    private static function _load($lang)
+    private static function load($lang)
     {
         if (isset(self::$cache[$lang])) return self::$cache[$lang];
         if (!self::$enable) return false;
-
 
         $table = array();
         $parts = explode('-', $lang);
@@ -933,6 +1039,15 @@ class I18n
     }
 }
 
+/**
+ * I18n translate function
+ *
+ * @param            $string
+ * @param array|null $values
+ * @param string     $lang
+ *
+ * @return string
+ */
 function __($string, array $values = NULL, $lang = 'en')
 {
     if ($lang !== I18n::lang()) $string = I18n::get($string);
