@@ -28,14 +28,7 @@ const EVENT_AUTOLOAD = 'autoload';
  */
 class App
 {
-    /**
-     * App config
-     *
-     * @var
-     */
     public static $config;
-
-    // is init?
     private static $_init = false;
     private static $start_time = null;
     private static $start_memory = null;
@@ -283,7 +276,7 @@ class App
 /**
  * Omni ArrayObject implements object get and set.
  */
-class ArrayObjectWrapper extends \ArrayObject
+class ArrayObjectWrapper extends ArrayObject
 {
     public function __set($name, $val)
     {
@@ -534,7 +527,6 @@ class View
  */
 class Route
 {
-
     /**
      * Register a route for path
      *
@@ -941,9 +933,12 @@ class Response
 /*********************
  * built-in modules
  ********************/
+
+/**
+ * Cli
+ */
 class Cli
 {
-
     /**
      * Returns one or more command-line options. Options are specified using
      * standard CLI syntax:
@@ -958,48 +953,23 @@ class Cli
      */
     public static function options()
     {
-        // Get all of the requested options
         $options = func_get_args();
-
-        // Found option values
         $values = array();
 
-        // Skip the first option, it is always the file executed
         for ($i = 1; $i < $_SERVER['argc']; $i++)
         {
-            if (!isset($_SERVER['argv'][$i]))
-            {
-                // No more args left
-                break;
-            }
+            if (!isset($_SERVER['argv'][$i])) break;
 
-            // Get the option
             $opt = $_SERVER['argv'][$i];
-
-            if (substr($opt, 0, 2) !== '--')
-            {
-                // This is not an option argument
-                continue;
-            }
-
-            // Remove the "--" prefix
+            if (substr($opt, 0, 2) !== '--') continue;
             $opt = substr($opt, 2);
 
-            if (strpos($opt, '='))
-            {
-                // Separate the name and value
+            if (strpos($opt, '=')) {
                 list ($opt, $value) = explode('=', $opt, 2);
             }
-            else
-            {
-                $value = NULL;
-            }
+            else $value = NULL;
 
-            if (in_array($opt, $options))
-            {
-                // Set the given value
-                $values[$opt] = $value;
-            }
+            if (in_array($opt, $options)) $values[$opt] = $value;
         }
 
         return $values;
@@ -1008,16 +978,15 @@ class Cli
     /**
      * Color output text for the CLI
      *
-     * @param string $text       to color
-     * @param string $color      of text
-     * @param string $background color
+     * @param string      $text       to color
+     * @param string      $color      of text
+     * @param bool|string $bold       color
+     *
+     * @return string
      */
     public static function colorize($text, $color, $bold = FALSE)
     {
-        // Standard CLI colors
         $colors = array_flip(array(30 => 'gray', 'red', 'green', 'yellow', 'blue', 'purple', 'cyan', 'white', 'black'));
-
-        // Escape string with color information
         return "\033[" . ($bold ? '1' : '0') . ';' . $colors[$color] . "m$text\033[0m";
     }
 
@@ -1028,18 +997,9 @@ class Cli
  */
 class I18n
 {
-    /**
-     * @var array config
-     */
-    // language config
     protected static $lang = 'en-US';
-
-    // cache config
     protected static $cache = array();
-
-    // Enabled?
     protected static $enable = false;
-
     protected static $config;
 
     /**
@@ -1179,7 +1139,6 @@ class I18n
 
 /**
  * Log
- *
  * @method static debug
  * @method static info
  * @method static warn
@@ -1194,18 +1153,9 @@ class Log
     const LEVEL_ERROR = 3;
     const LEVEL_EMERG = 4;
 
-    /**
-     * @var array log config
-     */
     protected static $config;
-
-    // log messages
     protected static $messages = array();
-
-    // log filename format
     protected static $filename = ':date/:level.log';
-
-    // level map
     private static $levels = array(
         'debug'    => self::LEVEL_DEBUG,
         'info'     => self::LEVEL_INFO,
