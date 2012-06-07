@@ -224,6 +224,8 @@ class App
      * @param $message
      * @param $file
      * @param $line
+     *
+     * @throws ErrorException
      */
     public static function __error($type, $message, $file, $line)
     {
@@ -1168,8 +1170,7 @@ class Log
      * Init log config
      *
      * @static
-     *
-     * @param $config
+     * @internal param $config
      */
     public static function init()
     {
@@ -1200,8 +1201,8 @@ class Log
      *
      * @param      $text
      * @param int  $level
-     * @param bool $tag
      *
+     * @internal param bool $tag
      * @return bool
      */
     public static function write($text, $level = self::LEVEL_INFO)
@@ -1241,7 +1242,7 @@ class Log
             $replace = array();
             foreach ($message as $k => $v) $replace[':' . $k] = $v;
 
-            $header = '[' . $message['datetime'] . '] [' . str_pad($message['level'], 8, ' ', STR_PAD_BOTH) . '] ';
+            $header = '[' . $message['datetime'] . '] [' . str_pad($message['level'], 7, ' ', STR_PAD_BOTH) . '] ';
             $text = $header . str_replace("\n", "\n{$header}", trim($message['text'], "\n"));
 
             $filename = self::$config['dir'] . '/' . strtr($log_filename, $replace);
@@ -1252,10 +1253,7 @@ class Log
                 {
                     if (mkdir($dir, 0777, true)) $dir_exists[] = $dir;
                 }
-                else
-                {
-                    $dir_exists[] = $dir;
-                }
+                else $dir_exists[] = $dir;
             }
 
             if (in_array($dir, $dir_exists)) file_put_contents($filename, $text . "\n", FILE_APPEND);
