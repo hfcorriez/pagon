@@ -1204,11 +1204,11 @@ class Log
      *
      * @param      $text
      * @param int  $level
+     * @param null $tag
      *
-     * @internal param bool $tag
      * @return bool
      */
-    public static function write($text, $level = self::LEVEL_INFO)
+    public static function write($text, $level = self::LEVEL_INFO, $tag = null)
     {
         if ($level < self::$config['level']) return false;
 
@@ -1218,7 +1218,7 @@ class Log
             'time'     => $micro_time,
             'text'     => $text,
             'ip'       => getenv('REMOTE_ADDR'),
-            'level'    => array_search($level, self::$levels),
+            'level'    => $tag ? $tag : array_search($level, self::$levels),
             'memory'   => memory_get_usage(),
             'datetime' => date('Y-m-d H:i:s', $micro_time) . substr($micro_time - floor($micro_time), 1, 4),
             'date'     => date('Y-m-d', floor($micro_time)),
