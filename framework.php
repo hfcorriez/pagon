@@ -947,14 +947,13 @@ class Cli
     /**
      * Returns one or more command-line options. Options are specified using
      * standard CLI syntax:
-     *
      *     php index.php --username=john.smith --password=secret --var="some value with spaces"
-     *
      *     // Get the values of "username" and "password"
      *     $auth = CLI::options('username', 'password');
      *
      * @param   string  option name
      * @param   ...
+     *
      * @return  array
      */
     public static function options()
@@ -1009,8 +1008,8 @@ class Cli
     /**
      * Color output text for the CLI
      *
-     * @param string $text to color
-     * @param string $color of text
+     * @param string $text       to color
+     * @param string $color      of text
      * @param string $background color
      */
     public static function colorize($text, $color, $bold = FALSE)
@@ -1041,6 +1040,8 @@ class I18n
     // Enabled?
     protected static $enable = false;
 
+    protected static $config;
+
     /**
      * Init i18n config
      *
@@ -1052,8 +1053,11 @@ class I18n
      */
     public static function init()
     {
-        if (App::$config['lang'] && App::$config['langpath']) self::$enable = true;
-        self::lang(I18n::preferLanguage(App::$config['lang']));
+        if (!isset(App::$config['i18n'])) return;
+
+        self::$config = &App::$config['i18n'];
+        if (self::$config['lang'] && self::$config['langpath']) self::$enable = true;
+        self::lang(I18n::preferLanguage(self::$config['lang']));
     }
 
     /**
@@ -1155,9 +1159,9 @@ class I18n
         $path = implode('/', $parts);
 
         $files = array(
-            App::$config['langpath'] . '/' . $path . '.php',
-            App::$config['langpath'] . '/' . $lang . '.php',
-            App::$config['langpath'] . '/' . strstr($lang, '-', true) . '.php',
+            self::$config['langpath'] . '/' . $path . '.php',
+            self::$config['langpath'] . '/' . $lang . '.php',
+            self::$config['langpath'] . '/' . strstr($lang, '-', true) . '.php',
         );
 
         foreach ($files as $file)
@@ -1170,6 +1174,142 @@ class I18n
         }
 
         return self::$cache[$lang] = $table;
+    }
+}
+
+/**
+ * Log
+ *
+ * @method static debug
+ * @method static info
+ * @method static warn
+ * @method static error
+ * @method static emerg
+ */
+class Log
+{
+    const LEVEL_DEBUG = 0;
+    const LEVEL_INFO = 1;
+    const LEVEL_WARN = 2;
+    const LEVEL_ERROR = 3;
+    const LEVEL_EMERG = 4;
+
+    /**
+     * @var array log config
+     */
+    protected static $config;
+
+    // log messages
+    protected static $messages = array();
+
+    // log filename format
+    protected static $filename = ':date/:level.log';
+
+    // level map
+    private static $levels = array(
+        'debug'    => self::LEVEL_DEBUG,
+        'info'     => self::LEVEL_INFO,
+        'warn'     => self::LEVEL_WARN,
+        'error'    => self::LEVEL_ERROR,
+        'emerg'    => self::LEVEL_EMERG
+    );
+
+    /**
+     * Init log config
+     *
+     * @static
+     *
+     * @param $config
+     */
+    public static function init()
+    {
+        self::$config = &App::$config['log'];
+        Event::on(EVENT_SHUTDOWN, function()
+        {
+            Log::save();
+        });
+    }
+
+    /**
+     * call level name as method
+     *
+     * @static
+     *
+     * @param $name
+     * @param $arguments
+     */
+    public static function __callstatic($name, $arguments)
+    {
+        if (isset(self::$levels[$name])) self::write($arguments[0], self::$levels[$name], $name);
+    }
+
+    /**
+     * Record log
+     *
+     * @static
+     *
+     * @param      $text
+     * @param int  $level
+     * @param bool $tag
+     *
+     * @return bool
+     */
+    public static function write($text, $level = self::LEVEL_INFO)
+    {
+        if ($level < self::$config['level']) return false;
+
+        $micro_time = microtime(true);
+        $message = array(
+            'id'       => Request::trackId(),
+            'time'     => $micro_time,
+            'text'     => $text,
+            'ip'       => getenv('REMOTE_ADDR'),
+            'level'    => array_search($level, self::$levels),
+            'memory'   => memory_get_usage(),
+            'datetime' => date('Y-m-d H:i:s', $micro_time) . substr($micro_time - floor($micro_time), 1, 4),
+            'date'     => date('Y-m-d', floor($micro_time)),
+        );
+        self::$messages[] = $message;
+        return true;
+    }
+
+    /**
+     * Save log message
+     *
+     * @static
+     * @return bool
+     */
+    public static function save()
+    {
+        if (empty(self::$messages)) return;
+
+        $log_filename = empty(self::$config['filename']) ? self::$filename : self::$config['filename'];
+        $dir_exists = array();
+
+        foreach (self::$messages as $message)
+        {
+            $replace = array();
+            foreach ($message as $k => $v) $replace[':' . $k] = $v;
+
+            $header = '[' . $message['datetime'] . '] [' . str_pad($message['level'], 8, ' ', STR_PAD_BOTH) . '] ';
+            $text = $header . str_replace("\n", "\n{$header}", trim($message['text'], "\n"));
+
+            $filename = self::$config['dir'] . '/' . strtr($log_filename, $replace);
+            $dir = dirname($filename);
+            if (!in_array($dir, $dir_exists))
+            {
+                if (!is_dir($dir))
+                {
+                    if (mkdir($dir, 0777, true)) $dir_exists[] = $dir;
+                }
+                else
+                {
+                    $dir_exists[] = $dir;
+                }
+            }
+
+            if (in_array($dir, $dir_exists)) file_put_contents($filename, $text . "\n", FILE_APPEND);
+        }
     }
 }
 

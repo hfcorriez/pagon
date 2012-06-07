@@ -6,8 +6,6 @@ $config = array(
         'Abc' => APPPATH . '/classes/omni',
     ),
     'viewpath'  => APPPATH . '/views',
-    'lang'      => array('zh-CN'),
-    'langpath'  => APPPATH . '/langs',
     'error'     => true,
 );
 
@@ -35,8 +33,13 @@ $config['event'] = array(
 );
 
 $config['log'] = array(
-    'level' => LOG_DEBUG,
+    'level' => Log::LEVEL_DEBUG,
     'dir'   => APPPATH . '/logs',
+);
+
+$config['i18n'] = array(
+    'lang'      => array('zh-CN'),
+    'langpath'  => APPPATH . '/langs',
 );
 
 return $config;
