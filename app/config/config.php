@@ -38,8 +38,8 @@ $config['log'] = array(
 );
 
 $config['i18n'] = array(
-    'lang'      => array('zh-CN'),
-    'langpath'  => APPPATH . '/langs',
+    'lang'  => array('zh-CN'),
+    'dir'   => APPPATH . '/langs',
 );
 
 return $config;

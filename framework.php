@@ -1018,7 +1018,7 @@ class I18n
         if (!isset(App::$config['i18n'])) return;
 
         self::$config = &App::$config['i18n'];
-        if (self::$config['lang'] && self::$config['langpath']) self::$enable = true;
+        if (self::$config['lang'] && self::$config['dir']) self::$enable = true;
         self::lang(I18n::preferLanguage(self::$config['lang']));
     }
 
@@ -1121,9 +1121,9 @@ class I18n
         $path = implode('/', $parts);
 
         $files = array(
-            self::$config['langpath'] . '/' . $path . '.php',
-            self::$config['langpath'] . '/' . $lang . '.php',
-            self::$config['langpath'] . '/' . strstr($lang, '-', true) . '.php',
+            self::$config['dir'] . '/' . $path . '.php',
+            self::$config['dir'] . '/' . $lang . '.php',
+            self::$config['dir'] . '/' . strstr($lang, '-', true) . '.php',
         );
 
         foreach ($files as $file)
@@ -1157,7 +1157,7 @@ class Log
 
     protected static $config;
     protected static $messages = array();
-    protected static $filename = ':date/:level.log';
+    protected static $filename = ':level.log';
     private static $levels = array(
         'debug'    => self::LEVEL_DEBUG,
         'info'     => self::LEVEL_INFO,
@@ -1175,6 +1175,9 @@ class Log
     public static function init()
     {
         self::$config = &App::$config['log'];
+        if (!isset(self::$config['dir'])) self::$config['dir'] = '.';
+        if (!isset(self::$config['level'])) self::$config['level'] = self::LEVEL_DEBUG;
+
         Event::on(EVENT_SHUTDOWN, function()
         {
             Log::save();
