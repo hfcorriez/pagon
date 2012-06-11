@@ -6,7 +6,7 @@
 - More built-in modules.
 - Extend easy.
 - Support 3rd's integration.
-- According to [PSR](https://github.com/pmjones/fig-standards) - PSR-0, PSR-1, PSR-2
+- According to [PSR](https://github.com/php-fig/fig-standards) - PSR-0, PSR-1, PSR-2
 
 ## How to use?
 
