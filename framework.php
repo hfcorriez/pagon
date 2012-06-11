@@ -193,7 +193,7 @@ class App
                 if (strtolower(substr($class, 0, strlen($prefix))) == strtolower($prefix))
                 {
                     array_unshift($available_path, $path);
-                    $class = substr($class, strlen($prefix));
+                    $class = trim(substr($class, strlen($prefix)), '\\');
                     break;
                 }
             }
