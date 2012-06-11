@@ -42,8 +42,7 @@ class App
      */
     public static function init($config = array())
     {
-        foreach (array('route', 'event') as $m)
-        {
+        foreach (array('route', 'event') as $m) {
             if (!isset($config[$m])) $config[$m] = array();
         }
 
@@ -84,8 +83,7 @@ class App
     public static function isWin()
     {
         static $is_win = null;
-        if ($is_win === null)
-        {
+        if ($is_win === null) {
             $is_win = substr(PHP_OS, 0, 3) == 'WIN';
         }
         return $is_win;
@@ -136,12 +134,9 @@ class App
         $path = self::isCli() ? join('/', array_slice($GLOBALS['argv'], 1)) : Request::path();
         list($controller, $route, $params) = Route::parse($path);
 
-        if (is_string($controller))
-        {
+        if (is_string($controller)) {
             Controller::factory($controller, $params);
-        }
-        else
-        {
+        } else {
             call_user_func_array($controller, $params);
         }
         Event::add(EVENT_END);
@@ -182,32 +177,25 @@ class App
     {
         $class = ltrim($class, '\\');
 
-        if (is_array(self::$config['classpath']))
-        {
+        if (is_array(self::$config['classpath'])) {
             $available_path = array(self::$config['classpath']['']);
 
-            foreach (self::$config['classpath'] as $prefix => $path)
-            {
+            foreach (self::$config['classpath'] as $prefix => $path) {
                 if ($prefix == '') continue;
 
-                if (strtolower(substr($class, 0, strlen($prefix))) == strtolower($prefix))
-                {
+                if (strtolower(substr($class, 0, strlen($prefix))) == strtolower($prefix)) {
                     array_unshift($available_path, $path);
                     $class = trim(substr($class, strlen($prefix)), '\\');
                     break;
                 }
             }
-        }
-        else
-        {
+        } else {
             $available_path = array(self::$config['classpath']);
         }
 
-        foreach ($available_path as $path)
-        {
+        foreach ($available_path as $path) {
             $file = stream_resolve_include_path($path . '/' . strtolower(str_replace('\\', '/', $class) . '.php'));
-            if ($file)
-            {
+            if ($file) {
                 require $file;
                 break;
             }
@@ -260,15 +248,11 @@ class App
         if (self::$config['error']
             && ($error = error_get_last())
             && in_array($error['type'], array(E_PARSE, E_ERROR, E_USER_ERROR))
-        )
-        {
+        ) {
             ob_get_level() and ob_clean();
-            try
-            {
+            try {
                 print new View(self::$config['route']['error']);
-            }
-            catch (\Exception $e)
-            {
+            } catch (\Exception $e) {
                 self::__exception(new \ErrorException($error['message'], $error['type'], 0, $error['file'], $error['line']));
             }
         }
@@ -288,11 +272,9 @@ class ArrayObjectWrapper extends ArrayObject
 
     public function &__get($name)
     {
-        if (array_key_exists($name, $this))
-        {
+        if (array_key_exists($name, $this)) {
             $ret = &$this[$name];
-        }
-        else $ret = null;
+        } else $ret = null;
         return $ret;
     }
 
@@ -335,10 +317,8 @@ abstract class Event
     public static function add($name)
     {
         $params = array_slice(func_get_args(), 1);
-        if (!empty(App::$config['event'][$name]))
-        {
-            foreach (App::$config['event'][$name] as $runner)
-            {
+        if (!empty(App::$config['event'][$name])) {
+            foreach (App::$config['event'][$name] as $runner) {
                 self::excute($runner, $params);
             }
         }
@@ -354,13 +334,10 @@ abstract class Event
      */
     private static function excute($runner, $params = array())
     {
-        if (is_string($runner))
-        {
+        if (is_string($runner)) {
             $event = new $runner();
             $event->run();
-        }
-        else
-        {
+        } else {
             call_user_func_array($runner, $params);
         }
     }
@@ -561,28 +538,20 @@ class Route
         if ($path === '') return array(App::$config['route'][''], '', array());
         if ($path AND !preg_match('/^[\w\-~\/\.]{1,400}$/', $path)) $path = '404';
 
-        foreach (App::$config['route'] as $route => $controller)
-        {
+        foreach (App::$config['route'] as $route => $controller) {
             if (!$route) continue;
 
-            if ($route{0} === '/')
-            {
-                if (preg_match($route, $path, $matches))
-                {
+            if ($route{0} === '/') {
+                if (preg_match($route, $path, $matches)) {
                     $complete = array_shift($matches);
                     $params = explode('/', trim(mb_substr($path, mb_strlen($complete)), '/'));
-                    if ($params[0])
-                    {
+                    if ($params[0]) {
                         foreach ($matches as $match) array_unshift($params, $match);
-                    }
-                    else $params = $matches;
+                    } else $params = $matches;
                     return array($controller, $complete, $params);
                 }
-            }
-            else
-            {
-                if (mb_substr($path, 0, mb_strlen($route)) === $route)
-                {
+            } else {
+                if (mb_substr($path, 0, mb_strlen($route)) === $route) {
                     $params = explode('/', trim(mb_substr($path, mb_strlen($route)), '/'));
                     return array($controller, $route, $params);
                 }
@@ -640,8 +609,7 @@ class Request
      */
     public static function url()
     {
-        if (!self::$url)
-        {
+        if (!self::$url) {
             self::$url = (strtolower(getenv('HTTPS')) == 'on' ? 'https' : 'http') . '://' . getenv('HTTP_HOST') . getenv('REQUEST_URI');
         }
 
@@ -689,8 +657,7 @@ class Request
      */
     public static function trackId()
     {
-        if (!self::$track_id)
-        {
+        if (!self::$track_id) {
             self::$track_id = md5(uniqid());
         }
 
@@ -730,26 +697,20 @@ class Request
      */
     public static function header($key = null)
     {
-        if (!self::$headers)
-        {
+        if (!self::$headers) {
             $headers = array();
-            foreach ($_SERVER as $key => $value)
-            {
-                if ('HTTP_' === substr($key, 0, 5))
-                {
+            foreach ($_SERVER as $key => $value) {
+                if ('HTTP_' === substr($key, 0, 5)) {
                     $headers[strtolower(substr($key, 5))] = $value;
-                }
-                elseif (in_array($key, array('CONTENT_LENGTH',
-                                             'CONTENT_MD5',
-                                             'CONTENT_TYPE'))
-                )
-                {
+                } elseif (in_array($key, array('CONTENT_LENGTH',
+                    'CONTENT_MD5',
+                    'CONTENT_TYPE'))
+                ) {
                     $headers[strtolower($key)] = $value;
                 }
             }
 
-            if (isset($_SERVER['PHP_AUTH_USER']))
-            {
+            if (isset($_SERVER['PHP_AUTH_USER'])) {
                 $pass = isset($_SERVER['PHP_AUTH_PW']) ? $_SERVER['PHP_AUTH_PW'] : '';
                 $headers['authorization'] = 'Basic ' . base64_encode($_SERVER['PHP_AUTH_USER'] . ':' . $pass);
             }
@@ -852,12 +813,9 @@ class Response
      */
     public static function status($status = NULL)
     {
-        if ($status === NULL)
-        {
+        if ($status === NULL) {
             return self::$status;
-        }
-        elseif (array_key_exists($status, self::$messages))
-        {
+        } elseif (array_key_exists($status, self::$messages)) {
             return self::$status = (int)$status;
         }
         else throw new Exception('Unknown status :value', array(':value' => $status));
@@ -875,13 +833,10 @@ class Response
      */
     public static function header($key = NULL, $value = NULL)
     {
-        if ($key === NULL)
-        {
+        if ($key === NULL) {
             return self::$headers;
-        }
-        elseif ($value === NULL) return self::$headers[$key];
-        else
-        {
+        } elseif ($value === NULL) return self::$headers[$key];
+        else {
             return self::$headers[$key] = $value;
         }
     }
@@ -959,8 +914,7 @@ class Cli
         $options = func_get_args();
         $values = array();
 
-        for ($i = 1; $i < $_SERVER['argc']; $i++)
-        {
+        for ($i = 1; $i < $_SERVER['argc']; $i++) {
             if (!isset($_SERVER['argv'][$i])) break;
 
             $opt = $_SERVER['argv'][$i];
@@ -969,8 +923,7 @@ class Cli
 
             if (strpos($opt, '=')) {
                 list ($opt, $value) = explode('=', $opt, 2);
-            }
-            else $value = NULL;
+            } else $value = NULL;
 
             if (in_array($opt, $options)) $values[$opt] = $value;
         }
@@ -1074,27 +1027,20 @@ class I18n
         $best_lang = $languages[0];
         $best_q_val = 0;
 
-        foreach ($hits as $arr)
-        {
+        foreach ($hits as $arr) {
             $lang_prefix = strtolower($arr[1]);
-            if (!empty($arr[3]))
-            {
+            if (!empty($arr[3])) {
                 $lang_range = strtolower($arr[3]);
                 $language = $lang_prefix . "-" . $lang_range;
-            }
-            else $language = $lang_prefix;
+            } else $language = $lang_prefix;
             $q_value = 1.0;
             if (!empty($arr[5])) $q_value = floatval($arr[5]);
 
-            if (in_array($language, $languages) && ($q_value > $best_q_val))
-            {
+            if (in_array($language, $languages) && ($q_value > $best_q_val)) {
                 $best_lang = $language;
                 $best_q_val = $q_value;
-            }
-            else
-            {
-                if (in_array($lang_prefix, $languages) && (($q_value * 0.9) > $best_q_val))
-                {
+            } else {
+                if (in_array($lang_prefix, $languages) && (($q_value * 0.9) > $best_q_val)) {
                     $best_lang = $lang_prefix;
                     $best_q_val = $q_value * 0.9;
                 }
@@ -1127,10 +1073,8 @@ class I18n
             self::$config['dir'] . '/' . strstr($lang, '-', true) . '.php',
         );
 
-        foreach ($files as $file)
-        {
-            if (file_exists($file))
-            {
+        foreach ($files as $file) {
+            if (file_exists($file)) {
                 $table = include($file);
                 break;
             }
@@ -1160,11 +1104,11 @@ class Log
     protected static $messages = array();
     protected static $filename = ':level.log';
     private static $levels = array(
-        'debug'    => self::LEVEL_DEBUG,
-        'info'     => self::LEVEL_INFO,
-        'warn'     => self::LEVEL_WARN,
-        'error'    => self::LEVEL_ERROR,
-        'emerg'    => self::LEVEL_EMERG
+        'debug' => self::LEVEL_DEBUG,
+        'info'  => self::LEVEL_INFO,
+        'warn'  => self::LEVEL_WARN,
+        'error' => self::LEVEL_ERROR,
+        'emerg' => self::LEVEL_EMERG
     );
 
     /**
@@ -1241,8 +1185,7 @@ class Log
         $log_filename = empty(self::$config['filename']) ? self::$filename : self::$config['filename'];
         $dir_exists = array();
 
-        foreach (self::$messages as $message)
-        {
+        foreach (self::$messages as $message) {
             $replace = array();
             foreach ($message as $k => $v) $replace[':' . $k] = $v;
 
@@ -1251,13 +1194,10 @@ class Log
 
             $filename = self::$config['dir'] . '/' . strtr($log_filename, $replace);
             $dir = dirname($filename);
-            if (!in_array($dir, $dir_exists))
-            {
-                if (!is_dir($dir))
-                {
+            if (!in_array($dir, $dir_exists)) {
+                if (!is_dir($dir)) {
                     if (mkdir($dir, 0777, true)) $dir_exists[] = $dir;
-                }
-                else $dir_exists[] = $dir;
+                } else $dir_exists[] = $dir;
             }
 
             if (in_array($dir, $dir_exists)) file_put_contents($filename, $text . "\n", FILE_APPEND);

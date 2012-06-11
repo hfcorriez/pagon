@@ -27,12 +27,12 @@ class Front extends \Controller
         $method = strtolower($_SERVER['REQUEST_METHOD']);
         $this->{$method}();
     }
-    
+
     public function before()
     {
         //doing something after run
     }
-    
+
     public function after()
     {
         echo $this->_body;

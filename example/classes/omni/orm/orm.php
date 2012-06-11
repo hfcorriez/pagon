@@ -22,7 +22,7 @@ class Orm extends Model
     {
         list($sql, $params) = static::db()->select('*', static::$_table, array(static::$_key => $id));
         $data = static::db()->row($sql, $params);
-        return new self($data ? (array) $data : array(static::$_key => $id));
+        return new self($data ? (array)$data : array(static::$_key => $id));
     }
 
     public static function db()
@@ -32,8 +32,7 @@ class Orm extends Model
 
     public function __construct(array $data)
     {
-        foreach ($data as $key => $value)
-        {
+        foreach ($data as $key => $value) {
             if (property_exists($this, $key)) $this->{$key} = $value;
         }
         $this->_data = $data;
@@ -53,10 +52,8 @@ class Orm extends Model
     public function getChanged()
     {
         $changed = array();
-        foreach ($this->_data as $key => $value)
-        {
-            if (!property_exists($this, $key))
-            {
+        foreach ($this->_data as $key => $value) {
+            if (!property_exists($this, $key)) {
                 $changed[$key] = null;
                 continue;
             }
@@ -67,8 +64,7 @@ class Orm extends Model
 
     public function isChanged()
     {
-        foreach ($this->_data as $key => $value)
-        {
+        foreach ($this->_data as $key => $value) {
             if (!property_exists($this, $key)) return true;
             if ($this->{$key} !== $value) return true;
         }
