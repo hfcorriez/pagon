@@ -3,7 +3,7 @@
 $config = array(
     'classpath' => array(
         ''     => APPPATH . '/classes',
-        'Twig_' => APPPATH . '/vendor/Twig',
+        'Twig_' => APPPATH . '/vendor',
     ),
     'viewpath'  => APPPATH . '/views',
     'error'     => true,

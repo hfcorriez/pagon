@@ -185,7 +185,6 @@ class App
 
                 if (strtolower(substr($class, 0, strlen($prefix))) == strtolower($prefix)) {
                     array_unshift($available_path, $path);
-                    $class = trim(substr($class, strlen($prefix)), '\\');
                     break;
                 }
             }
@@ -193,8 +192,16 @@ class App
             $available_path = array(self::$config['classpath']);
         }
 
+        $file_name = '';
+        if ($last_pos = strripos($class, '\\')) {
+            $namespace = substr($class, 0, $last_pos);
+            $class = substr($class, $last_pos + 1);
+            $file_name  = str_replace('\\', DIRECTORY_SEPARATOR, $namespace) . DIRECTORY_SEPARATOR;
+        }
+        $file_name .= str_replace('_', DIRECTORY_SEPARATOR, $class) . '.php';
+
         foreach ($available_path as $path) {
-            $file = stream_resolve_include_path($path . '/' . strtolower(str_replace('\\', '/', $class) . '.php'));
+            $file = stream_resolve_include_path($path . DIRECTORY_SEPARATOR . $file_name);
             if ($file) {
                 require $file;
                 break;
