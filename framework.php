@@ -172,6 +172,7 @@ class App
      * @static
      *
      * @param $class
+     * @return bool
      */
     public static function __autoload($class)
     {
@@ -204,11 +205,13 @@ class App
             $file = stream_resolve_include_path($path . DIRECTORY_SEPARATOR . $file_name);
             if ($file) {
                 require $file;
+                return true;
                 break;
             }
         }
 
         Event::add(EVENT_AUTOLOAD, $class);
+        return false;
     }
 
     /**
