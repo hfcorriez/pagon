@@ -29,9 +29,12 @@ const EVENT_AUTOLOAD = 'autoload';
 class App
 {
     public static $config;
-    private static $_init = false;
+    public static $modules = array();
+
     private static $start_time = null;
     private static $start_memory = null;
+
+    private static $_init = false;
 
     /**
      * App init
@@ -64,7 +67,25 @@ class App
     }
 
     /**
-     * Check sapi
+     * Load Modules
+     *
+     * @static
+     * @param array $modules
+     */
+    public static function modules()
+    {
+        $modules = func_get_args();
+        foreach ($modules as $module)
+        {
+            if (in_array($module, self::$modules)) continue;
+            // Module must implements static init function.
+            $module::init();
+            self::$modules[] = $module;
+        }
+    }
+
+    /**
+     * Check if clic
      *
      * @static
      * @return bool
@@ -197,7 +218,7 @@ class App
         if ($last_pos = strripos($class, '\\')) {
             $namespace = substr($class, 0, $last_pos);
             $class = substr($class, $last_pos + 1);
-            $file_name  = str_replace('\\', DIRECTORY_SEPARATOR, $namespace) . DIRECTORY_SEPARATOR;
+            $file_name = str_replace('\\', DIRECTORY_SEPARATOR, $namespace) . DIRECTORY_SEPARATOR;
         }
         $file_name .= str_replace('_', DIRECTORY_SEPARATOR, $class) . '.php';
 
