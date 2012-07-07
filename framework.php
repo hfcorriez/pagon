@@ -366,8 +366,7 @@ abstract class Event
     private static function execute($runner, $params = array())
     {
         if (is_string($runner)) {
-            $event = new $runner();
-            $event->run();
+            call_user_func_array(array(new $runner(), 'run'), $params);
         } else {
             call_user_func_array($runner, $params);
         }
