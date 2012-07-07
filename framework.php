@@ -40,7 +40,6 @@ class App
      * App init
      *
      * @static
-     *
      * @param array $config
      */
     public static function init($config = array())
@@ -75,8 +74,7 @@ class App
     public static function modules()
     {
         $modules = func_get_args();
-        foreach ($modules as $module)
-        {
+        foreach ($modules as $module) {
             if (in_array($module, self::$modules)) continue;
             // Module must implements static init function.
             $module::init();
@@ -191,7 +189,6 @@ class App
      * Auto load class
      *
      * @static
-     *
      * @param $class
      * @return bool
      */
@@ -239,12 +236,10 @@ class App
      * Error handler for app
      *
      * @static
-     *
      * @param $type
      * @param $message
      * @param $file
      * @param $line
-     *
      * @throws ErrorException
      */
     public static function __error($type, $message, $file, $line)
@@ -257,7 +252,6 @@ class App
      * Exception handler for app
      *
      * @static
-     *
      * @param \Exception $e
      */
     public static function __exception(\Exception $e)
@@ -329,7 +323,6 @@ abstract class Event
      * Register event on $name
      *
      * @static
-     *
      * @param $name
      * @param $runner
      */
@@ -342,7 +335,6 @@ abstract class Event
      * Add event trigger
      *
      * @static
-     *
      * @param $name
      */
     public static function add($name)
@@ -359,7 +351,6 @@ abstract class Event
      * Excute runner for event point
      *
      * @static
-     *
      * @param       $runner
      * @param array $params
      */
@@ -404,8 +395,7 @@ abstract class Model
     public function __construct(array $data = array())
     {
         foreach ($data as $key => $value) {
-            if ($this->__isValidProperty($key))
-            {
+            if ($this->__isValidProperty($key)) {
                 $this->{$key} = $value;
                 $this->_data[$key] = $value;
             }
@@ -467,7 +457,7 @@ abstract class Model
     /**
      * Forbidden set non-exists property
      *
-     * @param $key
+     * @param        $key
      * @param string $value
      * @throws Exception
      */
@@ -524,10 +514,8 @@ abstract class Controller
      * Factory a controller
      *
      * @static
-     *
      * @param       $controller
      * @param array $params
-     *
      * @return mixed
      */
     final public static function factory($controller, $params = array())
@@ -553,9 +541,7 @@ class View
      * Factory a view
      *
      * @static
-     *
      * @param $view
-     *
      * @return mixed|View
      */
     final public static function factory($view)
@@ -579,7 +565,6 @@ class View
      * Set variable for view
      *
      * @param $array
-     *
      * @return View
      */
     public function set($array)
@@ -603,7 +588,6 @@ class View
      * Get assign value for view
      *
      * @param $key
-     *
      * @return mixed
      */
     public function __get($key)
@@ -634,7 +618,6 @@ class Route
      * Register a route for path
      *
      * @static
-     *
      * @param $path
      * @param $runner
      */
@@ -647,9 +630,7 @@ class Route
      * Parse site path
      *
      * @static
-     *
      * @param $path
-     *
      * @return array
      * @throws Exception
      */
@@ -813,9 +794,7 @@ class Request
      * Get header or headers
      *
      * @static
-     *
      * @param null $key
-     *
      * @return mixed
      */
     public static function header($key = null)
@@ -912,9 +891,7 @@ class Response
      * Set body
      *
      * @static
-     *
      * @param string $content
-     *
      * @return string
      */
     public static function body($content = NULL)
@@ -928,9 +905,7 @@ class Response
      * Set status code
      *
      * @static
-     *
      * @param int $status
-     *
      * @return int|Response
      * @throws Exception
      */
@@ -948,10 +923,8 @@ class Response
      * Set header
      *
      * @static
-     *
      * @param null $key
      * @param null $value
-     *
      * @return array
      */
     public static function header($key = NULL, $value = NULL)
@@ -979,7 +952,6 @@ class Response
      * Send headers
      *
      * @static
-     *
      * @param bool $replace
      */
     public static function sendHeaders($replace = FALSE)
@@ -1029,7 +1001,6 @@ class Cli
      *
      * @param   string  option name
      * @param   ...
-     *
      * @return  array
      */
     public static function options()
@@ -1060,7 +1031,6 @@ class Cli
      * @param string      $text       to color
      * @param string      $color      of text
      * @param bool|string $bold       color
-     *
      * @return string
      */
     public static function colorize($text, $color, $bold = FALSE)
@@ -1085,9 +1055,7 @@ class I18n
      * Init i18n config
      *
      * @static
-     *
      * @param $config
-     *
      * @throws Exception
      */
     public static function init()
@@ -1103,9 +1071,7 @@ class I18n
      * Get or set language
      *
      * @static
-     *
      * @param null|string $lang
-     *
      * @return string
      */
     public static function lang($lang = NULL)
@@ -1118,10 +1084,8 @@ class I18n
      * Get words tranlation
      *
      * @static
-     *
      * @param             $string
      * @param null|string $lang
-     *
      * @return string
      */
     public static function get($string, $lang = NULL)
@@ -1135,9 +1099,7 @@ class I18n
      * Automatic match best language
      *
      * @static
-     *
      * @param array $languages
-     *
      * @return string
      */
     public static function preferLanguage($languages = array())
@@ -1176,9 +1138,7 @@ class I18n
      * Load language table
      *
      * @static
-     *
      * @param $lang
-     *
      * @return array
      */
     private static function load($lang)
@@ -1256,7 +1216,6 @@ class Log
      * call level name as method
      *
      * @static
-     *
      * @param $name
      * @param $arguments
      */
@@ -1269,11 +1228,9 @@ class Log
      * Record log
      *
      * @static
-     *
      * @param      $text
      * @param int  $level
      * @param null $tag
-     *
      * @return bool
      */
     public static function write($text, $level = self::LEVEL_INFO, $tag = null)
@@ -1334,7 +1291,6 @@ class Log
  * @param            $string
  * @param array|null $values
  * @param string     $lang
- *
  * @return string
  */
 function __($string, array $values = NULL, $lang = 'en')
