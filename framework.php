@@ -350,7 +350,7 @@ abstract class Event
         $params = array_slice(func_get_args(), 1);
         if (!empty(App::$config['event'][$name])) {
             foreach (App::$config['event'][$name] as $runner) {
-                self::excute($runner, $params);
+                self::execute($runner, $params);
             }
         }
     }
@@ -363,7 +363,7 @@ abstract class Event
      * @param       $runner
      * @param array $params
      */
-    private static function excute($runner, $params = array())
+    private static function execute($runner, $params = array())
     {
         if (is_string($runner)) {
             $event = new $runner();
