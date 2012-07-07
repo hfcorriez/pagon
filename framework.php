@@ -69,7 +69,7 @@ class App
      * Load Modules
      *
      * @static
-     * @param array $modules
+     * @internal param array $modules
      */
     public static function modules()
     {
@@ -174,7 +174,7 @@ class App
     }
 
     /**
-     * Restore error and exception hanlders
+     * Restore error and exception handlers
      *
      * @static
 
@@ -553,6 +553,7 @@ class View
      * Constrct a view
      *
      * @param $view
+     * @throws Exception
      */
     public function __construct($view)
     {
@@ -1055,8 +1056,6 @@ class I18n
      * Init i18n config
      *
      * @static
-     * @param $config
-     * @throws Exception
      */
     public static function init()
     {
