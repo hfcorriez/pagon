@@ -71,13 +71,19 @@ class App
      * @static
      * @internal param array $modules
      */
-    public static function modules()
+    public static function modules($modules)
     {
-        $modules = func_get_args();
-        foreach ($modules as $module) {
+        foreach ($modules as $k=> $v) {
+            $config = null;
+            if (is_int($k)) {
+                $module = $v;
+            } else {
+                $module = $k;
+                $config = $v;
+            }
             if (in_array($module, self::$modules)) continue;
             // Module must implements static init function.
-            $module::init();
+            $module::init($config);
             self::$modules[] = $module;
         }
     }

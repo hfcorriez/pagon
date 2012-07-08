@@ -5,7 +5,7 @@ require __DIR__ . '/../framework.php';
 define('APPPATH', __DIR__);
 
 App::init(include('config/config.php'));
-App::modules('I18N', 'Log');
+App::modules(array('I18N', 'Log'));
 
 Route::on('about', function()
 {
