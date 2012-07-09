@@ -57,7 +57,7 @@ class App
         if (!empty($config['timezone'])) date_default_timezone_set($config['timezone']);
         if (!isset($config['error']) || $config['error'] === true) self::registerErrorHandler();
 
-        self::$start_time = microtime(true);;
+        self::$start_time = microtime(true);
 
         self::$_init = true;
         Event::add(EVENT_INIT, $config);
