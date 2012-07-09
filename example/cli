@@ -8,17 +8,17 @@ define('APPPATH', __DIR__);
 
 App::init(
     array(
-         'classpath' => APPPATH . '/classes',
+         'classpath' => APPPATH . '/src',
     )
 );
 
 Route::on('', function(){
-    Controller::factory('\Controller\Cli\Help');
+    Controller::factory('\Example\Controller\Cli\Help');
 });
 
 Route::on('404', function()
 {
-    Controller::factory('\Controller\Cli\Unknown');
+    Controller::factory('\Example\Controller\Cli\Unknown');
 });
 
 Route::on('debug', function()

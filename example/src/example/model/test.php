@@ -1,6 +1,6 @@
 <?php
 
-namespace Model;
+namespace Example\Model;
 
 class Test extends \Omni\Orm
 {

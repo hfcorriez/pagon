@@ -2,7 +2,7 @@
 
 $config = array(
     'classpath' => array(
-        ''     => APPPATH . '/classes',
+        ''     => APPPATH . '/src',
         'Twig_' => APPPATH . '/vendor',
     ),
     'viewpath'  => APPPATH . '/views',
@@ -10,10 +10,10 @@ $config = array(
 );
 
 $config['route'] = array(
-    '404'   => '\Controller\Front\Page404',
-    'error' => '\Controller\Front\Page404',
+    '404'   => '\Example\Controller\Front\Page404',
+    'error' => '\Example\Controller\Front\Page404',
 
-    ''      => '\Controller\Front\Index',
+    ''      => '\Example\Controller\Front\Index',
     'debug' => function()
     {
         var_dump(func_get_args());

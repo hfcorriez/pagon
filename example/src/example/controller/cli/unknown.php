@@ -1,8 +1,8 @@
 <?php
 
-namespace Controller\Cli;
+namespace Example\Controller\Cli;
 
-class Unknown extends \Controller\Cli
+class Unknown extends \Example\Controller\Cli
 {
     public function run()
     {

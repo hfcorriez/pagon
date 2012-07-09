@@ -1,8 +1,8 @@
 <?php
 
-namespace Controller\Front;
+namespace Example\Controller\Front;
 
-class Index extends \Controller\Front
+class Index extends \Example\Controller\Front
 {
     public function get()
     {

@@ -1,6 +1,6 @@
 <?php
 
-namespace Controller;
+namespace Example\Controller;
 
 class Front extends \Controller
 {

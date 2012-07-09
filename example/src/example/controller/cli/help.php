@@ -1,8 +1,8 @@
 <?php
 
-namespace Controller\Cli;
+namespace Example\Controller\Cli;
 
-class Help extends \Controller\Cli
+class Help extends \Example\Controller\Cli
 {
     public function run()
     {
