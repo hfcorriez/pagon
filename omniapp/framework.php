@@ -32,7 +32,6 @@ class App
     public static $modules = array();
 
     private static $start_time = null;
-    private static $start_memory = null;
 
     private static $_init = false;
 
@@ -58,8 +57,7 @@ class App
         if (!empty($config['timezone'])) date_default_timezone_set($config['timezone']);
         if (!isset($config['error']) || $config['error'] === true) self::registerErrorHandler();
 
-        self::$start_time = $_SERVER['REQUEST_TIME'];
-        self::$start_memory = memory_get_usage();
+        self::$start_time = microtime(true);;
 
         self::$_init = true;
         Event::add(EVENT_INIT, $config);
@@ -123,17 +121,6 @@ class App
     public static function startTime()
     {
         return self::$start_time;
-    }
-
-    /**
-     * Get app start memory usage
-     *
-     * @static
-     * @return int
-     */
-    public static function startMemory()
-    {
-        return self::$start_memory;
     }
 
     /**
