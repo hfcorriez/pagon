@@ -69,7 +69,7 @@ class App
      * Load Modules
      *
      * @static
-     * @internal param array $modules
+     * @param array $modules
      */
     public static function modules($modules)
     {
@@ -89,7 +89,7 @@ class App
     }
 
     /**
-     * Check if clic
+     * Check if cli
      *
      * @static
      * @return bool
