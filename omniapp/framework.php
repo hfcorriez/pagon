@@ -213,7 +213,7 @@ class App
         $file_name .= str_replace('_', DIRECTORY_SEPARATOR, $class) . '.php';
 
         foreach ($available_path as $path) {
-            $file = stream_resolve_include_path($path . DIRECTORY_SEPARATOR . $file_name);
+            $file = stream_resolve_include_path(strtolower($path . DIRECTORY_SEPARATOR . $file_name));
             if ($file) {
                 require $file;
                 return true;
