@@ -12,14 +12,6 @@ namespace OmniApp;
 
 const VERSION = '0.1';
 
-const EVENT_INIT = 'init';
-const EVENT_RUN = 'run';
-const EVENT_END = 'end';
-const EVENT_ERROR = 'error';
-const EVENT_EXCEPTION = 'exception';
-const EVENT_SHUTDOWN = 'shutdown';
-const EVENT_AUTOLOAD = 'autoload';
-
 /*********************
  * core app
  ********************/
@@ -61,7 +53,7 @@ class App
         self::$start_time = microtime(true);
 
         self::$_init = true;
-        Event::add(EVENT_INIT, $config);
+        Event::add(EVENT::INIT, $config);
     }
 
     /**
@@ -144,7 +136,7 @@ class App
      */
     public static function run()
     {
-        Event::add(EVENT_RUN);
+        Event::add(EVENT::RUN);
         $path = self::isCli() ? join('/', array_slice($GLOBALS['argv'], 1)) : Request::path();
         list($controller, $route, $params) = Route::parse($path);
 
@@ -153,7 +145,7 @@ class App
         } else {
             call_user_func_array($controller, $params);
         }
-        Event::add(EVENT_END);
+        Event::add(EVENT::END);
     }
 
     /**
@@ -223,7 +215,6 @@ class App
             }
         }
 
-        Event::add(EVENT_AUTOLOAD, $class);
         return false;
     }
 
@@ -240,7 +231,7 @@ class App
     public static function __error($type, $message, $file, $line)
     {
         if (error_reporting() & $type) throw new \ErrorException($message, $type, 0, $file, $line);
-        Event::add(EVENT_ERROR, $type, $message, $file, $line);
+        Event::add(EVENT::ERROR, $type, $message, $file, $line);
     }
 
     /**
@@ -252,7 +243,7 @@ class App
     public static function __exception(\Exception $e)
     {
         echo $e;
-        Event::add(EVENT_EXCEPTION, $e);
+        Event::add(EVENT::EXCEPTION, $e);
     }
 
     /**
@@ -276,7 +267,7 @@ class App
                 self::__exception(new \ErrorException($error['message'], $error['type'], 0, $error['file'], $error['line']));
             }
         }
-        Event::add(EVENT_SHUTDOWN);
+        Event::add(EVENT::SHUTDOWN);
     }
 }
 
@@ -314,6 +305,13 @@ class ArrayObjectWrapper extends \ArrayObject
  */
 abstract class Event
 {
+    const INIT = 'INIT';
+    const RUN = 'RUN';
+    const END = 'END';
+    const ERROR = 'ERROR';
+    const EXCEPTION = 'EXCEPTION';
+    const SHUTDOWN = 'SHUTDOWN';
+
     /**
      * Register event on $name
      *
@@ -343,7 +341,7 @@ abstract class Event
     }
 
     /**
-     * Excute runner for event point
+     * Execute runner for event point
      *
      * @static
      * @param       $runner
@@ -545,15 +543,15 @@ class View
     }
 
     /**
-     * Constrct a view
+     * Construct a view
      *
      * @param $view
      * @throws \Exception
      */
     public function __construct($view)
     {
-        if (!App::$config['viewpath']) throw new \Exception('No viewpath found.');
-        $this->file = App::$config['viewpath'] . '/' . strtolower(trim($view, '/')) . '.php';
+        if (!App::$config['views']) throw new \Exception('No views found.');
+        $this->file = App::$config['views'] . '/' . strtolower(trim($view, '/')) . '.php';
         if (!is_file($this->file)) throw new \Exception('View file not exist: ' . $this->file);
     }
 
@@ -977,318 +975,4 @@ class Response
         self::sendHeaders();
         self::sendBody();
     }
-}
-
-/*********************
- * built-in modules
- ********************/
-
-/**
- * Cli
- */
-class Cli
-{
-    /**
-     * Returns one or more command-line options. Options are specified using
-     * standard CLI syntax:
-     *     php index.php --username=john.smith --password=secret --var="some value with spaces"
-     *     // Get the values of "username" and "password"
-     *     $auth = CLI::options('username', 'password');
-     *
-     * @param   string  option name
-     * @param   ...
-     * @return  array
-     */
-    public static function options()
-    {
-        $options = func_get_args();
-        $values = array();
-
-        for ($i = 1; $i < $_SERVER['argc']; $i++) {
-            if (!isset($_SERVER['argv'][$i])) break;
-
-            $opt = $_SERVER['argv'][$i];
-            if (substr($opt, 0, 2) !== '--') continue;
-            $opt = substr($opt, 2);
-
-            if (strpos($opt, '=')) {
-                list ($opt, $value) = explode('=', $opt, 2);
-            } else $value = NULL;
-
-            if (in_array($opt, $options)) $values[$opt] = $value;
-        }
-
-        return $values;
-    }
-
-    /**
-     * Color output text for the CLI
-     *
-     * @param string      $text       to color
-     * @param string      $color      of text
-     * @param bool|string $bold       color
-     * @return string
-     */
-    public static function colorize($text, $color, $bold = FALSE)
-    {
-        $colors = array_flip(array(30 => 'gray', 'red', 'green', 'yellow', 'blue', 'purple', 'cyan', 'white', 'black'));
-        return "\033[" . ($bold ? '1' : '0') . ';' . $colors[$color] . "m$text\033[0m";
-    }
-
-}
-
-/**
- * I18n
- */
-class I18n
-{
-    protected static $lang = 'en-US';
-    protected static $cache = array();
-    protected static $enable = false;
-    protected static $config;
-
-    /**
-     * Init i18n config
-     *
-     * @static
-     */
-    public static function init()
-    {
-        if (!isset(App::$config['i18n'])) return;
-
-        self::$config = &App::$config['i18n'];
-        if (self::$config['lang'] && self::$config['dir']) self::$enable = true;
-        self::lang(I18n::preferLanguage(self::$config['lang']));
-    }
-
-    /**
-     * Get or set language
-     *
-     * @static
-     * @param null|string $lang
-     * @return string
-     */
-    public static function lang($lang = NULL)
-    {
-        if ($lang) self::$lang = strtolower(str_replace(array(' ', '_'), '-', $lang));
-        return self::$lang;
-    }
-
-    /**
-     * Get words tranlation
-     *
-     * @static
-     * @param             $string
-     * @param null|string $lang
-     * @return string
-     */
-    public static function get($string, $lang = NULL)
-    {
-        if (!$lang) $lang = self::$lang;
-        $table = self::load($lang);
-        return isset($table[$string]) ? $table[$string] : $string;
-    }
-
-    /**
-     * Automatic match best language
-     *
-     * @static
-     * @param array $languages
-     * @return string
-     */
-    public static function preferLanguage($languages = array())
-    {
-        if (isset($_COOKIE['lang'])) return $_COOKIE['lang'];
-        if (!$languages) return 'en-US';
-
-        preg_match_all("/([[:alpha:]]{1,8})(-([[:alpha:]|-]{1,8}))?" . "(\s*;\s*q\s*=\s*(1\.0{0,3}|0\.\d{0,3}))?\s*(,|$)/i",
-            $_SERVER['HTTP_ACCEPT_LANGUAGE'], $hits, PREG_SET_ORDER);
-        $best_lang = $languages[0];
-        $best_q_val = 0;
-
-        foreach ($hits as $arr) {
-            $lang_prefix = strtolower($arr[1]);
-            if (!empty($arr[3])) {
-                $lang_range = strtolower($arr[3]);
-                $language = $lang_prefix . "-" . $lang_range;
-            } else $language = $lang_prefix;
-            $q_value = 1.0;
-            if (!empty($arr[5])) $q_value = floatval($arr[5]);
-
-            if (in_array($language, $languages) && ($q_value > $best_q_val)) {
-                $best_lang = $language;
-                $best_q_val = $q_value;
-            } else {
-                if (in_array($lang_prefix, $languages) && (($q_value * 0.9) > $best_q_val)) {
-                    $best_lang = $lang_prefix;
-                    $best_q_val = $q_value * 0.9;
-                }
-            }
-        }
-        return $best_lang;
-    }
-
-    /**
-     * Load language table
-     *
-     * @static
-     * @param $lang
-     * @return array
-     */
-    private static function load($lang)
-    {
-        if (isset(self::$cache[$lang])) return self::$cache[$lang];
-        if (!self::$enable) return false;
-
-        $table = array();
-        $parts = explode('-', $lang);
-        $path = implode('/', $parts);
-
-        $files = array(
-            self::$config['dir'] . '/' . $path . '.php',
-            self::$config['dir'] . '/' . $lang . '.php',
-            self::$config['dir'] . '/' . strstr($lang, '-', true) . '.php',
-        );
-
-        foreach ($files as $file) {
-            if (file_exists($file)) {
-                $table = include($file);
-                break;
-            }
-        }
-
-        return self::$cache[$lang] = $table;
-    }
-}
-
-/**
- * Log
- * @method static debug
- * @method static info
- * @method static warn
- * @method static error
- * @method static emerg
- */
-class Log
-{
-    const LEVEL_DEBUG = 0;
-    const LEVEL_INFO = 1;
-    const LEVEL_WARN = 2;
-    const LEVEL_ERROR = 3;
-    const LEVEL_EMERG = 4;
-
-    protected static $config;
-    protected static $messages = array();
-    protected static $filename = ':level.log';
-    private static $levels = array(
-        'debug' => self::LEVEL_DEBUG,
-        'info'  => self::LEVEL_INFO,
-        'warn'  => self::LEVEL_WARN,
-        'error' => self::LEVEL_ERROR,
-        'emerg' => self::LEVEL_EMERG
-    );
-
-    /**
-     * Init log config
-     *
-     * @static
-     * @internal param $config
-     */
-    public static function init()
-    {
-        self::$config = &App::$config['log'];
-        if (!isset(self::$config['dir'])) self::$config['dir'] = '.';
-        if (!isset(self::$config['level'])) self::$config['level'] = self::LEVEL_DEBUG;
-
-        Event::on(EVENT_SHUTDOWN, function()
-        {
-            Log::save();
-        });
-    }
-
-    /**
-     * call level name as method
-     *
-     * @static
-     * @param $name
-     * @param $arguments
-     */
-    public static function __callstatic($name, $arguments)
-    {
-        if (isset(self::$levels[$name])) self::write($arguments[0], self::$levels[$name], $name);
-    }
-
-    /**
-     * Record log
-     *
-     * @static
-     * @param      $text
-     * @param int  $level
-     * @param null $tag
-     * @return bool
-     */
-    public static function write($text, $level = self::LEVEL_INFO, $tag = null)
-    {
-        if ($level < self::$config['level']) return false;
-
-        $micro_time = microtime(true);
-        $message = array(
-            'id'       => Request::trackId(),
-            'time'     => $micro_time,
-            'text'     => $text,
-            'ip'       => getenv('REMOTE_ADDR'),
-            'level'    => $tag ? $tag : array_search($level, self::$levels),
-            'memory'   => memory_get_usage(),
-            'datetime' => date('Y-m-d H:i:s', $micro_time) . substr($micro_time - floor($micro_time), 1, 4),
-            'date'     => date('Y-m-d', floor($micro_time)),
-        );
-        self::$messages[] = $message;
-        return true;
-    }
-
-    /**
-     * Save log message
-     *
-     * @static
-     * @return bool
-     */
-    public static function save()
-    {
-        if (empty(self::$messages)) return;
-
-        $log_filename = empty(self::$config['filename']) ? self::$filename : self::$config['filename'];
-        $dir_exists = array();
-
-        foreach (self::$messages as $message) {
-            $replace = array();
-            foreach ($message as $k => $v) $replace[':' . $k] = $v;
-
-            $header = '[' . $message['datetime'] . '] [' . str_pad($message['level'], 7, ' ', STR_PAD_BOTH) . '] ';
-            $text = $header . str_replace("\n", "\n{$header}", trim($message['text'], "\n"));
-
-            $filename = self::$config['dir'] . '/' . strtr($log_filename, $replace);
-            $dir = dirname($filename);
-            if (!in_array($dir, $dir_exists)) {
-                if (!is_dir($dir)) {
-                    if (mkdir($dir, 0777, true)) $dir_exists[] = $dir;
-                } else $dir_exists[] = $dir;
-            }
-
-            if (in_array($dir, $dir_exists)) file_put_contents($filename, $text . "\n", FILE_APPEND);
-        }
-    }
-}
-
-/**
- * I18n translate function
- *
- * @param            $string
- * @param array|null $values
- * @param string     $lang
- * @return string
- */
-function __($string, array $values = NULL, $lang = 'en')
-{
-    if ($lang !== I18n::lang()) $string = I18n::get($string);
-    return empty($values) ? $string : strtr($string, $values);
 }
