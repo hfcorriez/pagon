@@ -6,8 +6,9 @@
  * @author    Corrie Zhao <hfcorriez@gmail.com>
  * @copyright (c) 2011 - 2012 OmniApp Framework
  * @license   http://www.apache.org/licenses/LICENSE-2.0
-
  */
+
+namespace OmniApp;
 
 const VERSION = '0.1';
 
@@ -79,6 +80,7 @@ class App
                 $module = $k;
                 $config = $v;
             }
+            if ($module{0} != '\\') $module = __NAMESPACE__ . '\\' . $module;
             if (in_array($module, self::$modules)) continue;
             // Module must implements static init function.
             $module::init($config);
@@ -233,7 +235,7 @@ class App
      * @param $message
      * @param $file
      * @param $line
-     * @throws ErrorException
+     * @throws \ErrorException
      */
     public static function __error($type, $message, $file, $line)
     {
@@ -281,7 +283,7 @@ class App
 /**
  * Omni ArrayObject implements object get and set.
  */
-class ArrayObjectWrapper extends ArrayObject
+class ArrayObjectWrapper extends \ArrayObject
 {
     public function __set($name, $val)
     {
@@ -398,7 +400,7 @@ abstract class Model
     /**
      * Save current values
      *
-     * @return
+     * @return void
      */
     public function save()
     {
@@ -452,22 +454,22 @@ abstract class Model
      *
      * @param        $key
      * @param string $value
-     * @throws Exception
+     * @throws \Exception
      */
     public function __set($key, $value = null)
     {
-        throw new Exception(__CLASS__ . " has no property named '$key'.");
+        throw new \Exception(__CLASS__ . " has no property named '$key'.");
     }
 
     /**
      * Forbidden get non-exists property
      *
      * @param $key
-     * @throws Exception
+     * @throws \Exception
      */
     public function __get($key)
     {
-        throw new Exception(__CLASS__ . " has no property named '$key'.");
+        throw new \Exception(__CLASS__ . " has no property named '$key'.");
     }
 
     /**
@@ -546,13 +548,13 @@ class View
      * Constrct a view
      *
      * @param $view
-     * @throws Exception
+     * @throws \Exception
      */
     public function __construct($view)
     {
-        if (!App::$config['viewpath']) throw new Exception('No viewpath found.');
+        if (!App::$config['viewpath']) throw new \Exception('No viewpath found.');
         $this->file = App::$config['viewpath'] . '/' . strtolower(trim($view, '/')) . '.php';
-        if (!is_file($this->file)) throw new Exception('View file not exist: ' . $this->file);
+        if (!is_file($this->file)) throw new \Exception('View file not exist: ' . $this->file);
     }
 
     /**
@@ -626,11 +628,11 @@ class Route
      * @static
      * @param $path
      * @return array
-     * @throws Exception
+     * @throws \Exception
      */
     public static function parse($path)
     {
-        if (empty(App::$config['route'])) throw new Exception('No routes found.');
+        if (empty(App::$config['route'])) throw new \Exception('No routes found.');
 
         $path = trim($path, '/');
         if ($path === '') return array(App::$config['route'][''], '', array());
@@ -656,7 +658,7 @@ class Route
             }
         }
 
-        if (!isset(App::$config['route']['404'])) throw new Exception('404 page found, but no 404 route found.');
+        if (!isset(App::$config['route']['404'])) throw new \Exception('404 page found, but no 404 route found.');
         return array(App::$config['route']['404'], $path, array($path));
     }
 }
@@ -901,7 +903,7 @@ class Response
      * @static
      * @param int $status
      * @return int|Response
-     * @throws Exception
+     * @throws \Exception
      */
     public static function status($status = NULL)
     {
@@ -910,7 +912,7 @@ class Response
         } elseif (array_key_exists($status, self::$messages)) {
             return self::$status = (int)$status;
         }
-        else throw new Exception('Unknown status :value', array(':value' => $status));
+        else throw new \Exception('Unknown status :value', array(':value' => $status));
     }
 
     /**
