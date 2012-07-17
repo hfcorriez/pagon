@@ -36,6 +36,7 @@ class App
      */
     public static function init($config = array())
     {
+        Event::fire(EVENT::INIT, $config);
         foreach (array('route', 'event') as $m) {
             if (!isset($config[$m])) $config[$m] = array();
         }
@@ -53,7 +54,6 @@ class App
         self::$start_time = microtime(true);
 
         self::$_init = true;
-        Event::add(EVENT::INIT, $config);
     }
 
     /**
@@ -136,7 +136,7 @@ class App
      */
     public static function run()
     {
-        Event::add(EVENT::RUN);
+        Event::fire(EVENT::RUN);
         $path = self::isCli() ? join('/', array_slice($GLOBALS['argv'], 1)) : Request::path();
         list($controller, $route, $params) = Route::parse($path);
 
@@ -145,7 +145,7 @@ class App
         } else {
             call_user_func_array($controller, $params);
         }
-        Event::add(EVENT::END);
+        Event::fire(EVENT::END);
     }
 
     /**
@@ -230,7 +230,6 @@ class App
     public static function __error($type, $message, $file, $line)
     {
         if (error_reporting() & $type) throw new \ErrorException($message, $type, 0, $file, $line);
-        Event::add(EVENT::ERROR, $type, $message, $file, $line);
     }
 
     /**
@@ -241,8 +240,8 @@ class App
      */
     public static function __exception(\Exception $e)
     {
+        Event::fire(EVENT::ERROR, $e);
         echo $e;
-        Event::add(EVENT::EXCEPTION, $e);
     }
 
     /**
@@ -253,6 +252,7 @@ class App
      */
     public static function __shutdown()
     {
+        Event::fire(EVENT::SHUTDOWN);
         if (!self::isInit()) return;
 
         if (self::$config['error']
@@ -266,7 +266,6 @@ class App
                 self::__exception(new \ErrorException($error['message'], $error['type'], 0, $error['file'], $error['line']));
             }
         }
-        Event::add(EVENT::SHUTDOWN);
     }
 }
 
@@ -308,7 +307,6 @@ abstract class Event
     const RUN = 'RUN';
     const END = 'END';
     const ERROR = 'ERROR';
-    const EXCEPTION = 'EXCEPTION';
     const SHUTDOWN = 'SHUTDOWN';
 
     /**
@@ -329,7 +327,7 @@ abstract class Event
      * @static
      * @param $name
      */
-    public static function add($name)
+    public static function fire($name)
     {
         $params = array_slice(func_get_args(), 1);
         if (!empty(App::$config['event'][$name])) {
