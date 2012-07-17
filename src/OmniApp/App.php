@@ -211,7 +211,6 @@ class App
             if ($file) {
                 require $file;
                 return true;
-                break;
             }
         }
 
