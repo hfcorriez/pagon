@@ -36,7 +36,7 @@ class App
      */
     public static function init($config = array())
     {
-        Event::fire(EVENT::INIT, $config);
+        Event::fire(Event::INIT, $config);
         foreach (array('route', 'event') as $m) {
             if (!isset($config[$m])) $config[$m] = array();
         }
@@ -136,7 +136,7 @@ class App
      */
     public static function run()
     {
-        Event::fire(EVENT::RUN);
+        Event::fire(Event::RUN);
         $path = self::isCli() ? join('/', array_slice($GLOBALS['argv'], 1)) : Request::path();
         list($controller, $route, $params) = Route::parse($path);
 
@@ -145,7 +145,7 @@ class App
         } else {
             call_user_func_array($controller, $params);
         }
-        Event::fire(EVENT::END);
+        Event::fire(Event::END);
     }
 
     /**
@@ -240,7 +240,7 @@ class App
      */
     public static function __exception(\Exception $e)
     {
-        Event::fire(EVENT::ERROR, $e);
+        Event::fire(Event::ERROR, $e);
         echo $e;
     }
 
@@ -252,7 +252,7 @@ class App
      */
     public static function __shutdown()
     {
-        Event::fire(EVENT::SHUTDOWN);
+        Event::fire(Event::SHUTDOWN);
         if (!self::isInit()) return;
 
         if (self::$config['error']
