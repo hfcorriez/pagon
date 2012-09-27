@@ -1,11 +1,13 @@
 <?php
 
-namespace OmniApp {
+namespace OmniApp\Module {
+
+    use \OmniApp\App;
 
     /**
-     * I18n
+     * I18N
      */
-    class I18n
+    class I18N
     {
         protected static $lang = 'en-US';
         protected static $cache = array();
@@ -25,7 +27,7 @@ namespace OmniApp {
             if (!self::$config) return;
 
             if (self::$config['lang'] && self::$config['dir']) self::$enable = true;
-            self::lang(I18n::preferLanguage(self::$config['lang']));
+            self::lang(I18N::preferLanguage(self::$config['lang']));
         }
 
         /**
@@ -130,7 +132,7 @@ namespace OmniApp {
 }
 
 /**
- * I18n translate function
+ * I18N translate function
  *
  * @param            $string
  * @param array|null $values
@@ -140,7 +142,7 @@ namespace OmniApp {
 namespace {
     function __($string, array $values = NULL, $lang = 'en')
     {
-        if ($lang !== \OmniApp\I18n::lang()) $string = \OmniApp\I18n::get($string);
+        if ($lang !== \OmniApp\Module\I18N::lang()) $string = \OmniApp\Module\I18N::get($string);
         return empty($values) ? $string : strtr($string, $values);
     }
 }

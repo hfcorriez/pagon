@@ -1,6 +1,10 @@
 <?php
 
-namespace OmniApp;
+namespace OmniApp\Module;
+
+use OmniApp\Event;
+use OmniApp\App;
+use OmniApp\Http\Request;
 
 /**
  * Log
@@ -43,8 +47,7 @@ class Log
         if (!isset(self::$config['dir'])) self::$config['dir'] = '.';
         if (!isset(self::$config['level'])) self::$config['level'] = self::LEVEL_DEBUG;
 
-        Event::on(EVENT::SHUTDOWN, function()
-        {
+        Event::on(EVENT::SHUTDOWN, function () {
             Log::save();
         });
     }

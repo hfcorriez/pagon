@@ -1,6 +1,6 @@
 <?php
 
-namespace OmniApp;
+namespace OmniApp\Helper;
 
 
 /**
