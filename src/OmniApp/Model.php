@@ -4,10 +4,13 @@ namespace OmniApp;
 
 abstract class Model
 {
-    /**
-     * @var \Database
-     */
-    protected $_data;
+    public $id;
+
+    protected $_data = array();
+    protected $_previous = array();
+    protected $_properties = null;
+    protected $_defaults = array();
+    protected $_key = 'id';
 
     /**
      * Construct new model
@@ -16,12 +19,88 @@ abstract class Model
      */
     public function __construct(array $data = array())
     {
+        $this->buildProperties();
+
+        // Set defaults to data
+        if ($this->_defaults) {
+            $data += $this->_defaults;
+        }
+
+        // Loop to set data
         foreach ($data as $key => $value) {
-            if ($this->__isValidProperty($key)) {
+            if ($this->has($key)) {
                 $this->{$key} = $value;
                 $this->_data[$key] = $value;
             }
         }
+    }
+
+    /**
+     * Get property
+     *
+     * @param $key
+     * @return null|mixed
+     */
+    public function get($key)
+    {
+        if (!$this->has($key)) return null;
+
+        return $this->{$key};
+    }
+
+    /**
+     * Set one property or multiple properties
+     *
+     * @param $key
+     * @param $value
+     */
+    public function set($key, $value)
+    {
+        if (is_string($key)) {
+            if ($this->has($key)) $this->{$key} = $value;
+        } elseif (is_array($key)) {
+            foreach ($key as $k => $v) $this->set($k, $v);
+        }
+    }
+
+    /**
+     * Has property?
+     *
+     * @param $key
+     * @return bool
+     */
+    public function has($key)
+    {
+        return $this->hasProperty($key);
+    }
+
+    /**
+     * Del a property
+     *
+     * @param $key
+     * @return bool
+     */
+    public function del($key)
+    {
+        return $this->delProperty($key);
+    }
+
+    /**
+     * Clear all properties
+     */
+    public function clear()
+    {
+        foreach ($this->_properties as $key => $null) {
+            $this->delProperty($key);
+        }
+    }
+
+    /**
+     * Get key
+     */
+    public function key()
+    {
+        return $this->{$this->_key};
     }
 
     /**
@@ -31,8 +110,10 @@ abstract class Model
      */
     public function save()
     {
-        if (!$this->isChanged()) return;
-        $this->_data = $this->getChanged() + $this->_data;
+        if (!$this->hasChanged()) return;
+
+        $this->_previous = $this->_data;
+        $this->_data = $this->changed() + $this->_data;
     }
 
     /**
@@ -40,26 +121,104 @@ abstract class Model
      *
      * @return array
      */
-    public function getChanged()
+    public function changed()
     {
         $changed = array();
-        foreach ($this->_data as $key => $value) {
-            if ($this->{$key} !== $value) $changed[$key] = $this->$key;
+        foreach ($this->_properties as $key => $null) {
+            if ($this->_key === $key) continue;
+            if ($this->{$key} !== $this->data($key)) $changed[$key] = $this->$key;
         }
         return $changed;
     }
 
     /**
+     * Get defaults
+     *
+     * @param string $key
+     * @return array
+     */
+    public function defaults($key = null)
+    {
+        if ($key && !$this->has($key)) return null;
+
+        if ($key) {
+            return array_key_exists($key, $this->_defaults) ? $this->_defaults[$key] : null;
+        }
+
+        return $this->_defaults;
+    }
+
+    /**
+     * Get data
+     *
+     * @param string $key
+     * @return array|null
+     */
+    public function data($key = null)
+    {
+        if ($key && !$this->has($key)) return null;
+
+        if ($key) {
+            return array_key_exists($key, $this->_data) ? $this->_data[$key] : null;
+        }
+
+        return $this->_data;
+    }
+
+    /**
+     * Get previous data
+     *
+     * @param $key
+     * @return mixed
+     */
+    public function previous($key = null)
+    {
+        if ($key && !$this->has($key)) return null;
+
+        if ($key) {
+            return array_key_exists($key, $this->_previous) ? $this->_previous[$key] : null;
+        }
+
+        return $this->_previous;
+    }
+
+    /**
      * Check if changed
+     *
+     * @param $key
+     * @return bool
+     */
+    public function hasChanged($key = null)
+    {
+        if ($this->isNew()) return !empty($this->_data);
+        if ($key && !$this->has($key)) return false;
+
+        if ($key) {
+            return $this->{$key} !== $this->_data[$key];
+        } else {
+            foreach ($this->_data as $key => $value) {
+                if ($this->{$key} !== $value) return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Is valid?
+     */
+    public function isValid()
+    {
+        return true;
+    }
+
+    /**
+     * If new object?
      *
      * @return bool
      */
-    public function isChanged()
+    public function isNew()
     {
-        foreach ($this->_data as $key => $value) {
-            if ($this->{$key} !== $value) return true;
-        }
-        return false;
+        return $this->id ? true : false;
     }
 
     /**
@@ -67,10 +226,10 @@ abstract class Model
      *
      * @return array
      */
-    public function getAsArray()
+    public function toArray()
     {
         $data = array();
-        foreach ($this->_data as $key => $value) {
+        foreach ($this->_properties as $key => $null) {
             $data[$key] = $this->{$key};
         }
         return $data;
@@ -100,13 +259,84 @@ abstract class Model
     }
 
     /**
+     * Init properties
+     */
+    protected function buildProperties()
+    {
+        $this->_properties = array();
+        $vars = get_object_vars($this);
+        foreach ($vars as $key => $value) {
+            if (!self::_isValidProperty($key)) continue;
+            $this->_properties[$key] = $key;
+            $this->_data[$key] = $value;
+        }
+    }
+
+    /**
+     * Get properties
+     *
+     * @return array|null
+     */
+    protected function getProperties()
+    {
+        if (null === $this->_properties) {
+            $this->buildProperties();
+        }
+        return $this->_properties;
+    }
+
+    /**
+     * Has property?
+     *
+     * @param $key
+     * @return bool
+     */
+    protected function hasProperty($key)
+    {
+        $properties = &$this->getProperties();
+        return in_array($key, $properties);
+    }
+
+    /**
+     * Delete a property
+     *
+     * @param $key
+     * @return bool
+     */
+    protected function delProperty($key)
+    {
+        if ($this->hasProperty($key)) {
+            unset($this->{$key});
+            unset($this->_properties[$key]);
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Add a property
+     *
+     * @param $key
+     * @return bool
+     */
+    protected function addProperty($key)
+    {
+        if (!self::_isValidProperty($key)) return false;
+
+        $this->{$key} = null;
+        $this->_properties[$key] = $key;
+        return true;
+    }
+
+    /**
      * Valida property name
      *
      * @param $key
      * @return bool
      */
-    private function __isValidProperty($key)
+    private static function _isValidProperty($key)
     {
-        return $key{0} != '_' && property_exists($this, $key);
+        return is_string($key) && $key{0} != '_' && !is_numeric($key{0});
     }
+
 }
