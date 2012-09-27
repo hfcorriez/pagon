@@ -64,6 +64,7 @@ class Response
     protected static $cookies = array();
     protected static $content_type = 'text/html';
     protected static $charset = 'UTF-8';
+    protected static $length = 0;
 
     /**
      * Set body
@@ -72,11 +73,45 @@ class Response
      * @param string $content
      * @return string
      */
-    public static function body($content = NULL)
+    public static function body($content = null)
     {
-        if ($content === NULL) return self::$body;
+        if ($content !== null) self::write($content);
 
-        return self::$body = (string)$content;
+        return self::$body;
+    }
+
+    /**
+     * Get and set length
+     *
+     * @param  int|null $length
+     * @return int
+     */
+    public static function length($length = null)
+    {
+        if (!is_null($length)) {
+            self::$length = (int)$length;
+        }
+
+        return self::$length;
+    }
+
+    /**
+     * Write body
+     *
+     * @param      $body
+     * @param bool $replace
+     * @return string
+     */
+    public static function write($body, $replace = false)
+    {
+        if ($replace) {
+            self::$body = $body;
+        } else {
+            self::$body .= (string)$body;
+        }
+        self::$length = strlen(self::$body);
+
+        return self::$body;
     }
 
     /**
@@ -87,76 +122,152 @@ class Response
      * @return int|Response
      * @throws \Exception
      */
-    public static function status($status = NULL)
+    public static function status($status = null)
     {
-        if ($status === NULL) {
+        if ($status === null) {
             return self::$status;
         } elseif (array_key_exists($status, self::$messages)) {
             return self::$status = (int)$status;
-        }
-        else throw new \Exception('Unknown status :value', array(':value' => $status));
+        } else throw new \Exception('Unknown status :value', array(':value' => $status));
     }
 
     /**
      * Set header
      *
-     * @static
      * @param null $key
      * @param null $value
-     * @return array
+     * @return array|null
      */
-    public static function header($key = NULL, $value = NULL)
+    public static function header($key = null, $value = null)
     {
-        if ($key === NULL) {
+        if (func_num_args() === 0) {
             return self::$headers;
-        } elseif ($value === NULL) return self::$headers[$key];
-        else {
-            return self::$headers[$key] = $value;
+        } elseif (func_num_args() === 1) {
+            return self::$headers[$key];
         }
+        return self::$headers[strtoupper(str_replace('_', '-', $key))] = $value;
     }
 
     /**
-     * Get lenth of body
+     * Get or set cookie
      *
-     * @static
-     * @return int
+     * @param $key
+     * @param $value
+     * @return array|string|bool
      */
-    public static function length()
+    public static function cookie($key, $value)
     {
-        return strlen(self::$body);
+        if (func_num_args() === 0) {
+            return self::$headers;
+        } elseif (func_num_args() === 1) {
+            return self::$headers[$key];
+        }
+        return setcookie($key, $value) ? $value : false;
     }
 
     /**
-     * Send headers
+     * Redirect url
      *
-     * @static
-     * @param bool $replace
+     * @param     $url
+     * @param int $status
      */
-    public static function sendHeaders($replace = FALSE)
+    public static function redirect($url, $status = 302)
     {
-
-        header(Request::protocol() . ' ' . self::$status . ' ' . self::$messages[self::$status]);
-        foreach (self::$headers as $key => $value) header($key . ': ' . $value, $replace);
+        self::$status = $status;
+        self::$headers['Location'] = $url;
     }
 
     /**
-     * Send body
+     * Is empty?
      *
-     * @static
+     * @return bool
      */
-    public static function sendBody()
+    public static function isEmpty()
     {
-        echo self::$body;
+        return in_array(self::$status, array(201, 204, 304));
     }
 
     /**
-     * Send all
+     * Is 200 ok?
      *
-     * @static
+     * @return bool
      */
-    public static function send()
+    public static function isOk()
     {
-        self::sendHeaders();
-        self::sendBody();
+        return self::$status === 200;
+    }
+
+    /**
+     * Is successful?
+     *
+     * @return bool
+     */
+    public static function isSuccessful()
+    {
+        return self::$status >= 200 && self::$status < 300;
+    }
+
+    /**
+     * Is redirect?
+     *
+     * @return bool
+     */
+    public static function isRedirect()
+    {
+        return in_array(self::$status, array(301, 302, 303, 307));
+    }
+
+    /**
+     * Is forbidden?
+     *
+     * @return bool
+     */
+    public static function isForbidden()
+    {
+        return self::$status === 403;
+    }
+
+    /**
+     * Is found?
+     *
+     * @return bool
+     */
+    public static function isNotFound()
+    {
+        return self::$status === 404;
+    }
+
+    /**
+     * Is client error?
+     *
+     * @return bool
+     */
+    public static function isClientError()
+    {
+        return self::$status >= 400 && self::$status < 500;
+    }
+
+    /**
+     * Is server error?
+     *
+     * @return bool
+     */
+    public static function isServerError()
+    {
+        return self::$status >= 500 && self::$status < 600;
+    }
+
+    /**
+     * Get message by code
+     *
+     * @param $status
+     * @return null
+     */
+    public static function getMessage($status)
+    {
+        if (isset(self::$messages[$status])) {
+            return self::$messages[$status];
+        }
+        return null;
     }
 }

@@ -36,7 +36,7 @@ class App
      */
     public static function init($config = array())
     {
-        Event::fire(Event::INIT, $config);
+        Event::fire('init', $config);
         foreach (array('route', 'event') as $m) {
             if (!isset($config[$m])) $config[$m] = array();
         }
@@ -145,6 +145,16 @@ class App
     }
 
     /**
+     * Get root of application
+     *
+     * @return string
+     */
+    public static function root()
+    {
+        return rtrim(getenv('DOCUMENT_ROOT'), '/') . rtrim(Http\Request::rootUri(), '/') . '/';
+    }
+
+    /**
      * App run
      *
      * @static
@@ -152,7 +162,7 @@ class App
      */
     public static function run()
     {
-        Event::fire(Event::RUN);
+        Event::fire('run');
         $path = self::isCli() ? join('/', array_slice($GLOBALS['argv'], 1)) : Http\Request::path();
         list($controller, $route, $params) = Route::parse($path);
 
@@ -161,7 +171,18 @@ class App
         } else {
             call_user_func_array($controller, $params);
         }
-        Event::fire(Event::END);
+        Event::fire('end');
+    }
+
+    /**
+     * Event register
+     *
+     * @param $event
+     * @param $closure
+     */
+    public static function on($event, $closure)
+    {
+        Event::attach($event, $closure);
     }
 
     /**
@@ -187,6 +208,11 @@ class App
         restore_error_handler();
         restore_exception_handler();
     }
+
+    /******************
+     * Request Helper
+     ******************/
+
 
     /**
      * Auto load class
@@ -256,7 +282,7 @@ class App
      */
     public static function __exception(\Exception $e)
     {
-        Event::fire(Event::ERROR, $e);
+        Event::fire('error', $e);
         echo $e;
     }
 
@@ -268,7 +294,7 @@ class App
      */
     public static function __shutdown()
     {
-        Event::fire(Event::SHUTDOWN);
+        Event::fire('shutdown');
         if (!self::isInit()) return;
 
         if (self::$config['error']
