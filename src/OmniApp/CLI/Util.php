@@ -1,12 +1,12 @@
 <?php
 
-namespace OmniApp\Helper;
+namespace OmniApp\CLI;
 
 
 /**
  * Cli
  */
-class Cli
+class Util
 {
     /**
      * Returns one or more command-line options. Options are specified using

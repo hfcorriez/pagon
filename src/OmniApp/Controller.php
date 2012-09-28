@@ -21,6 +21,13 @@ abstract class Controller
     abstract function after();
 
     /**
+     * Run
+     *
+     * @return mixed
+     */
+    abstract function run();
+
+    /**
      * Factory a controller
      *
      * @static
@@ -30,13 +37,16 @@ abstract class Controller
      */
     final public static function factory($controller, $params = array())
     {
-        $controller = new $controller();
+        if (class_exists($controller) && is_subclass_of($controller, __CLASS__)) {
+            $controller = new $controller();
 
-        $controller->before();
-        call_user_func_array(array($controller, 'run'), $params);
-        $controller->after();
+            $controller->before();
+            call_user_func_array(array($controller, 'run'), $params);
+            $controller->after();
+            return $controller;
+        }
 
-        return $controller;
+        return false;
     }
 }
 

@@ -4,49 +4,70 @@ namespace OmniApp;
 
 class View
 {
-    private $file = NULL;
+    private $file;
+    private $data = array();
 
-    /**
-     * Factory a view
-     *
-     * @static
-     * @param $view
-     * @return mixed|View
-     */
-    final public static function factory($view)
-    {
-        return new $view();
-    }
+    protected static $path;
+    protected static $ext = 'php';
 
     /**
      * Construct a view
      *
-     * @param $view
+     * @param string $view
+     * @param array  $params
      * @throws \Exception
+     * @internal param \Exception $
+     * @return View
      */
-    public function __construct($view)
+    public function __construct($view, $params = array())
     {
-        if (!App::$config['views']) throw new \Exception('No views found.');
-        $this->file = App::$config['views'] . '/' . strtolower(trim($view, '/')) . '.php';
+        $this->file = trim(static::$path) . '/' . strtolower(trim($view, '/')) . '.' . static::$ext;
         if (!is_file($this->file)) throw new \Exception('View file not exist: ' . $this->file);
+        $this->data = $params;
+    }
+
+    /**
+     * Set ext
+     *
+     * @param string $ext
+     * @return void
+     */
+    public static function setExt($ext)
+    {
+        static::$ext = $ext;
+    }
+
+    /**
+     * Set path
+     *
+     * @param string $path
+     */
+    public static function setPath($path)
+    {
+        static::$path = $path;
     }
 
     /**
      * Set variable for view
      *
-     * @param $array
+     * @param array $array
      * @return View
      */
-    public function set($array)
+    public function set(array $array = array())
     {
-        foreach ($array as $key => $value) $this->$key = $value;
+        $this->data = $array + $this->data;
         return $this;
     }
 
+    /**
+     * render
+     *
+     * @return string
+     */
     public function render()
     {
         ob_start();
-        extract((array)$this);
+        extract((array)$this->data);
         include($this->file);
         return ob_get_clean();
     }
@@ -59,7 +80,7 @@ class View
      */
     public function __set($key, $value)
     {
-        $this->$key = $value;
+        $this->data[$key] = $value;
     }
 
     /**
@@ -70,11 +91,32 @@ class View
      */
     public function __get($key)
     {
-        return $this->$key;
+        return isset($this->data[$key]) ? $this->data[$key] : null;
     }
 
     /**
-     * Support output
+     * Is-set data?
+     *
+     * @param $key
+     * @return bool
+     */
+    public function __isset($key)
+    {
+        return isset($this->data[$key]);
+    }
+
+    /**
+     * Un-set data
+     *
+     * @param $key
+     */
+    public function __unset($key)
+    {
+        unset($this->data[$key]);
+    }
+
+    /**
+     * Output object
      *
      * @return string
      */

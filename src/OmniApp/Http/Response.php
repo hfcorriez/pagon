@@ -63,7 +63,7 @@ class Response
     protected static $body = '';
     protected static $cookies = array();
     protected static $content_type = 'text/html';
-    protected static $charset = 'UTF-8';
+    protected static $charset = 'utf-8';
     protected static $length = 0;
 
     /**
@@ -143,9 +143,25 @@ class Response
         if (func_num_args() === 0) {
             return self::$headers;
         } elseif (func_num_args() === 1) {
-            return self::$headers[$key];
+            return self::$headers[strtoupper(str_replace('_', '-', $key))];
+        } else {
+            return self::$headers[strtoupper(str_replace('_', '-', $key))] = $value;
         }
-        return self::$headers[strtoupper(str_replace('_', '-', $key))] = $value;
+    }
+
+    /**
+     * Set content type
+     *
+     * @param $type
+     * @return null
+     */
+    public static function contentType($type)
+    {
+        if ($type) {
+            self::header('Content-Type', strpos($type, 'charset') ? $type : $type . '; charset=' . self::$charset);
+        }
+
+        return self::header('Content-Type');
     }
 
     /**
@@ -163,6 +179,42 @@ class Response
             return self::$headers[$key];
         }
         return setcookie($key, $value) ? $value : false;
+    }
+
+    /**
+     * To json
+     *
+     * @param $data
+     */
+    public static function json($data)
+    {
+        self::contentType('application/json');
+        self::body(json_encode($data));
+    }
+
+    /**
+     * To jsonp
+     *
+     * @param $callback
+     * @param $data
+     */
+    public static function jsonp($callback, $data)
+    {
+        self::contentType('application/javascript');
+        self::body($callback . '(' . json_encode($data) . ');');
+    }
+
+    /**
+     * To xml
+     *
+     * @param object|array $data
+     * @param string       $root
+     * @param string       $item
+     */
+    public static function xml($data, $root = 'root', $item = 'item')
+    {
+        self::contentType('application/xml');
+        self::body(\OmniApp\Util\XML::fromArray($data, $root, $item));
     }
 
     /**
@@ -263,8 +315,10 @@ class Response
      * @param $status
      * @return null
      */
-    public static function getMessage($status)
+    public static function message($status = null)
     {
+        if (!$status) $status = self::$status;
+
         if (isset(self::$messages[$status])) {
             return self::$messages[$status];
         }

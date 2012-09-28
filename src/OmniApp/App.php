@@ -21,12 +21,18 @@ const VERSION = '0.1';
  */
 class App
 {
-    public static $config;
+    public static $config = array('route' => array());
     public static $modules = array();
+
+    /**
+     * @var Middleware[]
+     */
+    private static $middleware = array();
 
     private static $start_time = null;
 
     private static $_init = false;
+
 
     /**
      * App init
@@ -36,10 +42,7 @@ class App
      */
     public static function init($config = array())
     {
-        Event::fire('init', $config);
-        foreach (array('route', 'event') as $m) {
-            if (!isset($config[$m])) $config[$m] = array();
-        }
+        Event::fire('init');
 
         self::$config = $config;
 
@@ -49,51 +52,10 @@ class App
         iconv_set_encoding("internal_encoding", "UTF-8");
         mb_internal_encoding('UTF-8');
         if (!empty($config['timezone'])) date_default_timezone_set($config['timezone']);
-        if (!isset($config['error']) || $config['error'] === true) self::registerErrorHandler();
 
         self::$start_time = microtime(true);
 
         self::$_init = true;
-    }
-
-    /**
-     * Load Modules
-     *
-     * @static
-     * @param array $modules
-     */
-    public static function modules($modules)
-    {
-        foreach ($modules as $k=> $v) {
-            $config = null;
-            if (is_int($k)) {
-                $module = $v;
-            } else {
-                $module = $k;
-                $config = $v;
-            }
-            if ($module{0} != '\\') $module = __NAMESPACE__ . '\\' . $module;
-            if (in_array($module, self::$modules)) continue;
-            // Module must implements static init function.
-            $module::init($config);
-            self::$modules[] = $module;
-        }
-    }
-
-    /**
-     * Config get or set after init
-     *
-     * @param      $key
-     * @param null $value
-     * @return null
-     */
-    public static function config($key, $value = null)
-    {
-        if ($value === null) {
-            return self::$config[$key];
-        } else {
-            return self::$config[$key] = $value;
-        }
     }
 
     /**
@@ -134,14 +96,67 @@ class App
     }
 
     /**
+     * Get run time
+     *
+     * @return string
+     */
+    public static function runTime()
+    {
+        return number_format(microtime(true) - self::startTime(), 6);
+    }
+
+    /**
      * Is init?
      *
      * @static
      * @return bool
      */
-    public static function isInit()
+    public static function hasInit()
     {
         return self::$_init;
+    }
+
+    /**
+     * Config get or set after init
+     *
+     * @param      $key
+     * @param null $value
+     * @return null
+     */
+    public static function config($key, $value = null)
+    {
+        if ($value === null) {
+            return isset(self::$config[$key]) ? self::$config[$key] : null;
+        } else {
+            return self::$config[$key] = $value;
+        }
+    }
+
+    /**
+     * Add middleware
+     *
+     * @param Middleware $middleware
+     */
+    public static function add($middleware)
+    {
+        if (is_string($middleware) && class_exists($middleware) && is_subclass_of($middleware, __NAMESPACE__ . '\Middleware')) {
+            $middleware = new $middleware();
+        }
+        if (!empty(self::$middleware)) {
+            $middleware->setNext(self::$middleware[0]);
+        }
+        array_unshift(self::$middleware, $middleware);
+    }
+
+    /**
+     * Map route
+     *
+     * @param $path
+     * @param $runner
+     */
+    public static function map($path, $runner)
+    {
+        Route::on($path, $runner);
     }
 
     /**
@@ -158,20 +173,80 @@ class App
      * App run
      *
      * @static
-
      */
     public static function run()
     {
         Event::fire('run');
-        $path = self::isCli() ? join('/', array_slice($GLOBALS['argv'], 1)) : Http\Request::path();
+
+        if (self::config('error')) self::registerErrorHandler();
+
+        if (!empty(self::$middleware)) {
+            self::$middleware[0]->call();
+        }
+
+        $path = self::isCli() ? '/' . join('/', array_slice($GLOBALS['argv'], 1)) : Http\Request::path();
         list($controller, $route, $params) = Route::parse($path);
 
-        if (is_string($controller)) {
-            Controller::factory($controller, $params);
-        } else {
-            call_user_func_array($controller, $params);
+        try {
+            Event::fire('start');
+            ob_start();
+            if (!self::control($controller, $params)) {
+                self::notFound();
+            }
+            self::stop();
+        } catch (Exception\Stop $e) {
+            if (self::isCli()) {
+                CLI\Output::write(ob_get_clean());
+            } else {
+                Http\Response::write(ob_get_clean());
+            }
+            Event::fire('stop');
+        } catch (\Exception $e) {
+            if (self::config('debug')) {
+                throw $e;
+            } else {
+                self::error();
+            }
+            Event::fire('exception');
         }
+
+        if (!self::isCli()) {
+            if (headers_sent() === false) {
+                header(sprintf('HTTP/%s %s %s', Http\Request::protocol(), Http\Response::status(), Http\Response::message()));
+
+                foreach (Http\Response::header() as $name => $value) {
+                    $h_values = explode("\n", $value);
+                    foreach ($h_values as $h_val) {
+                        header("$name: $h_val", false);
+                    }
+                }
+            }
+            echo Http\Response::body();
+        } else {
+            echo CLI\Output::body();
+        }
+
+        if (self::config('error')) self::restoreErrorHandler();
+
         Event::fire('end');
+    }
+
+    /**
+     * Control the runner
+     *
+     * @param       $runner
+     * @param array $params
+     * @return bool
+     */
+    public static function control($runner, $params = array())
+    {
+        if (is_string($runner) && Controller::factory($runner, $params)) {
+            return true;
+        } elseif (is_callable($runner)) {
+            call_user_func_array($runner, $params);
+            return true;
+        }
+        return false;
     }
 
     /**
@@ -186,6 +261,94 @@ class App
     }
 
     /**
+     * Stop
+     *
+     * @throws Exception\Stop
+     */
+    public static function stop()
+    {
+        throw new Exception\Stop;
+    }
+
+    /**
+     * Pass
+     *
+     * @throws Exception\Pass
+     */
+    public static function pass()
+    {
+        self::cleanBuffer();
+        throw new Exception\Pass();
+    }
+
+    /**
+     * Set or run not found
+     */
+    public static function notFound($runner = null)
+    {
+        if (is_callable($runner)) {
+            Route::notFound($runner);
+        } else {
+            ob_start();
+            $runner = Route::notFound();
+            if ($runner) {
+                self::control($runner);
+            } else {
+                echo "Page not found";
+            }
+            self::output(404, ob_get_clean());
+        }
+    }
+
+    /**
+     * Set or run not found
+     */
+    public static function error($runner = null)
+    {
+        if (is_callable($runner)) {
+            Route::error($runner);
+        } else {
+            ob_start();
+            $runner = Route::error();
+            if ($runner) {
+                self::control($runner);
+            } else {
+                echo "Error occured";
+            }
+            self::output(500, ob_get_clean());
+        }
+    }
+
+    /**
+     * Output
+     *
+     * @param $status
+     * @param $data
+     */
+    public static function output($status, $data)
+    {
+        self::cleanBuffer();
+        if (self::isCli()) {
+            CLI\Output::body($data);
+            CLI\Output::status($status);
+        } else {
+            Http\Response::body($data);
+            Http\Response::status($status);
+        }
+        self::stop();
+    }
+
+    /**
+     * Clean current output buffer
+     */
+    protected static function cleanBuffer()
+    {
+        if (ob_get_level() !== 0) {
+            ob_clean();
+        }
+    }
+
+    /**
      * Register error and exception handlers
      *
      * @static
@@ -194,7 +357,6 @@ class App
     public static function registerErrorHandler()
     {
         set_error_handler(array(__CLASS__, '__error'));
-        set_exception_handler(array(__CLASS__, '__exception'));
     }
 
     /**
@@ -205,14 +367,8 @@ class App
      */
     public static function restoreErrorHandler()
     {
-        restore_error_handler();
         restore_exception_handler();
     }
-
-    /******************
-     * Request Helper
-     ******************/
-
 
     /**
      * Auto load class
@@ -275,38 +431,22 @@ class App
     }
 
     /**
-     * Exception handler for app
-     *
-     * @static
-     * @param \Exception $e
-     */
-    public static function __exception(\Exception $e)
-    {
-        Event::fire('error', $e);
-        echo $e;
-    }
-
-    /**
      * Shutdown handler for app
      *
      * @static
-
+     * @todo Make as middleware
      */
     public static function __shutdown()
     {
         Event::fire('shutdown');
-        if (!self::isInit()) return;
+        if (!self::hasInit()) return;
 
-        if (self::$config['error']
+        if (self::config('error')
             && ($error = error_get_last())
             && in_array($error['type'], array(E_PARSE, E_ERROR, E_USER_ERROR))
         ) {
             ob_get_level() and ob_clean();
-            try {
-                print new View(self::$config['route']['error']);
-            } catch (\Exception $e) {
-                self::__exception(new \ErrorException($error['message'], $error['type'], 0, $error['file'], $error['line']));
-            }
+            echo new \ErrorException($error['message'], $error['type'], 0, $error['file'], $error['line']);
         }
     }
 }
