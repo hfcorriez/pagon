@@ -369,7 +369,7 @@ class App
             if ($runner) {
                 self::dispatch($runner, array($e));
             } else {
-                echo "Error occured";
+                echo "Error occurred";
             }
             self::output(500, ob_get_clean());
         }
