@@ -5,12 +5,11 @@
  * @package   OmniApp
  * @author    Corrie Zhao <hfcorriez@gmail.com>
  * @copyright (c) 2011 - 2012 OmniApp Framework
- * @license   http://www.apache.org/licenses/LICENSE-2.0
  */
 
 namespace OmniApp;
 
-const VERSION = '0.1';
+const VERSION = '0.2';
 
 /*********************
  * core app
