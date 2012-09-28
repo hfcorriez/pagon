@@ -30,7 +30,7 @@ class Output
      */
     public static function body($content = null)
     {
-        if ($content !== null) self::write($content);
+        if ($content !== null) self::write($content, true);
 
         return self::$body;
     }

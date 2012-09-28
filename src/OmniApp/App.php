@@ -20,7 +20,15 @@ const VERSION = '0.2';
  */
 class App
 {
+    /**
+     * @var array Config for the app
+     * @todo protect
+     */
     public static $config = array('route' => array());
+
+    /**
+     * @var array Modules for the app
+     */
     public static $modules = array();
 
     /**
@@ -28,10 +36,15 @@ class App
      */
     private static $middleware = array();
 
+    /**
+     * @var float App start time
+     */
     private static $start_time = null;
 
+    /**
+     * @var bool Initialized?
+     */
     private static $_init = false;
-
 
     /**
      * App init
@@ -53,6 +66,8 @@ class App
         if (!empty($config['timezone'])) date_default_timezone_set($config['timezone']);
 
         self::$start_time = microtime(true);
+
+        self::$middleware = array(new Middleware\RunTime());
 
         self::$_init = true;
     }
@@ -118,9 +133,15 @@ class App
     /**
      * Config get or set after init
      *
+     * // ## TODO
+     *  - Support config array
+     *  - Support set config event
+     *  - Support smarty config path
+     *  - Support config for the mode
+     *
      * @param      $key
      * @param null $value
-     * @return null
+     * @return mixed
      */
     public static function config($key, $value = null)
     {
@@ -138,12 +159,13 @@ class App
      */
     public static function add($middleware)
     {
+        // Check and construct Middleware
         if (is_string($middleware) && class_exists($middleware) && is_subclass_of($middleware, __NAMESPACE__ . '\Middleware')) {
             $middleware = new $middleware();
         }
-        if (!empty(self::$middleware)) {
-            $middleware->setNext(self::$middleware[0]);
-        }
+        // Set next middleware
+        $middleware->setNext(self::$middleware[0]);
+        // Un-shift middleware
         array_unshift(self::$middleware, $middleware);
     }
 
@@ -159,6 +181,33 @@ class App
     }
 
     /**
+     * Set or get view
+     *
+     * @param $view_class
+     * @return string
+     */
+    public static function view($view_class = null)
+    {
+        if ($view_class) {
+            View::setView($view_class);
+        }
+        return View::getView();
+    }
+
+    /**
+     * @param       $file
+     * @param array $params
+     */
+    public static function render($file, $params = array())
+    {
+        if (self::isCli()) {
+            CLI\Output::write(View::factory($file, $params));
+        } else {
+            Http\Response::write(View::factory($file, $params));
+        }
+    }
+
+    /**
      * Get root of application
      *
      * @return string
@@ -169,27 +218,48 @@ class App
     }
 
     /**
-     * App run
+     * App will run
      *
      * @static
      */
     public static function run()
     {
+        if (!self::hasInit()) {
+            throw new \Exception('App has not initialized');
+        }
+
         Event::fire('run');
 
         if (self::config('error')) self::registerErrorHandler();
 
-        if (!empty(self::$middleware)) {
-            self::$middleware[0]->call();
+        self::$middleware[0]->call();
+
+        if (!self::isCli()) {
+
+            echo Http\Response::body();
+        } else {
+            echo CLI\Output::body();
         }
 
-        $path = self::isCli() ? '/' . join('/', array_slice($GLOBALS['argv'], 1)) : Http\Request::path();
-        list($controller, $route, $params) = Route::parse($path);
+        if (self::config('error')) self::restoreErrorHandler();
 
+        Event::fire('end');
+    }
+
+    /**
+     * Call for the middleware
+     *
+     * @throws \Exception
+     */
+    public static function call()
+    {
         try {
+            $path = self::isCli() ? '/' . join('/', array_slice($GLOBALS['argv'], 1)) : Http\Request::path();
+            list($controller, $route, $params) = Route::parse($path);
+
             Event::fire('start');
             ob_start();
-            if (!self::control($controller, $params)) {
+            if (!self::dispatch($controller, $params)) {
                 self::notFound();
             }
             self::stop();
@@ -205,33 +275,13 @@ class App
                 throw $e;
             } else {
                 try {
-                    self::error();
+                    self::error($e);
                 } catch (Exception\Stop $e) {
                     //
                 }
             }
             Event::fire('exception');
         }
-
-        if (!self::isCli()) {
-            if (headers_sent() === false) {
-                header(sprintf('HTTP/%s %s %s', Http\Request::protocol(), Http\Response::status(), Http\Response::message()));
-
-                foreach (Http\Response::header() as $name => $value) {
-                    $h_values = explode("\n", $value);
-                    foreach ($h_values as $h_val) {
-                        header("$name: $h_val", false);
-                    }
-                }
-            }
-            echo Http\Response::body();
-        } else {
-            echo CLI\Output::body();
-        }
-
-        if (self::config('error')) self::restoreErrorHandler();
-
-        Event::fire('end');
     }
 
     /**
@@ -241,7 +291,7 @@ class App
      * @param array $params
      * @return bool
      */
-    public static function control($runner, $params = array())
+    public static function dispatch($runner, $params = array())
     {
         if (is_string($runner) && Controller::factory($runner, $params)) {
             return true;
@@ -296,7 +346,7 @@ class App
             ob_start();
             $runner = Route::notFound();
             if ($runner) {
-                self::control($runner);
+                self::dispatch($runner);
             } else {
                 echo "Page not found";
             }
@@ -314,9 +364,10 @@ class App
         } else {
             self::cleanBuffer();
             ob_start();
+            $e = $runner;
             $runner = Route::error();
             if ($runner) {
-                self::control($runner);
+                self::dispatch($runner, array($e));
             } else {
                 echo "Error occured";
             }

@@ -2,28 +2,66 @@
 
 namespace OmniApp;
 
-class View
+abstract class View
 {
-    private $file;
-    private $data = array();
+    /**
+     * @var string File path
+     */
+    protected $file;
 
-    protected static $path;
+    /**
+     * @var array The data for view
+     */
+    protected $data = array();
+
+    /**
+     * @var string Directory for the template path
+     */
+    protected static $dir;
+
+    /**
+     * @var string Extension for file
+     */
     protected static $ext = 'php';
+
+    /**
+     * @var string View module
+     */
+    protected static $view = 'Base';
 
     /**
      * Construct a view
      *
-     * @param string $view
+     * @param string $file
      * @param array  $params
      * @throws \Exception
-     * @internal param \Exception $
      * @return View
      */
-    public function __construct($view, $params = array())
+    public function __construct($file, $params = array())
     {
-        $this->file = trim(static::$path) . '/' . strtolower(trim($view, '/')) . '.' . static::$ext;
-        if (!is_file($this->file)) throw new \Exception('View file not exist: ' . $this->file);
+        // Set file path
+        $this->file = ($file{0} != '/' ? static::$dir : '') . '/' . strtolower(trim($file, '/')) . (static::$ext ? '.' . static::$ext : '');
+
+        // If file exists?
+        if (!is_file($this->file)) {
+            throw new \Exception('template file not exist: ' . $this->file);
+        }
+
+        // Set data
         $this->data = $params;
+    }
+
+    /**
+     * Create a new view
+     *
+     * @param       $file
+     * @param array $params
+     * @return mixed
+     */
+    public static function factory($file, $params = array())
+    {
+        $view = self::getView();
+        return new $view($file, $params);
     }
 
     /**
@@ -40,11 +78,33 @@ class View
     /**
      * Set path
      *
-     * @param string $path
+     * @param string $dir
      */
-    public static function setPath($path)
+    public static function setDir($dir)
     {
-        static::$path = $path;
+        static::$dir = $dir;
+    }
+
+    /**
+     * @param $view
+     */
+    public static function setView($view)
+    {
+        static::$view = $view;
+    }
+
+    /**
+     * Get view class
+     *
+     * @return string
+     */
+    public static function getView()
+    {
+        $view = self::$view;
+        if ($view{0} != '\\') {
+            $view = __NAMESPACE__ . '\\View\\' . self::$view;
+        }
+        return $view;
     }
 
     /**
@@ -64,13 +124,7 @@ class View
      *
      * @return string
      */
-    public function render()
-    {
-        ob_start();
-        extract((array)$this->data);
-        include($this->file);
-        return ob_get_clean();
-    }
+    abstract public function render();
 
     /**
      * Assign value for view

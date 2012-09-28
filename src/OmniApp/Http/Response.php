@@ -201,6 +201,66 @@ class Response
     }
 
     /**
+     * Get message by code
+     *
+     * @param $status
+     * @return null
+     */
+    public static function message($status = null)
+    {
+        if (!$status) $status = self::$status;
+
+        if (isset(self::$messages[$status])) {
+            return self::$messages[$status];
+        }
+        return null;
+    }
+
+    /**
+     * Has send header
+     *
+     * @return bool
+     */
+    public static function hasSendHeader()
+    {
+        return headers_sent();
+    }
+
+    /**
+     * Send headers
+     */
+    public static function sendHeader()
+    {
+        if (self::hasSendHeader() === false) {
+            header(sprintf('HTTP/%s %s %s', Request::protocol(), self::status(), self::message()));
+
+            foreach (self::header() as $name => $value) {
+                $h_values = explode("\n", $value);
+                foreach ($h_values as $h_val) {
+                    header("$name: $h_val", false);
+                }
+            }
+        }
+    }
+
+    /**
+     * Set expires time
+     *
+     * @param string|int $time
+     * @return array|null
+     */
+    public static function expires($time = null)
+    {
+        if ($time) {
+            if (is_string($time)) {
+                $time = strtotime($time);
+            }
+            self::header('Expires', gmdate(DATE_RFC1123, $time));
+        }
+        return self::header('Expires');
+    }
+
+    /**
      * To json
      *
      * @param $data
@@ -326,21 +386,5 @@ class Response
     public static function isServerError()
     {
         return self::$status >= 500 && self::$status < 600;
-    }
-
-    /**
-     * Get message by code
-     *
-     * @param $status
-     * @return null
-     */
-    public static function message($status = null)
-    {
-        if (!$status) $status = self::$status;
-
-        if (isset(self::$messages[$status])) {
-            return self::$messages[$status];
-        }
-        return null;
     }
 }
