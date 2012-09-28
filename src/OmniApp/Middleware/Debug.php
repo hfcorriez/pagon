@@ -10,8 +10,11 @@ class Debug extends \OmniApp\Middleware
     public function call()
     {
         try {
+            ob_start();
             $this->next->call();
+            echo ob_get_clean();
         } catch (\Exception $e) {
+            ob_clean();
             App::render(__DIR__ . '/views/error', array(
                 'file'    => $e->getFile(),
                 'line'    => $e->getLine(),
