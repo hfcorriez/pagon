@@ -66,6 +66,7 @@ class Response
     protected static $charset = 'utf-8';
     protected static $length = 0;
 
+
     /**
      * Set body
      *
@@ -75,7 +76,7 @@ class Response
      */
     public static function body($content = null)
     {
-        if ($content !== null) self::write($content);
+        if ($content !== null) self::write($content, true);
 
         return self::$body;
     }
@@ -93,6 +94,20 @@ class Response
         }
 
         return self::$length;
+    }
+
+    /**
+     * Get or set charset
+     *
+     * @param $charset
+     * @return string
+     */
+    public static function charset($charset = null)
+    {
+        if ($charset) {
+            self::$charset = $charset;
+        }
+        return self::$charset;
     }
 
     /**
@@ -152,13 +167,17 @@ class Response
     /**
      * Set content type
      *
-     * @param $type
+     * @param $mime_type
      * @return null
      */
-    public static function contentType($type)
+    public static function contentType($mime_type)
     {
-        if ($type) {
-            self::header('Content-Type', strpos($type, 'charset') ? $type : $type . '; charset=' . self::$charset);
+        if ($mime_type) {
+            if (!strpos($mime_type, '/')) {
+                $mime_type = MimeType::get($mime_type);
+            }
+
+            self::header('Content-Type', $mime_type . '; charset=' . self::charset());
         }
 
         return self::header('Content-Type');
@@ -188,7 +207,7 @@ class Response
      */
     public static function json($data)
     {
-        self::contentType('application/json');
+        self::contentType('json');
         self::body(json_encode($data));
     }
 
@@ -198,9 +217,9 @@ class Response
      * @param $callback
      * @param $data
      */
-    public static function jsonp($callback, $data)
+    public static function jsonp($data, $callback)
     {
-        self::contentType('application/javascript');
+        self::contentType('js');
         self::body($callback . '(' . json_encode($data) . ');');
     }
 
@@ -213,7 +232,7 @@ class Response
      */
     public static function xml($data, $root = 'root', $item = 'item')
     {
-        self::contentType('application/xml');
+        self::contentType('xml');
         self::body(\OmniApp\Util\XML::fromArray($data, $root, $item));
     }
 

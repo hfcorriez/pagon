@@ -204,7 +204,11 @@ class App
             if (self::config('debug')) {
                 throw $e;
             } else {
-                self::error();
+                try {
+                    self::error();
+                } catch (Exception\Stop $e) {
+                    //
+                }
             }
             Event::fire('exception');
         }
@@ -288,6 +292,7 @@ class App
         if (is_callable($runner)) {
             Route::notFound($runner);
         } else {
+            self::cleanBuffer();
             ob_start();
             $runner = Route::notFound();
             if ($runner) {
@@ -307,6 +312,7 @@ class App
         if (is_callable($runner)) {
             Route::error($runner);
         } else {
+            self::cleanBuffer();
             ob_start();
             $runner = Route::error();
             if ($runner) {
@@ -331,6 +337,7 @@ class App
             CLI\Output::body($data);
             CLI\Output::status($status);
         } else {
+            Http\Response::contentType('text/plain');
             Http\Response::body($data);
             Http\Response::status($status);
         }
