@@ -1,5 +1,5 @@
 <?php
-namespace OmniApp\Util;
+namespace OmniApp\Helper;
 
 class XML
 {

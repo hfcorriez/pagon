@@ -52,9 +52,9 @@ $error_id = uniqid('error');
     <h1><span class="type"><?php echo $type ?> [ <?php echo $code ?> ]:</span> <span class="message"><?php echo $message ?></span></h1>
     <div id="<?php echo $error_id ?>" class="content">
         <p><span class="file"><?php echo $file ?> [ <?php echo $line ?> ]</span></p>
-        <?php echo \OmniApp\Util\Debug::source($file, $line) ?>
+        <?php echo \OmniApp\Helper\Debug::source($file, $line) ?>
         <ol class="trace">
-            <?php foreach (\OmniApp\Util\Debug::trace($trace) as $i => $step): ?>
+            <?php foreach (\OmniApp\Helper\Debug::trace($trace) as $i => $step): ?>
             <li>
                 <p>
 					<span class="file">
@@ -73,7 +73,7 @@ $error_id = uniqid('error');
                         <?php foreach ($step['args'] as $name => $arg): ?>
                         <tr>
                             <td><code><?php echo $name ?></code></td>
-                            <td><pre><?php echo \OmniApp\Util\Debug::dump($arg) ?></pre></td>
+                            <td><pre><?php echo \OmniApp\Helper\Debug::dump($arg) ?></pre></td>
                         </tr>
                         <?php endforeach ?>
                     </table>
@@ -119,7 +119,7 @@ $error_id = uniqid('error');
                 <?php foreach ($GLOBALS[$var] as $key => $value): ?>
                 <tr>
                     <td><code><?php echo $key ?></code></td>
-                    <td><pre><?php echo \OmniApp\Util\Debug::dump($value) ?></pre></td>
+                    <td><pre><?php echo \OmniApp\Helper\Debug::dump($value) ?></pre></td>
                 </tr>
                 <?php endforeach ?>
             </table>

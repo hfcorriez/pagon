@@ -293,7 +293,7 @@ class Response
     public static function xml($data, $root = 'root', $item = 'item')
     {
         self::contentType('xml');
-        self::body(\OmniApp\Util\XML::fromArray($data, $root, $item));
+        self::body(\OmniApp\Helper\XML::fromArray($data, $root, $item));
     }
 
     /**

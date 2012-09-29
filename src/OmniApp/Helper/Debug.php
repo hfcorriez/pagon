@@ -1,6 +1,6 @@
 <?php
 
-namespace OmniApp\Util;
+namespace OmniApp\Helper;
 /**
  * Contains debugging and dumping tools.
  *
