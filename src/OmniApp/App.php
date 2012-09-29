@@ -169,6 +169,78 @@ class App
     }
 
     /**
+     * Route get method
+     *
+     * @param $path
+     * @param $runner
+     */
+    public static function get($path, $runner) {
+        if (self::isCli() || !Http\Request::isGet()) return;
+
+        self::map($path, $runner);
+    }
+
+    /**
+     * Route post method
+     *
+     * @param $path
+     * @param $runner
+     */
+    public static function post($path, $runner) {
+        if (self::isCli() || !Http\Request::isPost()) return;
+
+        self::map($path, $runner);
+    }
+
+    /**
+     * Route put method
+     *
+     * @param $path
+     * @param $runner
+     */
+    public static function put($path, $runner) {
+        if (self::isCli() || !Http\Request::isPut()) return;
+
+        self::map($path, $runner);
+    }
+
+    /**
+     * Route delete method
+     *
+     * @param $path
+     * @param $runner
+     */
+    public static function delete($path, $runner) {
+        if (self::isCli() || !Http\Request::isDelete()) return;
+
+        self::map($path, $runner);
+    }
+
+    /**
+     * Route options method
+     *
+     * @param $path
+     * @param $runner
+     */
+    public static function options($path, $runner) {
+        if (self::isCli() || !Http\Request::isOptions()) return;
+
+        self::map($path, $runner);
+    }
+
+    /**
+     * Route head method
+     *
+     * @param $path
+     * @param $runner
+     */
+    public static function head($path, $runner) {
+        if (self::isCli() || !Http\Request::isHead()) return;
+
+        self::map($path, $runner);
+    }
+
+    /**
      * Map route
      *
      * @param $path
