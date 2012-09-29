@@ -132,7 +132,6 @@ class App
 
     /**
      * Config get or set after init
-     *
      * // ## TODO
      *  - Support config array
      *  - Support set config event
@@ -195,16 +194,21 @@ class App
     }
 
     /**
-     * @param       $file
-     * @param array $params
+     * Render template
+     *
+     * @param string $file
+     * @param array  $params
+     * @return View
      */
     public static function render($file, $params = array())
     {
+        $view = View::factory($file, $params);
         if (self::isCli()) {
-            CLI\Output::write(View::factory($file, $params));
+            CLI\Output::write($view);
         } else {
-            Http\Response::write(View::factory($file, $params));
+            Http\Response::write($view);
         }
+        return $view;
     }
 
     /**
