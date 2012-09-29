@@ -40,7 +40,11 @@ abstract class View
     public function __construct($file, $params = array())
     {
         // Set file path
-        $this->file = ($file{0} != '/' ? static::$dir : '') . '/' . strtolower(trim($file, '/')) . (static::$ext ? '.' . static::$ext : '');
+        if ($file{0} == '/') {
+            $this->file = $file;
+        } else {
+            $this->file = static::$dir . '/' . strtolower(trim($file, '/')) . static::$ext;
+        }
 
         // If file exists?
         if (!is_file($this->file)) {

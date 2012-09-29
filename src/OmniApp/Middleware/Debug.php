@@ -15,7 +15,7 @@ class Debug extends \OmniApp\Middleware
             echo ob_get_clean();
         } catch (\Exception $e) {
             ob_clean();
-            App::render(__DIR__ . '/views/error', array(
+            App::render(__DIR__ . '/views/error.php', array(
                 'file'    => $e->getFile(),
                 'line'    => $e->getLine(),
                 'code'    => $e->getCode(),
