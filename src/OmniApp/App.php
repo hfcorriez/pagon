@@ -150,11 +150,11 @@ class App
      *
      * @param      $key
      * @param null $value
-     * @param bool $detect_callback
+     * @param bool $no_detect_callback
      * @param bool $only_trigger
      * @return mixed
      */
-    public static function config($key = null, $value = null, $detect_callback = true, $only_trigger = false)
+    public static function config($key = null, $value = null, $no_detect_callback = false, $only_trigger = false)
     {
         if ($key == null && $value == null) {
             // If not arguments, return config
@@ -188,7 +188,7 @@ class App
                 return self::$config->get($key);
             }
         } else {
-            if ($detect_callback && $value instanceof \Closure) {
+            if (!$no_detect_callback && $value instanceof \Closure) {
                 // Auto attach event
                 Event::on('config:' . $key, function (Event $e) use ($value) {
                     $value($e->value, $e->previous);
