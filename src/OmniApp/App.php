@@ -156,7 +156,7 @@ class App
      */
     public static function config($key = null, $value = null, $no_detect_callback = false, $only_trigger = false)
     {
-        if ($key == null && $value == null) {
+        if (func_num_args() === 0) {
             // If not arguments, return config
             return self::$config;
         } elseif ($value === null) {
