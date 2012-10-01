@@ -4,8 +4,8 @@ namespace OmniApp\Config;
 
 class Dict extends \OmniApp\Config
 {
-    public function parse($array)
+    public function parse($input)
     {
-        return (array)$array;
+        return (array)$input;
     }
 }

@@ -56,7 +56,7 @@ class App
     {
         Event::fire('init');
 
-        // Record starttime
+        // Record start time
         self::$start_time = microtime(true);
 
         // Add default middleware
@@ -140,7 +140,7 @@ class App
      * @static
      * @return bool
      */
-    public static function hasInit()
+    public static function isInit()
     {
         return self::$_init;
     }
@@ -375,7 +375,7 @@ class App
      */
     public static function run()
     {
-        if (!self::hasInit()) {
+        if (!self::isInit()) {
             throw new \Exception('App has not initialized');
         }
 
@@ -646,7 +646,7 @@ class App
     public static function __shutdown()
     {
         Event::fire('shutdown');
-        if (!self::hasInit()) return;
+        if (!self::isInit()) return;
 
         if (self::config('error')
             && ($error = error_get_last())
