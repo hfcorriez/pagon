@@ -10,6 +10,9 @@ class Event
     // Events
     protected static $_events = array();
 
+    // Events listeners
+    protected static $_events_listeners = array();
+
     // Event name
     protected $_name = null;
 
@@ -120,7 +123,7 @@ class Event
      */
     protected static function attachEventListener($name, $listener)
     {
-        self::$_events[strtolower($name)][] = $listener;
+        self::$_events_listeners[strtolower($name)][] = $listener;
     }
 
     /**
@@ -133,11 +136,11 @@ class Event
     protected static function detachEventListener($name, $listener)
     {
         $name = strtolower($name);
-        if (!empty(self::$_events[$name])) {
+        if (!empty(self::$_events_listeners[$name])) {
             // Find Listener index
             if (($key = array_search($listener, $name)) !== false) {
                 // Remove it
-                unset(self::$_events[$name][$key]);
+                unset(self::$_events_listeners[$name][$key]);
             }
         }
     }
@@ -154,8 +157,8 @@ class Event
         $name = strtolower($name);
         if (!$e) $e = new Event($name);
 
-        if (!empty(self::$_events[$name])) {
-            foreach (self::$_events[$name] as $listener) {
+        if (!empty(self::$_events_listeners[$name])) {
+            foreach (self::$_events_listeners[$name] as $listener) {
                 if (is_object($listener) && $listener instanceof \Closure) {
                     // Closure Listener
                     call_user_func($listener, $e);
@@ -169,6 +172,30 @@ class Event
                 if ($e->hasStopPropagation()) break;
             }
         }
+    }
+
+    /**
+     * Is set event by name
+     *
+     * @param $name
+     * @return bool
+     */
+    public static function hasListener($name) {
+        return isset(self::$_events_listeners[$name]);
+    }
+
+    /**
+     * Instance event by name
+     *
+     * @param null $name
+     * @return mixed
+     */
+    public static function instance($name)
+    {
+        if (!isset(self::$_events[$name])) {
+            self::$_events[$name] = self::create($name);
+        }
+        return self::$_events[$name];
     }
 
     /**
@@ -223,7 +250,7 @@ class Event
      */
     public function set($name, $value = null)
     {
-        if (is_array($name) && $value = null) {
+        if (is_array($name) && $value === null) {
             foreach ($name as $k => $v) {
                 // Protect private and protected property
                 if ($k{0} != '_') $this->{$k} = $v;

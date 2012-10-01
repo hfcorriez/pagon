@@ -21,10 +21,10 @@ const VERSION = '0.2';
 class App
 {
     /**
-     * @var array Config for the app
+     * @var Config
      * @todo protect
      */
-    public static $config = array('route' => array());
+    public static $config = array();
 
     /**
      * @var array Modules for the app
@@ -56,18 +56,33 @@ class App
     {
         Event::fire('init');
 
-        self::$config = $config;
+        // Record starttime
+        self::$start_time = microtime(true);
 
+        // Add default middleware
+        self::$middleware = array(new Middleware\RunTime());
+
+        // handle autoload and shutdown
         spl_autoload_register(array(__CLASS__, '__autoload'));
         register_shutdown_function(array(__CLASS__, '__shutdown'));
 
+        // Force use UTF-8 encoding
         iconv_set_encoding("internal_encoding", "UTF-8");
         mb_internal_encoding('UTF-8');
-        if (!empty($config['timezone'])) date_default_timezone_set($config['timezone']);
 
-        self::$start_time = microtime(true);
+        // configure timezone
+        App::config('timezone', function ($value) {
+            date_default_timezone_set($value);
+        });
 
-        self::$middleware = array(new Middleware\RunTime());
+        // configure debug
+        App::config('debug', function ($value) {
+            if ($value == true) {
+                App::add(new \OmniApp\Middleware\Debug());
+            }
+        });
+
+        App::config($config);
 
         self::$_init = true;
     }
@@ -132,23 +147,77 @@ class App
 
     /**
      * Config get or set after init
-     * // ## TODO
-     *  - Support config array
-     *  - Support set config event
-     *  - Support smarty config path
-     *  - Support config for the mode
      *
      * @param      $key
      * @param null $value
+     * @param bool $detect_callback
+     * @param bool $only_trigger
      * @return mixed
      */
-    public static function config($key, $value = null)
+    public static function config($key = null, $value = null, $detect_callback = true, $only_trigger = false)
     {
-        if ($value === null) {
-            return isset(self::$config[$key]) ? self::$config[$key] : null;
+        if ($key == null && $value == null) {
+            // If not arguments, return config
+            return self::$config;
+        } elseif ($value === null) {
+            if (is_array($key) || $key instanceof Config) {
+                // First set config
+                $_first = false;
+
+                // Set config first
+                if (empty(self::$config)) {
+                    $_first = true;
+                    if ($key instanceof Config) {
+                        self::$config = $key;
+                    } else {
+                        self::$config = new Config\Dict($key);
+                    }
+                }
+
+                // Convert Config to array
+                if ($key instanceof Config) {
+                    $key = $key->getArrayCopy();
+                }
+
+                // Loop config
+                foreach ($key as $k => $v) {
+                    self::config($k, $v, false, $_first);
+                }
+            } else {
+                // When get config
+                return self::$config->get($key);
+            }
         } else {
-            return self::$config[$key] = $value;
+            if ($detect_callback && $value instanceof \Closure) {
+                // Auto attach event
+                Event::on('config:' . $key, function (Event $e) use ($value) {
+                    $value($e->value, $e->previous);
+                });
+            } else {
+                // Set event name
+                $_e_name = 'config:' . $key;
+
+                // Check if event has listener
+                if (Event::hasListener($_e_name)) {
+                    // Fire event when listener exists
+                    Event::fire($_e_name, Event::instance($_e_name)->set(array(
+                        'value'    => $value,
+                        'previous' => self::$config->get($key)
+                    )));
+                }
+
+                if (is_array($value)) {
+                    // If values if array then loop set
+                    foreach ($value as $k => $v) {
+                        self::config($key . '.' . $k, $v, false, $only_trigger);
+                    }
+                } elseif (!$only_trigger) {
+                    //  Set value to key
+                    self::$config->set($key, $value);
+                }
+            }
         }
+        return;
     }
 
     /**
@@ -174,7 +243,8 @@ class App
      * @param $path
      * @param $runner
      */
-    public static function get($path, $runner) {
+    public static function get($path, $runner)
+    {
         if (self::isCli() || !Http\Request::isGet()) return;
 
         self::map($path, $runner);
@@ -186,7 +256,8 @@ class App
      * @param $path
      * @param $runner
      */
-    public static function post($path, $runner) {
+    public static function post($path, $runner)
+    {
         if (self::isCli() || !Http\Request::isPost()) return;
 
         self::map($path, $runner);
@@ -198,7 +269,8 @@ class App
      * @param $path
      * @param $runner
      */
-    public static function put($path, $runner) {
+    public static function put($path, $runner)
+    {
         if (self::isCli() || !Http\Request::isPut()) return;
 
         self::map($path, $runner);
@@ -210,7 +282,8 @@ class App
      * @param $path
      * @param $runner
      */
-    public static function delete($path, $runner) {
+    public static function delete($path, $runner)
+    {
         if (self::isCli() || !Http\Request::isDelete()) return;
 
         self::map($path, $runner);
@@ -222,7 +295,8 @@ class App
      * @param $path
      * @param $runner
      */
-    public static function options($path, $runner) {
+    public static function options($path, $runner)
+    {
         if (self::isCli() || !Http\Request::isOptions()) return;
 
         self::map($path, $runner);
@@ -234,7 +308,8 @@ class App
      * @param $path
      * @param $runner
      */
-    public static function head($path, $runner) {
+    public static function head($path, $runner)
+    {
         if (self::isCli() || !Http\Request::isHead()) return;
 
         self::map($path, $runner);
@@ -311,7 +386,6 @@ class App
         self::$middleware[0]->call();
 
         if (!self::isCli()) {
-
             echo Http\Response::body();
         } else {
             echo CLI\Output::body();
