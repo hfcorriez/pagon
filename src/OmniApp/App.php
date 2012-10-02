@@ -89,7 +89,8 @@ class App
 
         App::config($config);
 
-        if (!self::$mode) App::mode();
+        // If trigger exists, trigger closure
+        Event::fire('mode:' . App::mode());
 
         self::$_init = true;
     }
@@ -248,6 +249,8 @@ class App
     /**
      * Config mode
      *
+     * # Manuel call must before App::init
+     *
      * @param          $mode
      * @param callable $closure
      * @return null|string
@@ -281,8 +284,6 @@ class App
             self::$mode = $mode;
         }
 
-        // If trigger exists, trigger closure
-        Event::fire('mode:' . self::$mode);
         return self::$mode;
     }
 
