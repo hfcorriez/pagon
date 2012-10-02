@@ -257,6 +257,9 @@ class App
      */
     public static function mode($mode = null, \Closure $closure = null)
     {
+        // Check if init
+        if (self::$_init) return self::$mode;
+
         // Save get mode method
         static $mode_get = null;
         // Check args number
@@ -279,7 +282,7 @@ class App
             $mode = null;
         }
 
-        if ($mode && is_string($mode) && self::$mode != $mode && !self::isInit()) {
+        if ($mode && is_string($mode) && self::$mode != $mode && !self::$_init) {
             // If set mode and mode is string and App is not init
             self::$mode = $mode;
         }
