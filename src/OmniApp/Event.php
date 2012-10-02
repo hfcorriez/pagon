@@ -10,7 +10,7 @@ class Event
     // Events
     protected static $_events = array();
 
-    // Events listeners
+    // Events Listeners
     protected static $_events_listeners = array();
 
     // Event name
@@ -24,7 +24,7 @@ class Event
      *
      * @static
      * @param array|string $name
-     * @param \Closure $listener
+     * @param \Closure     $listener
      */
     public static function on($name, $listener)
     {
@@ -36,7 +36,7 @@ class Event
      *
      * @static
      * @param array|string $name
-     * @param \Closure $listener
+     * @param \Closure     $listener
      */
     public static function attach($name, $listener)
     {
@@ -65,7 +65,7 @@ class Event
      *
      * @static
      * @param array|string $name
-     * @param \Closure $listener
+     * @param \Closure     $listener
      */
     public static function detach($name, $listener)
     {
@@ -82,36 +82,77 @@ class Event
      * Alias for fireEvent
      *
      * @static
-     * @param       $name
-     * @param Event $e
+     * @internal param $name
      */
-    public static function emit($name, Event $e = null)
+    public static function emit()
     {
-        self::fireEvent($name, $e);
+        call_user_func_array(__CLASS__ . '::fireEvent', func_get_args());
     }
 
     /**
      * Alias for fireEvent
      *
      * @static
-     * @param       $name
-     * @param Event $e
+     * @internal param $name
      */
-    public static function trigger($name, Event $e = null)
+    public static function trigger()
     {
-        self::fireEvent($name, $e);
+        call_user_func_array(__CLASS__ . '::fireEvent', func_get_args());
     }
 
     /**
      * Alias for fireEvent
      *
      * @static
+     * @internal param $name
+     */
+    public static function fire()
+    {
+        call_user_func_array(__CLASS__ . '::fireEvent', func_get_args());
+    }
+
+    /**
+     * fire event
+     *
+     * @static
      * @param       $name
      * @param Event $e
      */
-    public static function fire($name, Event $e = null)
+    public static function fireEvent($name, $e = null)
     {
-        self::fireEvent($name, $e);
+        $name = strtolower($name);
+
+        if (!empty(self::$_events_listeners[$name])) {
+
+            // Set default arguments
+            $args = array($e);
+
+            // Only trigger when event listeners exists
+            if (!$e instanceof Event || !$e) {
+                // Get event instance
+                $args[0] = $e = self::instance($name);
+
+                if (func_num_args() > 1) {
+                    // Check arguments, set inline args more than 1
+                    $args += array_slice(func_get_args(), 1, null, true);
+                }
+            }
+
+            // Loop listeners for callback
+            foreach (self::$_events_listeners[$name] as $listener) {
+                if (is_object($listener) && $listener instanceof \Closure) {
+                    // Closure Listener
+                    call_user_func_array($listener, $args);
+                } elseif (is_string($listener) && class_exists($listener)) {
+                    // Listener name
+                    $listener = new $listener();
+                    // The Object can be implements `run`
+                    if (method_exists($listener, 'run')) call_user_func_array(array($listener, 'run'), $args);
+                }
+                // Stop propagation
+                if ($e->hasStopPropagation()) break;
+            }
+        }
     }
 
     /**
@@ -146,54 +187,15 @@ class Event
     }
 
     /**
-     * fire event
-     *
-     * @static
-     * @param       $name
-     * @param Event $e
-     */
-    public static function fireEvent($name, Event $e = null)
-    {
-        $name = strtolower($name);
-        if (!$e) $e = new Event($name);
-
-        if (!empty(self::$_events_listeners[$name])) {
-            foreach (self::$_events_listeners[$name] as $listener) {
-                if (is_object($listener) && $listener instanceof \Closure) {
-                    // Closure Listener
-                    call_user_func($listener, $e);
-                } elseif (is_string($listener) && class_exists($listener)) {
-                    // Listener name
-                    $listener = new $listener();
-                    // The Object can be implements `run`
-                    if (method_exists($listener, 'run')) call_user_func(array($listener, 'run'), $e);
-                }
-                // Stop propagation
-                if ($e->hasStopPropagation()) break;
-            }
-        }
-    }
-
-    /**
-     * Is set event by name
-     *
-     * @param $name
-     * @return bool
-     */
-    public static function hasListener($name) {
-        return isset(self::$_events_listeners[$name]);
-    }
-
-    /**
      * Instance event by name
      *
-     * @param null $name
-     * @return mixed
+     * @param string $name
+     * @return Event
      */
     public static function instance($name)
     {
         if (!isset(self::$_events[$name])) {
-            self::$_events[$name] = self::create($name);
+            self::$_events[$name] = self::factory($name);
         }
         return self::$_events[$name];
     }
@@ -202,10 +204,10 @@ class Event
      * Create new Event
      *
      * @static
-     * @param $name
+     * @param string $name
      * @return Event
      */
-    public static function create($name = null)
+    public static function factory($name = null)
     {
         $class = get_called_class();
         return new $class($name);
@@ -214,7 +216,7 @@ class Event
     /**
      * Create event
      *
-     * @param $name
+     * @param       $name
      */
     public function __construct($name = null)
     {
@@ -250,7 +252,7 @@ class Event
      */
     public function set($name, $value = null)
     {
-        if (is_array($name) && $value === null) {
+        if (is_array($name) && $value = null) {
             foreach ($name as $k => $v) {
                 // Protect private and protected property
                 if ($k{0} != '_') $this->{$k} = $v;

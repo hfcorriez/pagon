@@ -32,6 +32,11 @@ class App
     public static $modules = array();
 
     /**
+     * @var string Mode
+     */
+    private static $mode = 'development';
+
+    /**
      * @var Middleware[]
      */
     private static $middleware = array();
@@ -83,6 +88,8 @@ class App
         });
 
         App::config($config);
+
+        if (!self::$mode) App::mode();
 
         self::$_init = true;
     }
@@ -156,6 +163,8 @@ class App
      */
     public static function config($key = null, $value = null, $no_detect_callback = false, $only_trigger = false)
     {
+        static $configs = array();
+
         if (func_num_args() === 0) {
             // If not arguments, return config
             return self::$config;
@@ -166,11 +175,25 @@ class App
 
                 // Set config first
                 if (empty(self::$config)) {
+                    // First set config
                     $_first = true;
+
+                    // Check key type
                     if ($key instanceof Config) {
+                        // If config instance, use it
                         self::$config = $key;
                     } else {
+                        // Else convert to Dict config
                         self::$config = new Config\Dict($key);
+                    }
+
+                    // Check configs and merge
+                    if ($configs) {
+                        // Loop config and set
+                        foreach ($configs as $k => $v) {
+                            self::$config->set($k, $v);
+                        }
+                        $key = self::$config;
                     }
                 }
 
@@ -185,26 +208,24 @@ class App
                 }
             } else {
                 // When get config
-                return self::$config->get($key);
+                if (!is_array(self::$config)) {
+                    return self::$config->get($key);
+                } else {
+                    return false;
+                }
             }
         } else {
             if (!$no_detect_callback && $value instanceof \Closure) {
                 // Auto attach event
-                Event::on('config:' . $key, function (Event $e) use ($value) {
-                    $value($e->value, $e->previous);
+                Event::on('config:' . $key, function (Event $e, $v, $p) use ($value) {
+                    $value($v, $p);
                 });
             } else {
                 // Set event name
                 $_e_name = 'config:' . $key;
 
-                // Check if event has listener
-                if (Event::hasListener($_e_name)) {
-                    // Fire event when listener exists
-                    Event::fire($_e_name, Event::instance($_e_name)->set(array(
-                        'value'    => $value,
-                        'previous' => self::$config->get($key)
-                    )));
-                }
+                // Fire event when listener exists
+                Event::fire($_e_name, $value, self::config($key));
 
                 if (is_array($value)) {
                     // If values if array then loop set
@@ -213,11 +234,56 @@ class App
                     }
                 } elseif (!$only_trigger) {
                     //  Set value to key
-                    self::$config->set($key, $value);
+                    if (!is_array(self::$config)) {
+                        self::$config->set($key, $value);
+                    } else {
+                        $configs[$key] = $value;
+                    }
                 }
             }
         }
         return;
+    }
+
+    /**
+     * Config mode
+     *
+     * @param          $mode
+     * @param callable $closure
+     * @return null|string
+     */
+    public static function mode($mode = null, \Closure $closure = null)
+    {
+        // Save get mode method
+        static $mode_get = null;
+        // Check args number
+        $args_num = func_num_args();
+
+        if ($args_num === 0) {
+            // Get or generate mode
+            $mode = $mode_get ? $mode_get() : getenv('OMNIAPP_ENV');
+        } elseif ($args_num == 1) {
+            // Allow set mode get method when mode is closure
+            if ($mode instanceof \Closure) {
+                $mode_get = $mode;
+            }
+        } elseif ($args_num == 2) {
+            // Set trigger for the mode
+            if (is_string($mode)) {
+                Event::on('mode:' . $mode, $closure);
+            }
+            // Don not change the current mode
+            $mode = null;
+        }
+
+        if ($mode && is_string($mode) && self::$mode != $mode && !self::isInit()) {
+            // If set mode and mode is string and App is not init
+            self::$mode = $mode;
+        }
+
+        // If trigger exists, trigger closure
+        Event::fire('mode:' . self::$mode);
+        return self::$mode;
     }
 
     /**
