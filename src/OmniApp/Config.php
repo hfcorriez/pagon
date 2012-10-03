@@ -31,7 +31,7 @@ abstract class Config extends \ArrayObject
             }
         } else {
             if (isset($this[$key])) {
-                $tmp = $this[$key];
+                $tmp = &$this[$key];
             }
         }
         return $tmp;

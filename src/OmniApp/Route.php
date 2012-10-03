@@ -16,7 +16,7 @@ class Route
      */
     public static function on($path, $runner)
     {
-        App::$config['route'][$path] = $runner;
+        App::config('route.' . $path, $runner, true);
     }
 
     /**
@@ -29,20 +29,32 @@ class Route
      */
     public static function parse($path)
     {
-        if (empty(App::$config['route'])) throw new \Exception('No routes found.');
+        $routes = App::config('route');
+        if (empty($routes)) throw new \Exception('No routes found.');
 
         //$path = trim($path, '/');
         if ($path AND !preg_match('/^[\w\-~\/\.]{1,400}$/', $path)) $path = 'error';
 
-        foreach (App::$config['route'] as $route => $controller) {
+        foreach ($routes as $route => $controller) {
             if (!$route) continue;
+            $complete = false;
+            $params = array();
 
-            if (preg_match(self::toRegex($route), $path, $matches)) {
-                $complete = array_shift($matches);
-                $params = explode('/', trim(mb_substr($path, mb_strlen($complete)), '/'));
-                if ($params[0]) {
-                    foreach ($matches as $match) array_unshift($params, $match);
-                } else $params = $matches;
+            if (!strpos($route, ':')) {
+                if ($path === $route) {
+                    $complete = $route;
+                }
+            } else {
+                if (preg_match(self::toRegex($route), $path, $matches)) {
+                    $complete = array_shift($matches);
+                    $params = explode('/', trim(mb_substr($path, mb_strlen($complete)), '/'));
+                    if ($params[0]) {
+                        foreach ($matches as $match) array_unshift($params, $match);
+                    } else $params = $matches;
+                }
+            }
+
+            if ($complete) {
                 return array($controller, $complete, $params);
             }
         }
@@ -59,9 +71,9 @@ class Route
     public static function notFound($runner = null)
     {
         if ($runner) {
-            App::$config['route']['error'] = $runner;
+            App::config('route.404', $runner, true);
         }
-        return !empty(App::$config['route']['error']) ? App::$config['route']['error'] : null;
+        return App::config('route.404');
     }
 
 
@@ -74,9 +86,9 @@ class Route
     public static function error($runner = null)
     {
         if ($runner) {
-            App::$config['route']['error'] = $runner;
+            App::config('route.error', $runner, true);
         }
-        return !empty(App::$config['route']['error']) ? App::$config['route']['error'] : null;
+        return App::config('route.error');
     }
 
     /**

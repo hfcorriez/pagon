@@ -132,7 +132,7 @@ class Event
                 // Get event instance
                 $args[0] = $e = self::instance($name);
 
-                if (func_num_args() > 1) {
+                if ($e) {
                     // Check arguments, set inline args more than 1
                     $args += array_slice(func_get_args(), 1, null, true);
                 }
