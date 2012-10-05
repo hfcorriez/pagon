@@ -4,7 +4,7 @@ namespace OmniApp\Middleware;
 
 use OmniApp\App;
 
-class Debug extends \OmniApp\Middleware
+class PrettyException extends \OmniApp\Middleware
 {
     public function call()
     {

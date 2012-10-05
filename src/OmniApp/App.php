@@ -115,7 +115,7 @@ class App
         // configure debug
         self::config('debug', function ($value) {
             if ($value == true) {
-                App::add(new \OmniApp\Middleware\Debug());
+                App::add(new \OmniApp\Middleware\PrettyException());
             }
         });
 
