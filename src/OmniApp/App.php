@@ -465,6 +465,7 @@ class App
      */
     public static function run()
     {
+        // Check has init?
         if (!self::$_init) {
             throw new \Exception('App has not initialized');
         }
@@ -473,8 +474,14 @@ class App
 
         if (self::config('error')) self::registerErrorHandler();
 
+        // request app call
         self::$middleware[0]->call();
 
+        if (!self::$_cli) {
+            // Send headers when http request
+            self::$response->sendHeader();
+        }
+        // send data
         echo self::$response->body();
 
         if (self::config('error')) self::restoreErrorHandler();
