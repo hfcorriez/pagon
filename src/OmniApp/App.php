@@ -519,7 +519,7 @@ class App
                     //
                 }
             }
-            Event::fireEvent('exception');
+            Event::fireEvent('error');
         }
     }
 
