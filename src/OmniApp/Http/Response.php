@@ -2,6 +2,8 @@
 
 namespace OmniApp\Http;
 
+use OmniApp\Data\MimeType;
+
 class Response
 {
     public static $messages = array(
@@ -173,7 +175,8 @@ class Response
     {
         if ($mime_type) {
             if (!strpos($mime_type, '/')) {
-                $mime_type = MimeType::get($mime_type);
+                $mime_type = MimeType::load()->get($mime_type);
+                $mime_type = $mime_type[0];
             }
 
             $this->header('Content-Type', $mime_type . '; charset=' . $this->charset());
@@ -216,27 +219,23 @@ class Response
     }
 
     /**
-     * Has send header
-     *
-     * @return bool
-     */
-    public function hasSendHeader()
-    {
-        return headers_sent();
-    }
-
-    /**
      * Send headers
      */
     public function sendHeader()
     {
-        if ($this->hasSendHeader() === false) {
-            header(sprintf('HTTP/%s %s %s', \OmniApp\App::$request->protocol(), $this->status(), $this->message()));
+        // Check headers
+        if (headers_sent() === false) {
+            // Send header
+            header(sprintf('HTTP/%s %s %s', \OmniApp\App::$request->protocol(), $this->status, $this->message()));
 
-            foreach ($this->header() as $name => $value) {
-                $h_values = explode("\n", $value);
-                foreach ($h_values as $h_val) {
-                    header("$name: $h_val", false);
+            // Loop headers to send
+            if ($this->headers) {
+                foreach ($this->headers as $name => $value) {
+                    // Multiple line headers support
+                    $h_values = explode("\n", $value);
+                    foreach ($h_values as $h_val) {
+                        header("$name: $h_val", false);
+                    }
                 }
             }
         }
