@@ -265,7 +265,7 @@ class Response
      */
     public function json($data)
     {
-        $this->contentType('json');
+        $this->contentType('application/json');
         $this->body(json_encode($data));
     }
 
@@ -277,7 +277,7 @@ class Response
      */
     public function jsonp($data, $callback)
     {
-        $this->contentType('js');
+        $this->contentType('application/javascript');
         $this->body($callback . '(' . json_encode($data) . ');');
     }
 
@@ -290,7 +290,7 @@ class Response
      */
     public function xml($data, $root = 'root', $item = 'item')
     {
-        $this->contentType('xml');
+        $this->contentType('application/xml');
         $this->body(\OmniApp\Helper\XML::fromArray($data, $root, $item));
     }
 
