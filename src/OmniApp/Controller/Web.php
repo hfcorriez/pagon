@@ -2,10 +2,18 @@
 
 namespace OmniApp\Controller;
 
-use OmniApp\Http\Request;
-
 class Web extends \OmniApp\Controller
 {
+
+    /**
+     * @var \OmniApp\Http\Request
+     */
+    protected $request;
+
+    /**
+     * @var \OmniApp\Http\Response
+     */
+    protected $response;
 
     /**
      * before run
@@ -24,11 +32,15 @@ class Web extends \OmniApp\Controller
     /**
      * Run
      *
+     * @param \OmniApp\Http\Request $req
+     * @param \OmniApp\Http\Response $res
      * @return mixed
      */
-    function run()
+    function run($req, $res)
     {
-        $method = Request::method();
+        $this->request = $req;
+        $this->response = $res;
+        $method = $req->method();
 
         if (method_exists($this, strtolower($method))) {
             $this->{$method}();

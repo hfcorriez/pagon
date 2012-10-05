@@ -4,6 +4,7 @@ namespace OmniApp\Controller;
 
 class CLI extends \OmniApp\Controller
 {
+
     /**
      * before run
      */
@@ -21,9 +22,11 @@ class CLI extends \OmniApp\Controller
     /**
      * Run
      *
+     * @param \OmniApp\Http\Request $req
+     * @param \OmniApp\Http\Response $res
      * @return mixed
      */
-    function run()
+    function run($req, $res)
     {
     }
 }

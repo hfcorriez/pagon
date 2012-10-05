@@ -29,11 +29,10 @@ class Route
      */
     public static function parse($path)
     {
-        $routes = App::config('route');
-        if (empty($routes)) throw new \Exception('No routes found.');
+        $routes = (array)App::config('route');
 
         //$path = trim($path, '/');
-        if ($path AND !preg_match('/^[\w\-~\/\.]{1,400}$/', $path)) $path = 'error';
+        if ($path AND !preg_match('/^[\w\-~\/\.]{1,400}$/', $path)) $path = '404';
 
         foreach ($routes as $route => $controller) {
             if (!$route) continue;

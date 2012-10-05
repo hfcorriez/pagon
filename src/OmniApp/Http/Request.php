@@ -4,13 +4,15 @@ namespace OmniApp\Http;
 
 class Request
 {
+    public $params = array();
+
     /**
      * Get protocol
      *
      * @static
      * @return string
      */
-    public static function protocol()
+    public function protocol()
     {
         return getenv('SERVER_PROTOCOL');
     }
@@ -21,7 +23,7 @@ class Request
      * @static
      * @return mixed
      */
-    public static function path()
+    public function path()
     {
         static $path = null;
         if (null === $path) $path = parse_url(getenv('REQUEST_URI'), PHP_URL_PATH);
@@ -34,7 +36,7 @@ class Request
      *
      * @return string
      */
-    public static function uri()
+    public function uri()
     {
         return getenv('REQUEST_URI');
     }
@@ -62,7 +64,7 @@ class Request
      *
      * @return string
      */
-    public static function rootUri()
+    public function rootUri()
     {
         return self::scriptName();
     }
@@ -72,7 +74,7 @@ class Request
      *
      * @return string
      */
-    public static function pathInfo()
+    public function pathInfo()
     {
         static $path_info = null;
         if (null === $path_info) {
@@ -101,7 +103,7 @@ class Request
      * @static
      * @return mixed
      */
-    public static function url()
+    public function url()
     {
         static $url = null;
 
@@ -121,7 +123,7 @@ class Request
      * @static
      * @return string
      */
-    public static function method()
+    public function method()
     {
         return getenv('REQUEST_METHOD');
     }
@@ -132,7 +134,7 @@ class Request
      * @param string $method
      * @return bool
      */
-    public static function is($method)
+    public function is($method)
     {
         return self::method() == strtoupper($method);
     }
@@ -142,7 +144,7 @@ class Request
      *
      * @return bool
      */
-    public static function isGet()
+    public function isGet()
     {
         return self::is('get');
     }
@@ -152,7 +154,7 @@ class Request
      *
      * @return bool
      */
-    public static function isPost()
+    public function isPost()
     {
         return self::is('post');
     }
@@ -162,7 +164,7 @@ class Request
      *
      * @return bool
      */
-    public static function isPut()
+    public function isPut()
     {
         return self::is('put');
     }
@@ -172,7 +174,7 @@ class Request
      *
      * @return bool
      */
-    public static function isDelete()
+    public function isDelete()
     {
         return self::is('delete');
     }
@@ -182,7 +184,7 @@ class Request
      *
      * @return bool
      */
-    public static function isHead()
+    public function isHead()
     {
         return self::is('head');
     }
@@ -192,7 +194,7 @@ class Request
      *
      * @return bool
      */
-    public static function isOptions()
+    public function isOptions()
     {
         return self::is('options');
     }
@@ -203,7 +205,7 @@ class Request
      * @static
      * @return bool
      */
-    public static function isAjax()
+    public function isAjax()
     {
         return !getenv('X-Requested-With') && 'XMLHttpRequest' == getenv('X-Requested-With');
     }
@@ -230,7 +232,7 @@ class Request
      * @static
      * @return string
      */
-    public static function refer()
+    public function refer()
     {
         return getenv('HTTP_REFERER');
     }
@@ -241,7 +243,7 @@ class Request
      * @static
      * @return mixed
      */
-    public static function trackId()
+    public function trackId()
     {
         static $track_id = null;
 
@@ -257,7 +259,7 @@ class Request
      *
      * @return string
      */
-    public static function host()
+    public function host()
     {
         if ($host = getenv('HTTP_HOST')) {
             if (strpos($host, ':') !== false) {
@@ -277,7 +279,7 @@ class Request
      * @static
      * @return string
      */
-    public static function domain()
+    public function domain()
     {
         return self::host();
     }
@@ -287,7 +289,7 @@ class Request
      *
      * @return string
      */
-    public static function scheme()
+    public function scheme()
     {
         return !getenv('HTTPS') || getenv('HTTPS') === 'off' ? 'http' : 'https';
     }
@@ -297,7 +299,7 @@ class Request
      *
      * @return int
      */
-    public static function port()
+    public function port()
     {
         return (int)getenv('SERVER_PORT');
     }
@@ -308,7 +310,7 @@ class Request
      * @static
      * @return string
      */
-    public static function userAgent()
+    public function userAgent()
     {
         return getenv('HTTP_USER_AGENT');
     }
@@ -318,7 +320,7 @@ class Request
      *
      * @return string
      */
-    public static function contentType()
+    public function contentType()
     {
         return getenv('CONTENT_TYPE');
     }
@@ -371,7 +373,7 @@ class Request
      * @param null $default
      * @return null
      */
-    public static function get($key, $default = null)
+    public function get($key, $default = null)
     {
         return array_key_exists($key, $_GET) ? $_GET[$key] : $default;
     }
@@ -383,7 +385,7 @@ class Request
      * @param null $default
      * @return null
      */
-    public static function post($key, $default = null)
+    public function post($key, $default = null)
     {
         return array_key_exists($key, $_POST) ? $_POST[$key] : $default;
 
@@ -396,9 +398,9 @@ class Request
      * @param null $default
      * @return null
      */
-    public static function param($key, $default = null)
+    public function param($key, $default = null)
     {
-        return array_key_exists($key, $_REQUEST) ? $_REQUEST[$key] : $default;
+        return array_key_exists($key, $this->params) ? $this->params[$key] : $default;
     }
 
     /**
@@ -408,7 +410,7 @@ class Request
      * @param null $key
      * @return mixed
      */
-    public static function header($key = null)
+    public function header($key = null)
     {
         static $headers = null;
         if (null === $headers) {
@@ -444,7 +446,7 @@ class Request
      * @param null $default
      * @return null
      */
-    public static function cookie($key, $default = null)
+    public function cookie($key, $default = null)
     {
         if (func_num_args() === 0) {
             return $_COOKIE;
@@ -457,7 +459,7 @@ class Request
      *
      * @return string
      */
-    public static function body()
+    public function body()
     {
         static $rawInput = null;
         if (null === $rawInput) {

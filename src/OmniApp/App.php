@@ -26,12 +26,22 @@ class App
      * @var Config
      * @todo protect
      */
-    public static $config = array();
+    protected static $config = array();
 
     /**
      * @var array Modules for the app
      */
     public static $modules = array();
+
+    /**
+     * @var Http\Request
+     */
+    public static $request;
+
+    /**
+     * @var Http\Response|CLI\Output
+     */
+    public static $response;
 
     /**
      * @var string Mode
@@ -79,6 +89,13 @@ class App
 
         // Is win
         self::$_win = substr(PHP_OS, 0, 3) == 'WIN';
+
+        if (!self::$_cli) {
+            self::$request = new Http\Request();
+            self::$response = new Http\Response();
+        } else {
+            self::$response = new CLI\Output();
+        }
 
         // handle autoload and shutdown
         register_shutdown_function(array(__CLASS__, '__shutdown'));
@@ -226,7 +243,7 @@ class App
                 }
             } else {
                 // When get config
-                return self::$config ? self::$config->get($key) : false;
+                return self::$config instanceof Config ? self::$config->get($key) : false;
             }
         } else {
             if (!$no_detect_callback && $value instanceof \Closure) {
@@ -245,7 +262,7 @@ class App
                     }
                 } elseif (!$only_trigger) {
                     //  Set value to key
-                    if (self::$config) {
+                    if (self::$config instanceof Config) {
                         self::$config->set($key, $value);
                     } else {
                         $configs[$key] = $value;
@@ -304,10 +321,14 @@ class App
         if (is_string($middleware) && is_subclass_of($middleware, __NAMESPACE__ . '\Middleware')) {
             $middleware = new $middleware();
         }
-        // Set next middleware
-        $middleware->setNext(self::$middleware[0]);
-        // Un-shift middleware
-        array_unshift(self::$middleware, $middleware);
+
+        // Check middleware
+        if ($middleware instanceof Middleware) {
+            // Set next middleware
+            $middleware->setNext(self::$middleware[0]);
+            // Un-shift middleware
+            array_unshift(self::$middleware, $middleware);
+        }
     }
 
     /**
@@ -318,7 +339,7 @@ class App
      */
     public static function get($path, $runner)
     {
-        if (self::$_cli || !Http\Request::isGet()) return;
+        if (self::$_cli || !self::$request->isGet()) return;
 
         self::map($path, $runner);
     }
@@ -331,7 +352,7 @@ class App
      */
     public static function post($path, $runner)
     {
-        if (self::$_cli || !Http\Request::isPost()) return;
+        if (self::$_cli || !self::$request->isPost()) return;
 
         self::map($path, $runner);
     }
@@ -344,7 +365,7 @@ class App
      */
     public static function put($path, $runner)
     {
-        if (self::$_cli || !Http\Request::isPut()) return;
+        if (self::$_cli || !self::$request->isPut()) return;
 
         self::map($path, $runner);
     }
@@ -357,7 +378,7 @@ class App
      */
     public static function delete($path, $runner)
     {
-        if (self::$_cli || !Http\Request::isDelete()) return;
+        if (self::$_cli || !self::$request->isDelete()) return;
 
         self::map($path, $runner);
     }
@@ -370,7 +391,7 @@ class App
      */
     public static function options($path, $runner)
     {
-        if (self::$_cli || !Http\Request::isOptions()) return;
+        if (self::$_cli || !self::$request->isOptions()) return;
 
         self::map($path, $runner);
     }
@@ -383,7 +404,7 @@ class App
      */
     public static function head($path, $runner)
     {
-        if (self::$_cli || !Http\Request::isHead()) return;
+        if (self::$_cli || !self::$request->isHead()) return;
 
         self::map($path, $runner);
     }
@@ -423,11 +444,7 @@ class App
     public static function render($file, $params = array())
     {
         $view = View::factory($file, $params);
-        if (self::$_cli) {
-            CLI\Output::write($view);
-        } else {
-            Http\Response::write($view);
-        }
+        self::$response->write($view);
         return $view;
     }
 
@@ -438,7 +455,7 @@ class App
      */
     public static function root()
     {
-        return rtrim(getenv('DOCUMENT_ROOT'), '/') . rtrim(Http\Request::rootUri(), '/') . '/';
+        return rtrim(getenv('DOCUMENT_ROOT'), '/') . rtrim(self::$request->rootUri(), '/') . '/';
     }
 
     /**
@@ -458,11 +475,7 @@ class App
 
         self::$middleware[0]->call();
 
-        if (!self::$_cli) {
-            echo Http\Response::body();
-        } else {
-            echo CLI\Output::body();
-        }
+        echo self::$response->body();
 
         if (self::config('error')) self::restoreErrorHandler();
 
@@ -477,7 +490,7 @@ class App
     public static function call()
     {
         try {
-            $path = self::$_cli ? '/' . join('/', array_slice($GLOBALS['argv'], 1)) : Http\Request::path();
+            $path = self::$_cli ? '/' . join('/', array_slice($GLOBALS['argv'], 1)) : self::$request->path();
             list($controller, $route, $params) = Route::parse($path);
 
             Event::fireEvent('start');
@@ -487,11 +500,7 @@ class App
             }
             self::stop();
         } catch (Exception\Stop $e) {
-            if (self::$_cli) {
-                CLI\Output::write(ob_get_clean());
-            } else {
-                Http\Response::write(ob_get_clean());
-            }
+            self::$response->write(ob_get_clean());
             Event::fireEvent('stop');
         } catch (\Exception $e) {
             if (self::config('debug')) {
@@ -516,10 +525,15 @@ class App
      */
     public static function dispatch($runner, $params = array())
     {
-        if (is_string($runner) && Controller::factory($runner, $params)) {
+        // Set params
+        if (!self::$_cli) self::$request->params = $params;
+
+        if (is_string($runner) && Controller::factory($runner, array(self::$request, self::$response))) {
+            // Support controller class string
             return true;
         } elseif (is_callable($runner)) {
-            call_user_func_array($runner, $params);
+            // Closure function support
+            call_user_func_array($runner, array(self::$request, self::$response));
             return true;
         }
         return false;
@@ -603,14 +617,11 @@ class App
     public static function output($status, $data)
     {
         self::cleanBuffer();
-        if (self::$_cli) {
-            CLI\Output::body($data);
-            CLI\Output::status($status);
-        } else {
-            Http\Response::contentType('text/plain');
-            Http\Response::body($data);
-            Http\Response::status($status);
+        if (!self::$_cli) {
+            self::$response->contentType('text/plain');
         }
+        self::$response->body($data);
+        self::$response->status($status);
         self::stop();
     }
 

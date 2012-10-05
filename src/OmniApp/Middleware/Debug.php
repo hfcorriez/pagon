@@ -2,7 +2,6 @@
 
 namespace OmniApp\Middleware;
 
-use OmniApp\Http\Response;
 use OmniApp\App;
 
 class Debug extends \OmniApp\Middleware
@@ -16,12 +15,12 @@ class Debug extends \OmniApp\Middleware
         } catch (\Exception $e) {
             ob_clean();
             App::render(__DIR__ . '/views/error.php', array(
-                'file'    => $e->getFile(),
-                'line'    => $e->getLine(),
-                'code'    => $e->getCode(),
-                'trace'   => $e->getTrace(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'code' => $e->getCode(),
+                'trace' => $e->getTrace(),
                 'message' => $e->getMessage(),
-                'type'    => get_class($e)
+                'type' => get_class($e)
             ));
         }
     }

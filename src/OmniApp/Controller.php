@@ -25,7 +25,7 @@ abstract class Controller
      *
      * @return mixed
      */
-    abstract function run();
+    abstract function run($req, $res);
 
     /**
      * Factory a controller
@@ -37,7 +37,8 @@ abstract class Controller
      */
     final public static function factory($controller, $params = array())
     {
-        if (class_exists($controller) && is_subclass_of($controller, __CLASS__)) {
+        // Check controller is base Controller
+        if (is_string($controller) && is_subclass_of($controller, __CLASS__)) {
             $controller = new $controller();
 
             $controller->before();

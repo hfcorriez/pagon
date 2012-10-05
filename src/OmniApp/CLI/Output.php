@@ -4,8 +4,8 @@ namespace OmniApp\CLI;
 
 class Output
 {
-    protected static $body;
-    protected static $status = 0;
+    protected $body;
+    protected $status = 0;
 
     /**
      * Set or get status
@@ -13,12 +13,12 @@ class Output
      * @param null $status
      * @return int|string
      */
-    public static function status($status = null)
+    public function status($status = null)
     {
         if (is_numeric($status)) {
-            self::$status = $status;
+            $this->status = $status;
         }
-        return self::$status;
+        return $this->status;
     }
 
     /**
@@ -28,11 +28,11 @@ class Output
      * @param string $content
      * @return string
      */
-    public static function body($content = null)
+    public function body($content = null)
     {
         if ($content !== null) self::write($content, true);
 
-        return self::$body;
+        return $this->body;
     }
 
     /**
@@ -42,15 +42,15 @@ class Output
      * @param bool $replace
      * @return string
      */
-    public static function write($body, $replace = false)
+    public function write($body, $replace = false)
     {
         if ($replace) {
-            self::$body = $body;
+            $this->body = $body;
         } else {
-            self::$body .= (string)$body;
+            $this->body .= (string)$body;
         }
 
-        return self::$body;
+        return $this->body;
     }
 
     /**
@@ -58,8 +58,8 @@ class Output
      *
      * @return bool
      */
-    public static function isOk()
+    public function isOk()
     {
-        return self::$status === 0;
+        return $this->status === 0;
     }
 }

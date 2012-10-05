@@ -58,14 +58,13 @@ class Response
         509 => 'Bandwidth Limit Exceeded'
     );
 
-    protected static $status = 200;
-    protected static $headers = array();
-    protected static $body = '';
-    protected static $cookies = array();
-    protected static $content_type = 'text/html';
-    protected static $charset = 'utf-8';
-    protected static $length = 0;
-
+    protected $status = 200;
+    protected $headers = array();
+    protected $body = '';
+    protected $cookies = array();
+    protected $content_type = 'text/html';
+    protected $charset = 'utf-8';
+    protected $length = 0;
 
     /**
      * Set body
@@ -74,11 +73,11 @@ class Response
      * @param string $content
      * @return string
      */
-    public static function body($content = null)
+    public function body($content = null)
     {
-        if ($content !== null) self::write($content, true);
+        if ($content !== null) $this->write($content, true);
 
-        return self::$body;
+        return $this->body;
     }
 
     /**
@@ -87,13 +86,13 @@ class Response
      * @param  int|null $length
      * @return int
      */
-    public static function length($length = null)
+    public function length($length = null)
     {
         if (!is_null($length)) {
-            self::$length = (int)$length;
+            $this->length = (int)$length;
         }
 
-        return self::$length;
+        return $this->length;
     }
 
     /**
@@ -102,12 +101,12 @@ class Response
      * @param $charset
      * @return string
      */
-    public static function charset($charset = null)
+    public function charset($charset = null)
     {
         if ($charset) {
-            self::$charset = $charset;
+            $this->charset = $charset;
         }
-        return self::$charset;
+        return $this->charset;
     }
 
     /**
@@ -117,16 +116,16 @@ class Response
      * @param bool $replace
      * @return string
      */
-    public static function write($body, $replace = false)
+    public function write($body, $replace = false)
     {
         if ($replace) {
-            self::$body = $body;
+            $this->body = $body;
         } else {
-            self::$body .= (string)$body;
+            $this->body .= (string)$body;
         }
-        self::$length = strlen(self::$body);
+        $this->length = strlen($this->body);
 
-        return self::$body;
+        return $this->body;
     }
 
     /**
@@ -137,12 +136,12 @@ class Response
      * @return int|Response
      * @throws \Exception
      */
-    public static function status($status = null)
+    public function status($status = null)
     {
         if ($status === null) {
-            return self::$status;
+            return $this->status;
         } elseif (array_key_exists($status, self::$messages)) {
-            return self::$status = (int)$status;
+            return $this->status = (int)$status;
         } else throw new \Exception('Unknown status :value', array(':value' => $status));
     }
 
@@ -153,14 +152,14 @@ class Response
      * @param null $value
      * @return array|null
      */
-    public static function header($key = null, $value = null)
+    public function header($key = null, $value = null)
     {
         if (func_num_args() === 0) {
-            return self::$headers;
+            return $this->headers;
         } elseif (func_num_args() === 1) {
-            return self::$headers[strtoupper(str_replace('_', '-', $key))];
+            return $this->headers[strtoupper(str_replace('_', '-', $key))];
         } else {
-            return self::$headers[strtoupper(str_replace('_', '-', $key))] = $value;
+            return $this->headers[strtoupper(str_replace('_', '-', $key))] = $value;
         }
     }
 
@@ -170,17 +169,17 @@ class Response
      * @param $mime_type
      * @return null
      */
-    public static function contentType($mime_type)
+    public function contentType($mime_type)
     {
         if ($mime_type) {
             if (!strpos($mime_type, '/')) {
                 $mime_type = MimeType::get($mime_type);
             }
 
-            self::header('Content-Type', $mime_type . '; charset=' . self::charset());
+            $this->header('Content-Type', $mime_type . '; charset=' . $this->charset());
         }
 
-        return self::header('Content-Type');
+        return $this->header('Content-Type');
     }
 
     /**
@@ -190,12 +189,12 @@ class Response
      * @param $value
      * @return array|string|bool
      */
-    public static function cookie($key, $value)
+    public function cookie($key, $value)
     {
         if (func_num_args() === 0) {
-            return self::$headers;
+            return $this->headers;
         } elseif (func_num_args() === 1) {
-            return self::$headers[$key];
+            return $this->headers[$key];
         }
         return setcookie($key, $value) ? $value : false;
     }
@@ -206,9 +205,9 @@ class Response
      * @param $status
      * @return null
      */
-    public static function message($status = null)
+    public function message($status = null)
     {
-        if (!$status) $status = self::$status;
+        if (!$status) $status = $this->status;
 
         if (isset(self::$messages[$status])) {
             return self::$messages[$status];
@@ -221,7 +220,7 @@ class Response
      *
      * @return bool
      */
-    public static function hasSendHeader()
+    public function hasSendHeader()
     {
         return headers_sent();
     }
@@ -229,12 +228,12 @@ class Response
     /**
      * Send headers
      */
-    public static function sendHeader()
+    public function sendHeader()
     {
-        if (self::hasSendHeader() === false) {
-            header(sprintf('HTTP/%s %s %s', Request::protocol(), self::status(), self::message()));
+        if ($this->hasSendHeader() === false) {
+            header(sprintf('HTTP/%s %s %s', \OmniApp\App::$request->protocol(), $this->status(), $this->message()));
 
-            foreach (self::header() as $name => $value) {
+            foreach ($this->header() as $name => $value) {
                 $h_values = explode("\n", $value);
                 foreach ($h_values as $h_val) {
                     header("$name: $h_val", false);
@@ -249,15 +248,15 @@ class Response
      * @param string|int $time
      * @return array|null
      */
-    public static function expires($time = null)
+    public function expires($time = null)
     {
         if ($time) {
             if (is_string($time)) {
                 $time = strtotime($time);
             }
-            self::header('Expires', gmdate(DATE_RFC1123, $time));
+            $this->header('Expires', gmdate(DATE_RFC1123, $time));
         }
-        return self::header('Expires');
+        return $this->header('Expires');
     }
 
     /**
@@ -265,10 +264,10 @@ class Response
      *
      * @param $data
      */
-    public static function json($data)
+    public function json($data)
     {
-        self::contentType('json');
-        self::body(json_encode($data));
+        $this->contentType('json');
+        $this->body(json_encode($data));
     }
 
     /**
@@ -277,10 +276,10 @@ class Response
      * @param $callback
      * @param $data
      */
-    public static function jsonp($data, $callback)
+    public function jsonp($data, $callback)
     {
-        self::contentType('js');
-        self::body($callback . '(' . json_encode($data) . ');');
+        $this->contentType('js');
+        $this->body($callback . '(' . json_encode($data) . ');');
     }
 
     /**
@@ -290,10 +289,10 @@ class Response
      * @param string       $root
      * @param string       $item
      */
-    public static function xml($data, $root = 'root', $item = 'item')
+    public function xml($data, $root = 'root', $item = 'item')
     {
-        self::contentType('xml');
-        self::body(\OmniApp\Helper\XML::fromArray($data, $root, $item));
+        $this->contentType('xml');
+        $this->body(\OmniApp\Helper\XML::fromArray($data, $root, $item));
     }
 
     /**
@@ -302,10 +301,10 @@ class Response
      * @param     $url
      * @param int $status
      */
-    public static function redirect($url, $status = 302)
+    public function redirect($url, $status = 302)
     {
-        self::$status = $status;
-        self::$headers['Location'] = $url;
+        $this->status = $status;
+        $this->headers['Location'] = $url;
     }
 
     /**
@@ -313,9 +312,9 @@ class Response
      *
      * @return bool
      */
-    public static function isEmpty()
+    public function isEmpty()
     {
-        return in_array(self::$status, array(201, 204, 304));
+        return in_array($this->status, array(201, 204, 304));
     }
 
     /**
@@ -323,9 +322,9 @@ class Response
      *
      * @return bool
      */
-    public static function isOk()
+    public function isOk()
     {
-        return self::$status === 200;
+        return $this->status === 200;
     }
 
     /**
@@ -333,9 +332,9 @@ class Response
      *
      * @return bool
      */
-    public static function isSuccessful()
+    public function isSuccessful()
     {
-        return self::$status >= 200 && self::$status < 300;
+        return $this->status >= 200 && $this->status < 300;
     }
 
     /**
@@ -343,9 +342,9 @@ class Response
      *
      * @return bool
      */
-    public static function isRedirect()
+    public function isRedirect()
     {
-        return in_array(self::$status, array(301, 302, 303, 307));
+        return in_array($this->status, array(301, 302, 303, 307));
     }
 
     /**
@@ -353,9 +352,9 @@ class Response
      *
      * @return bool
      */
-    public static function isForbidden()
+    public function isForbidden()
     {
-        return self::$status === 403;
+        return $this->status === 403;
     }
 
     /**
@@ -363,9 +362,9 @@ class Response
      *
      * @return bool
      */
-    public static function isNotFound()
+    public function isNotFound()
     {
-        return self::$status === 404;
+        return $this->status === 404;
     }
 
     /**
@@ -373,9 +372,9 @@ class Response
      *
      * @return bool
      */
-    public static function isClientError()
+    public function isClientError()
     {
-        return self::$status >= 400 && self::$status < 500;
+        return $this->status >= 400 && $this->status < 500;
     }
 
     /**
@@ -383,8 +382,8 @@ class Response
      *
      * @return bool
      */
-    public static function isServerError()
+    public function isServerError()
     {
-        return self::$status >= 500 && self::$status < 600;
+        return $this->status >= 500 && $this->status < 600;
     }
 }
