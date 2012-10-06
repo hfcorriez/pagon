@@ -25,11 +25,6 @@ abstract class View
     protected static $ext = 'php';
 
     /**
-     * @var string View module
-     */
-    protected static $view = 'Base';
-
-    /**
      * Construct a view
      *
      * @param string $file
@@ -48,7 +43,7 @@ abstract class View
 
         // If file exists?
         if (!is_file($this->file)) {
-            throw new \Exception('template file not exist: ' . $this->file);
+            throw new Exception('Template file is not exist: ' . $this->file);
         }
 
         // Set data
@@ -64,7 +59,7 @@ abstract class View
      */
     public static function factory($file, $params = array())
     {
-        $view = self::getView();
+        $view = get_called_class();
         return new $view($file, $params);
     }
 
@@ -87,28 +82,6 @@ abstract class View
     public static function setDir($dir)
     {
         static::$dir = $dir;
-    }
-
-    /**
-     * @param $view
-     */
-    public static function setView($view)
-    {
-        static::$view = $view;
-    }
-
-    /**
-     * Get view class
-     *
-     * @return string
-     */
-    public static function getView()
-    {
-        $view = self::$view;
-        if ($view{0} != '\\') {
-            $view = __NAMESPACE__ . '\\View\\' . self::$view;
-        }
-        return $view;
     }
 
     /**

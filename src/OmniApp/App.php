@@ -44,6 +44,11 @@ class App
     public static $response;
 
     /**
+     * @var string View engine
+     */
+    protected static $view = 'OmniApp\View\Base';
+
+    /**
      * @var string Mode
      */
     private static $mode = 'development';
@@ -115,7 +120,19 @@ class App
         // configure debug
         self::config('debug', function ($value) {
             if ($value == true) {
-                App::add(new \OmniApp\Middleware\PrettyException());
+                self::add(new \OmniApp\Middleware\PrettyException());
+            }
+        });
+
+        // Set view engine
+        self::config('view.engine', function ($value, $previous) {
+            if ($value{0} !== '\\') {
+                $value = __NAMESPACE__ . '\\View\\' . $value;
+            }
+            if (is_subclass_of($value, __NAMESPACE__ . '\View')) {
+                self::$view = $value;
+            } else {
+                self::config('view.engine', $previous);
             }
         });
 
@@ -252,8 +269,7 @@ class App
                     $value($v, $p);
                 });
             } else {
-                // Fire event when listener exists
-                Event::fireEvent('config:' . $key, $value, self::config($key));
+                $_trigger = true;
 
                 if (is_array($value)) {
                     // If values if array then loop set
@@ -263,11 +279,22 @@ class App
                 } elseif (!$only_trigger) {
                     //  Set value to key
                     if (self::$config instanceof Config) {
-                        self::$config->set($key, $value);
+                        if (self::$config->get($key) !== $value) {
+                            self::$config->set($key, $value);
+                        } else {
+                            $_trigger = false;
+                        }
                     } else {
-                        $configs[$key] = $value;
+                        if (isset($configs[$key]) && $configs[$key] !== $value) {
+                            $configs[$key] = $value;
+                        } else {
+                            $_trigger = false;
+                        }
                     }
                 }
+
+                // Fire event when listener exists
+                $_trigger && Event::fireEvent('config:' . $key, $value, self::config($key));
             }
         }
         return;
@@ -421,31 +448,16 @@ class App
     }
 
     /**
-     * Set or get view
-     *
-     * @param $view_class
-     * @return string
-     */
-    public static function view($view_class = null)
-    {
-        if ($view_class) {
-            View::setView($view_class);
-        }
-        return View::getView();
-    }
-
-    /**
      * Render template
      *
      * @param string $file
      * @param array  $params
-     * @return View
+     * @throws Exception
      */
     public static function render($file, $params = array())
     {
-        $view = View::factory($file, $params);
-        self::$response->write($view);
-        return $view;
+        $view = self::$view;
+        self::$response->write($view::factory($file, $params));
     }
 
     /**
