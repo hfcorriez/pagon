@@ -148,20 +148,24 @@ class Response
     }
 
     /**
-     * Set header
+     * Set or get header
      *
-     * @param null $key
-     * @param null $value
+     * @param string $name
+     * @param string $value
+     * @param bool   $replace
      * @return array|null
      */
-    public function header($key = null, $value = null)
+    public function header($name = null, $value = null, $replace = false)
     {
-        if (func_num_args() === 0) {
+        if ($name === null) {
             return $this->headers;
-        } elseif (func_num_args() === 1) {
-            return $this->headers[strtoupper(str_replace('_', '-', $key))];
         } else {
-            return $this->headers[strtoupper(str_replace('_', '-', $key))] = $value;
+            $name = strtoupper(str_replace('_', '-', $name));
+            if ($value === null) {
+                return $this->headers[$name];
+            } else {
+                return $this->headers[$name] = !$replace && !empty($this->headers[$name]) ? $this->headers[$name] . "\n" . $value : $value;
+            }
         }
     }
 
@@ -192,28 +196,25 @@ class Response
      * @param $value
      * @return array|string|bool
      */
-    public function cookie($key, $value)
+    public function cookie($key = null, $value = null)
     {
-        if (func_num_args() === 0) {
-            return $this->headers;
-        } elseif (func_num_args() === 1) {
-            return $this->headers[$key];
+        if ($key === null) {
+            return $_COOKIE;
+        } elseif ($value) {
+            setcookie($key, $value);
         }
-        return setcookie($key, $value) ? $value : false;
+        return $_COOKIE[$key];
     }
 
     /**
      * Get message by code
      *
-     * @param $status
-     * @return null
+     * @return string|null
      */
-    public function message($status = null)
+    public function message()
     {
-        if (!$status) $status = $this->status;
-
-        if (isset(self::$messages[$status])) {
-            return self::$messages[$status];
+        if (isset(self::$messages[$this->status])) {
+            return self::$messages[$this->status];
         }
         return null;
     }
