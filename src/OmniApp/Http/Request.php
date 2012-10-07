@@ -13,6 +13,9 @@ class Request
     protected $url;
     protected $body;
     protected $headers;
+    protected $accept;
+    protected $accept_language;
+    protected $accept_encoding;
 
     /**
      * Get protocol
@@ -234,19 +237,103 @@ class Request
         return $this->scheme() === 'https';
     }
 
+    /**
+     * Check If accept mime type?
+     *
+     * @param array|string $type
+     * @return array|null|string
+     */
     public function accept($type = null)
     {
+        if ($this->accept === null) {
+            $this->accept = self::buildAcceptMap(getenv('HTTP_ACCEPT'));
+        }
 
+        // if no parameter was passed, just return parsed data
+        if (!$type) return $this->accept;
+        // Support get best match
+        if ($type === true) {
+            reset($this->accept);
+            return key($this->accept);
+        }
+
+        // If type is 'txt', 'xml' and so on, use smarty stracy
+        if (is_string($type) && !strpos($type, '/')) {
+            $type = \OmniApp\Data\MimeType::load()->get($type);
+            if (!$type) return null;
+        }
+
+        // Force to array
+        $type = (array)$type;
+
+        // let’s check our supported types:
+        foreach ($this->accept as $mime => $q) {
+            if ($q && in_array($mime, $type)) return $mime;
+        }
+
+        // All match
+        if (isset($this->accept['*/*'])) return $type[0];
+        return null;
     }
 
+    /**
+     * Check accept giving encoding?
+     *
+     * @param string|array $type
+     * @return array|null|string
+     */
     public function acceptEncoding($type = null)
     {
+        if ($this->accept_encoding === null) {
+            $this->accept_encoding = self::buildAcceptMap(getenv('HTTP_ACCEPT_LANGUAGE'));
+        }
 
+        // if no parameter was passed, just return parsed data
+        if (!$type) return $this->accept_encoding;
+        // Support get best match
+        if ($type === true) {
+            reset($this->accept_encoding);
+            return key($this->accept_encoding);
+        }
+
+        // Force to array
+        $type = (array)$type;
+
+        // let’s check our supported types:
+        foreach ($this->accept_encoding as $lang => $q) {
+            if ($q && in_array($lang, $type)) return $lang;
+        }
+        return null;
     }
 
+    /**
+     * Check if accept given language?
+     *
+     * @param string|array $type
+     * @return array|null|string
+     */
     public function acceptLanguage($type = null)
     {
+        if ($this->accept_language === null) {
+            $this->accept_language = self::buildAcceptMap(getenv('HTTP_ACCEPT_LANGUAGE'));
+        }
 
+        // if no parameter was passed, just return parsed data
+        if (!$type) return $this->accept_language;
+        // Support get best match
+        if ($type === true) {
+            reset($this->accept_language);
+            return key($this->accept_language);
+        }
+
+        // Force to array
+        $type = (array)$type;
+
+        // let’s check our supported types:
+        foreach ($this->accept_language as $lang => $q) {
+            if ($q && in_array($lang, $type)) return $lang;
+        }
+        return null;
     }
 
     /**
@@ -506,5 +593,35 @@ class Request
             $this->body = @(string)file_get_contents('php://input');
         }
         return $this->body;
+    }
+
+    /**
+     * Build accept map
+     *
+     * @param $string
+     * @return array
+     */
+    protected static function buildAcceptMap($string)
+    {
+        $_accept = array();
+
+        // Accept header is case insensitive, and whitespace isn’t important
+        $accept = strtolower(str_replace(' ', '', $string));
+        // divide it into parts in the place of a ","
+        $accept = explode(',', $accept);
+        foreach ($accept as $a) {
+            // the default quality is 1.
+            $q = 1;
+            // check if there is a different quality
+            if (strpos($a, ';q=')) {
+                // divide "mime/type;q=X" into two parts: "mime/type" i "X"
+                list($a, $q) = explode(';q=', $a);
+            }
+            // mime-type $a is accepted with the quality $q
+            // WARNING: $q == 0 means, that mime-type isn’t supported!
+            $_accept[$a] = $q;
+        }
+        arsort($_accept);
+        return $_accept;
     }
 }
