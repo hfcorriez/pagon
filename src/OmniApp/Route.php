@@ -16,7 +16,7 @@ class Route
      */
     public static function on($path, $runner)
     {
-        App::config('route.' . $path, $runner, true);
+        App::config()->route[$path] = $runner;
     }
 
     /**
@@ -39,20 +39,21 @@ class Route
             $complete = false;
             $params = array();
 
-            if (!strpos($route, ':')) {
+            // Regex or Param check
+            if (!strpos($route, ':') && strpos($route, '^') === false) {
                 if ($path === $route) {
                     $complete = $route;
                 }
             } else {
+                // Try match
                 if (preg_match(self::toRegex($route), $path, $matches)) {
-                    $complete = array_shift($matches);
-                    $params = explode('/', trim(mb_substr($path, mb_strlen($complete)), '/'));
-                    if ($params[0]) {
-                        foreach ($matches as $match) array_unshift($params, $match);
-                    } else $params = $matches;
+                    $complete = $route;
+                    array_shift($matches);
+                    $params = $matches;
                 }
             }
 
+            // When complete the return
             if ($complete) {
                 return array($controller, $complete, $params);
             }
@@ -93,13 +94,21 @@ class Route
     /**
      * To regex
      *
-     * @param $string
+     * @param $regex
      * @return string
      */
-    public static function toRegex($string)
+    public static function toRegex($regex)
     {
-        $regex = str_replace(array('/'), array('\/'), $string);
-        $regex = '/^' . $regex . '$/';
+        if ($regex[1] !== '^') {
+            $regex = str_replace(array('/'), array('\\/'), $regex);
+            if ($regex{0} == '^') {
+                $regex = '/' . $regex . '/';
+            } elseif (strpos($regex, ':')) {
+                $regex = '/^' . preg_replace('/:([a-zA-Z0-9]+)/', '(?<$1>[a-zA-Z0-9\.\-\+_]+?)', $regex) . '$/';
+            } else {
+                $regex = '/^' . $regex . '$/';
+            }
+        }
         return $regex;
     }
 }
