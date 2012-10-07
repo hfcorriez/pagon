@@ -10,7 +10,7 @@ class PrettyException extends \OmniApp\Middleware
     {
         try {
             ob_start();
-            $this->next->call();
+            $this->next();
             echo ob_get_clean();
         } catch (\Exception $e) {
             ob_clean();

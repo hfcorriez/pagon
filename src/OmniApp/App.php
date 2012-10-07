@@ -120,19 +120,19 @@ class App
         // configure debug
         self::config('debug', function ($value) {
             if ($value == true) {
-                self::add(new \OmniApp\Middleware\PrettyException());
+                App::add(new \OmniApp\Middleware\PrettyException());
             }
         });
 
         // Set view engine
         self::config('view.engine', function ($value, $previous) {
+            // Auto fix framework views
             if ($value{0} !== '\\') {
                 $value = __NAMESPACE__ . '\\View\\' . $value;
             }
-            if (is_subclass_of($value, __NAMESPACE__ . '\View')) {
-                self::$view = $value;
-            } else {
-                self::config('view.engine', $previous);
+            // Not set ok then configure previous
+            if ($value !== self::view($value)) {
+                App::config('view.engine', $previous);
             }
         });
 
@@ -445,6 +445,22 @@ class App
     public static function map($path, $runner)
     {
         Route::on($path, $runner);
+    }
+
+    /**
+     * Set or get view
+     *
+     * @param string $view
+     * @return string
+     */
+    public static function view($view = null)
+    {
+        if ($view) {
+            if (self::$view !== $view && is_subclass_of($view, __NAMESPACE__ . '\View')) {
+                self::$view = $view;
+            }
+        }
+        return self::$view;
     }
 
     /**

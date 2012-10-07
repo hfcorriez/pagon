@@ -4,7 +4,6 @@ namespace OmniApp;
 
 abstract class Middleware
 {
-
     /**
      * @var Middleware
      */
@@ -20,6 +19,14 @@ abstract class Middleware
     final public function setNext(Middleware $middleware)
     {
         $this->next = $middleware;
+    }
+
+    /**
+     * Call next
+     */
+    final protected function next()
+    {
+        $this->next->call();
     }
 
     /**
