@@ -262,7 +262,7 @@ class Response
     /**
      * To json
      *
-     * @param $data
+     * @param mixed $data
      */
     public function json($data)
     {
@@ -273,10 +273,10 @@ class Response
     /**
      * To jsonp
      *
-     * @param $callback
-     * @param $data
+     * @param mixed $data
+     * @param string $callback
      */
-    public function jsonp($data, $callback)
+    public function jsonp($data, $callback = 'callback')
     {
         $this->contentType('application/javascript');
         $this->body($callback . '(' . json_encode($data) . ');');
@@ -298,8 +298,8 @@ class Response
     /**
      * Redirect url
      *
-     * @param     $url
-     * @param int $status
+     * @param string $url
+     * @param int    $status
      */
     public function redirect($url, $status = 302)
     {

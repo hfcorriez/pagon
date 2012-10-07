@@ -7,7 +7,6 @@ class Request
     public $params = array();
 
     protected $path;
-    protected $track_id;
     protected $script_name;
     protected $path_info;
     protected $url;
@@ -364,21 +363,6 @@ class Request
     }
 
     /**
-     * Get track id
-     *
-     *
-     * @return mixed
-     */
-    public function trackId()
-    {
-        if (null === $this->track_id) {
-            $this->track_id = sha1(uniqid());
-        }
-
-        return $this->track_id;
-    }
-
-    /**
      * Get host
      *
      * @return string
@@ -529,7 +513,7 @@ class Request
     /**
      * Get header or headers
      *
-     * @param null $key
+     * @param null $name
      * @return mixed
      */
     public function header($name = null)
@@ -574,9 +558,9 @@ class Request
      * @param null $default
      * @return null
      */
-    public function cookie($key, $default = null)
+    public function cookie($key = null, $default = null)
     {
-        if (func_num_args() === 0) {
+        if ($key === null) {
             return $_COOKIE;
         }
         return array_key_exists($key, $_COOKIE) ? $_COOKIE[$key] : $default;
