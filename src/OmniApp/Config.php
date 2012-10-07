@@ -89,9 +89,10 @@ abstract class Config extends \ArrayObject
      */
     public function &__get($name)
     {
-        if (array_key_exists($name, $this)) {
-            $ret = &$this[$name];
-        } else $ret = null;
+        if (!array_key_exists($name, $this)) {
+            $this[$name] = null;
+        }
+        $ret = &$this[$name];
         return $ret;
     }
 

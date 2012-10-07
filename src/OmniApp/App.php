@@ -560,15 +560,28 @@ class App
      */
     public static function dispatch($runner, $params = array())
     {
+        $_args = array();
+        foreach ($params as $k => $v) {
+            if (is_int($k)) {
+                $_args[] = $v;
+            }
+        }
+
         // Set params
         if (!self::$_cli) self::$request->params = $params;
 
-        if (is_string($runner) && Controller::factory($runner, array(self::$request, self::$response))) {
+        if (is_string($runner) && Controller::factory($runner, array(self::$request, self::$response), $_args)) {
             // Support controller class string
             return true;
         } elseif (is_callable($runner)) {
+            if ($_args) {
+                array_unshift($_args, self::$response);
+                array_unshift($_args, self::$request);
+            } else {
+                $_args = array(self::$request, self::$response);
+            }
             // Closure function support
-            call_user_func_array($runner, array(self::$request, self::$response));
+            call_user_func_array($runner, $_args);
             return true;
         }
         return false;
@@ -689,7 +702,7 @@ class App
      */
     public static function restoreErrorHandler()
     {
-        restore_exception_handler();
+        restore_error_handler();
     }
 
     /**
@@ -706,7 +719,7 @@ class App
         if ($class{0} == '\\') $class = ltrim($class, '\\');
 
         $file_name = '';
-        if (substr($class, 0, 8) == 'OmniApp\\') {
+        if (substr($class, 0, strlen(__NAMESPACE__) + 1) == __NAMESPACE__ . '\\') {
             require __DIR__ . '/' . str_replace('\\', '/', substr($class, 8)) . '.php';
         } else {
             if (isset(self::$config['classpath']) && !$available_path) {
