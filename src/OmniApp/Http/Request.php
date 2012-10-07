@@ -6,10 +6,18 @@ class Request
 {
     public $params = array();
 
+    protected $path;
+    protected $track_id;
+    protected $script_name;
+    protected $path_info;
+    protected $url;
+    protected $body;
+    protected $headers;
+
     /**
      * Get protocol
      *
-     * @static
+     *
      * @return string
      */
     public function protocol()
@@ -20,15 +28,14 @@ class Request
     /**
      * Get path
      *
-     * @static
+     *
      * @return mixed
      */
     public function path()
     {
-        static $path = null;
-        if (null === $path) $path = parse_url(getenv('REQUEST_URI'), PHP_URL_PATH);
+        if (null === $this->path) $this->path = parse_url(getenv('REQUEST_URI'), PHP_URL_PATH);
 
-        return $path;
+        return $this->path;
     }
 
     /**
@@ -48,15 +55,14 @@ class Request
      */
     public function scriptName()
     {
-        static $script_name = null;
-        if (null === $script_name) {
-            $script_name = getenv('SCRIPT_NAME');
-            if (strpos(getenv('REQUEST_URI'), $script_name) !== 0) {
-                $script_name = str_replace('\\', '/', dirname($script_name));
+        if (null === $this->script_name) {
+            $_script_name = getenv('SCRIPT_NAME');
+            if (strpos(getenv('REQUEST_URI'), $_script_name) !== 0) {
+                $_script_name = str_replace('\\', '/', dirname($_script_name));
             }
-            $script_name = rtrim($script_name, '/');
+            $this->script_name = rtrim($_script_name, '/');
         }
-        return $script_name;
+        return $this->script_name;
     }
 
     /**
@@ -66,7 +72,7 @@ class Request
      */
     public function rootUri()
     {
-        return self::scriptName();
+        return $this->scriptName();
     }
 
     /**
@@ -76,15 +82,14 @@ class Request
      */
     public function pathInfo()
     {
-        static $path_info = null;
-        if (null === $path_info) {
-            $path_info = getenv('PATH_INFO');
-            $path_info = substr_replace(self::uri(), '', 0, strlen(self::scriptName()));
-            if (strpos($path_info, '?') !== false) {
-                $path_info = substr_replace($path_info, '', strpos($path_info, '?')); //query string is not removed automatically
+        if (null === $this->path_info) {
+            $_path_info = substr_replace($this->uri(), '', 0, strlen($this->scriptName()));
+            if (strpos($_path_info, '?') !== false) {
+                $_path_info = substr_replace($_path_info, '', strpos($_path_info, '?')); //query string is not removed automatically
             }
+            $this->path_info = $_path_info;
         }
-        return $path_info;
+        return $this->path_info;
     }
 
     /**
@@ -94,33 +99,32 @@ class Request
      */
     public function resourceUri()
     {
-        return self::pathInfo();
+        return $this->pathInfo();
     }
 
     /**
      * Get url
      *
-     * @static
+     *
      * @return mixed
      */
     public function url()
     {
-        static $url = null;
-
-        if (null === $url) {
-            $url = self::scheme() . '://' . self::host();
-            if ((self::scheme() === 'https' && self::port() !== 443) || (self::scheme() === 'http' && self::port() !== 80)) {
-                $url .= sprintf(':%s', self::port());
+        if (null === $this->url) {
+            $_url = $this->scheme() . '://' . $this->host();
+            if (($this->scheme() === 'https' && $this->port() !== 443) || ($this->scheme() === 'http' && $this->port() !== 80)) {
+                $_url .= sprintf(':%s', $this->port());
             }
+            $this->url = $_url;
         }
 
-        return $url;
+        return $this->url;
     }
 
     /**
      * Get method
      *
-     * @static
+     *
      * @return string
      */
     public function method()
@@ -136,7 +140,7 @@ class Request
      */
     public function is($method)
     {
-        return self::method() == strtoupper($method);
+        return $this->method() == strtoupper($method);
     }
 
     /**
@@ -146,7 +150,7 @@ class Request
      */
     public function isGet()
     {
-        return self::is('get');
+        return $this->is('get');
     }
 
     /**
@@ -156,7 +160,7 @@ class Request
      */
     public function isPost()
     {
-        return self::is('post');
+        return $this->is('post');
     }
 
     /**
@@ -166,7 +170,7 @@ class Request
      */
     public function isPut()
     {
-        return self::is('put');
+        return $this->is('put');
     }
 
     /**
@@ -176,7 +180,7 @@ class Request
      */
     public function isDelete()
     {
-        return self::is('delete');
+        return $this->is('delete');
     }
 
     /**
@@ -186,7 +190,7 @@ class Request
      */
     public function isHead()
     {
-        return self::is('head');
+        return $this->is('head');
     }
 
     /**
@@ -196,18 +200,53 @@ class Request
      */
     public function isOptions()
     {
-        return self::is('options');
+        return $this->is('options');
     }
 
     /**
      * Is ajax
      *
-     * @static
+     *
      * @return bool
      */
     public function isAjax()
     {
         return !getenv('X-Requested-With') && 'XMLHttpRequest' == getenv('X-Requested-With');
+    }
+
+    /**
+     * Is Ajax?
+     *
+     * @return bool
+     */
+    public function isXhr()
+    {
+        return $this->isAjax();
+    }
+
+    /**
+     * Is secure connection?
+     *
+     * @return bool
+     */
+    public function isSecure()
+    {
+        return $this->scheme() === 'https';
+    }
+
+    public function accept($type = null)
+    {
+
+    }
+
+    public function acceptEncoding($type = null)
+    {
+
+    }
+
+    public function acceptLanguage($type = null)
+    {
+
     }
 
     /**
@@ -229,7 +268,7 @@ class Request
     /**
      * Get refer url
      *
-     * @static
+     *
      * @return string
      */
     public function refer()
@@ -240,18 +279,16 @@ class Request
     /**
      * Get track id
      *
-     * @static
+     *
      * @return mixed
      */
     public function trackId()
     {
-        static $track_id = null;
-
-        if (null === $track_id) {
-            $track_id = sha1(uniqid());
+        if (null === $this->track_id) {
+            $this->track_id = sha1(uniqid());
         }
 
-        return $track_id;
+        return $this->track_id;
     }
 
     /**
@@ -276,12 +313,11 @@ class Request
     /**
      * Get domain
      *
-     * @static
      * @return string
      */
     public function domain()
     {
-        return self::host();
+        return $this->host();
     }
 
     /**
@@ -307,7 +343,7 @@ class Request
     /**
      * Get user agent
      *
-     * @static
+     *
      * @return string
      */
     public function userAgent()
@@ -332,7 +368,7 @@ class Request
      */
     public function mediaType()
     {
-        $contentType = self::contentType();
+        $contentType = $this->contentType();
         if ($contentType) {
             $contentTypeParts = preg_split('/\s*[;,]\s*/', $contentType);
 
@@ -346,7 +382,7 @@ class Request
      */
     public function contentCharset()
     {
-        $mediaTypeParams = self::mediaType();
+        $mediaTypeParams = $this->mediaType();
         if (isset($mediaTypeParams['charset'])) {
             return $mediaTypeParams['charset'];
         }
@@ -367,7 +403,7 @@ class Request
     }
 
     /**
-     * Get the param from querystring
+     * Get the param from query string
      *
      * @param      $key
      * @param null $default
@@ -406,37 +442,42 @@ class Request
     /**
      * Get header or headers
      *
-     * @static
      * @param null $key
      * @return mixed
      */
-    public function header($key = null)
+    public function header($name = null)
     {
-        static $headers = null;
-        if (null === $headers) {
-            $headers = array();
+        if (null === $this->headers) {
+            $_headers = array();
             foreach ($_SERVER as $key => $value) {
-                $value = is_string($value) ? trim($value) : $value;
+                $_name = false;
                 if ('HTTP_' === substr($key, 0, 5)) {
-                    $headers[strtolower(substr($key, 5))] = $value;
+                    $_name = substr($key, 5);
                 } elseif ('X_' == substr($key, 0, 2)) {
-                    $headers[strtolower(substr($key, 2))] = $value;
+                    $_name = substr($key, 2);
                 } elseif (in_array($key, array('CONTENT_LENGTH',
                     'CONTENT_MD5',
                     'CONTENT_TYPE'))
                 ) {
-                    $headers[strtolower($key)] = $value;
+                    $_name = $key;
                 }
+                if (!$_name) continue;
+
+                // Set headers
+                $_headers[strtoupper(str_replace('_', '-', $_name))] = trim($value);
             }
 
             if (isset($_SERVER['PHP_AUTH_USER'])) {
                 $pass = isset($_SERVER['PHP_AUTH_PW']) ? $_SERVER['PHP_AUTH_PW'] : '';
-                $headers['authorization'] = 'Basic ' . base64_encode($_SERVER['PHP_AUTH_USER'] . ':' . $pass);
+                $_headers['AUTHORIZATION'] = 'Basic ' . base64_encode($_SERVER['PHP_AUTH_USER'] . ':' . $pass);
             }
+            $this->headers = $_headers;
+            unset($_headers);
         }
 
-        if ($key === null) return $headers;
-        return $headers[$key];
+        if ($name === null) return $this->headers;
+        $name = strtoupper($name);
+        return isset($this->headers[$name]) ? $this->headers[$name] : null;
     }
 
     /**
@@ -461,11 +502,9 @@ class Request
      */
     public function body()
     {
-        static $rawInput = null;
-        if (null === $rawInput) {
-            $rawInput = @file_get_contents('php://input');
-            if (!$rawInput) $rawInput = '';
+        if (null === $this->body) {
+            $this->body = @(string)file_get_contents('php://input');
         }
-        return $rawInput;
+        return $this->body;
     }
 }
