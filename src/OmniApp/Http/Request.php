@@ -2,8 +2,14 @@
 
 namespace OmniApp\Http;
 
-class Request
+use OmniApp\Data\MimeType;
+use OmniApp\Registry;
+
+class Request extends Registry
 {
+    /**
+     * @var array Route params
+     */
     public $params = array();
 
     protected $path;
@@ -258,7 +264,7 @@ class Request
 
         // If type is 'txt', 'xml' and so on, use smarty stracy
         if (is_string($type) && !strpos($type, '/')) {
-            $type = \OmniApp\Data\MimeType::load()->get($type);
+            $type = MimeType::load()->get($type);
             if (!$type) return null;
         }
 

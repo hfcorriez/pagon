@@ -3,8 +3,9 @@
 namespace OmniApp\Http;
 
 use OmniApp\Data\MimeType;
+use OmniApp\Registry;
 
-class Response
+class Response extends Registry
 {
     public static $messages = array(
         // Informational 1xx
