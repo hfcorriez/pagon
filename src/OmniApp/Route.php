@@ -15,12 +15,13 @@ class Route
      * Register a route for path
      *
      * @static
-     * @param $path
-     * @param $runner
+     * @param string               $path
+     * @param \Closure|string      $runner
+     * @param \Closure|string|null $more
      */
-    public static function on($path, $runner)
+    public static function on($path, $runner, $more = null)
     {
-        if (func_num_args() > 2) {
+        if ($more) {
             $_args = func_get_args();
             $path = array_shift($_args);
             $runner = $_args;
@@ -41,20 +42,20 @@ class Route
         $routes = (array)App::config('route');
 
         // Set path
-        $path = App::isCli() ? '/' . join('/', array_slice($GLOBALS['argv'], 1)) : App::$request->path();
+        $_path = App::isCli() ? '/' . join('/', array_slice($GLOBALS['argv'], 1)) : App::$request->path();
 
         //$path = trim($path, '/');
-        if ($path AND !preg_match('/^[\w\-~\/\.]{1,400}$/', $path)) $path = '404';
+        if ($_path AND !preg_match('/^[\w\-~\/\.]{1,400}$/', $_path)) $_path = '404';
 
         // Loop routes for parse and dispatch
-        foreach ($routes as $route => $controller) {
-            if (!$route) continue;
+        foreach ($routes as $p => $link) {
+            if (!$p) continue;
 
             // Try to parse the params
-            if (($params = self::parse($path, $route)) !== false) {
+            if (($params = self::parse($_path, $p)) !== false) {
                 // For save if dispatched?
                 try {
-                    return self::next($controller, $params);
+                    return self::next($link, $params);
                     // If multiple controller
                 } catch (Pass $e) {
                     // When catch Next, continue next route
