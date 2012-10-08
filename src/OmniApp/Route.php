@@ -70,23 +70,37 @@ class Route
      *
      * @param array|string $middleware
      * @param array        $params
+     * @throws Exception\Pass
      * @return bool
      */
     public static function next($middleware = null, $params = array())
     {
-        static $queue = null;
-        static $args = null;
+        // Save queue for the controllers
+        static $q = null;
+        // Save arguments
+        static $a = null;
 
+        // Default dispatch value
         $_dispatched = false;
 
+        // Set middleware first
         if ($middleware) {
-            $queue = (array)$middleware;
-            $args = $params;
+            $q = (array)$middleware;
+            $a = $params;
         }
 
-        if ($queue) {
-            $_dispatched = self::call(array_shift($queue), $args);
-            if (!$_dispatched || !$queue) unset($queue, $args);
+        if ($q) {
+            if ($middleware) {
+                // First call the first controller
+                $_dispatched = self::call(current($q), $a);
+            } elseif ($_next = next($q)) {
+                // After first, use cursor the get controller
+                $_dispatched = self::call($_next, $a);
+            } else {
+                // If last controller call the next, pass the next route
+                throw new Pass();
+            }
+            if (!$_dispatched) unset($q, $a);
         }
 
         return $_dispatched;
@@ -130,12 +144,9 @@ class Route
     public static function call($runner, $params = array())
     {
         // Save next closure
-        static $next = null;
-        if ($next === null) {
-            $next = function () {
-                Route::next();
-            };
-        }
+        $next = function () {
+            Route::next();
+        };
 
         // Set params
         if (!App::isCli()) App::$request->params = $params;
