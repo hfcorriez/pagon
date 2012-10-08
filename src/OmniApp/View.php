@@ -2,7 +2,7 @@
 
 namespace OmniApp;
 
-abstract class View
+class View
 {
     const _CLASS_ = __CLASS__;
 
@@ -103,7 +103,14 @@ abstract class View
      *
      * @return string
      */
-    abstract public function render();
+    public function render(){
+        ob_start();
+        if ($this->data) {
+            extract((array)$this->data);
+        }
+        include($this->file);
+        return ob_get_clean();
+    }
 
     /**
      * Assign value for view

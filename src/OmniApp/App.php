@@ -46,7 +46,7 @@ class App
     /**
      * @var string View engine
      */
-    protected static $view = 'OmniApp\View\Base';
+    protected static $view;
 
     /**
      * @var string Mode
@@ -247,11 +247,6 @@ class App
                         $key = self::$config;
                         $configs = array();
                     }
-                }
-
-                // Convert Config to array
-                if ($key instanceof Config) {
-                    $key = $key->getArrayCopy();
                 }
 
                 // Loop config
@@ -512,6 +507,8 @@ class App
             if (self::$view !== $view && is_subclass_of($view, View::_CLASS_)) {
                 self::$view = $view;
             }
+        } elseif ($view === false) {
+            self::$view = null;
         }
         return self::$view;
     }
@@ -525,8 +522,8 @@ class App
      */
     public static function render($file, $params = array())
     {
-        $view = self::$view;
-        self::$response->write($view::factory($file, $params));
+        $_view = self::$view ? self::$view : View::_CLASS_;
+        self::$response->write(new $_view($file, $params));
     }
 
     /**
@@ -715,10 +712,10 @@ class App
 
         if ($class{0} == '\\') $class = ltrim($class, '\\');
 
-        $file_name = '';
         if (substr($class, 0, strlen(__NAMESPACE__) + 1) == __NAMESPACE__ . '\\') {
             require __DIR__ . '/' . str_replace('\\', '/', substr($class, 8)) . '.php';
         } else {
+            $file_name = '';
             if (isset(self::$config['classpath']) && !$available_path) {
                 if (is_array(self::$config['classpath'])) {
                     $available_path = array(self::$config['classpath']['']);
@@ -743,7 +740,7 @@ class App
                 $class = substr($class, $last_pos + 1);
                 $file_name = str_replace('\\', '/', $namespace) . '/';
             }
-            $file_name .= (strpos($class, '_') ? str_replace('_', '/', $class) : $class) . '.php';
+            $file_name .= str_replace('_', '/', $class) . '.php';
             foreach ($available_path as $path) {
                 $file = stream_resolve_include_path($path . '/' . $file_name);
                 if ($file) {
