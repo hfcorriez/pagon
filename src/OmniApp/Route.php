@@ -2,24 +2,32 @@
 
 namespace OmniApp;
 
+use OmniApp\Middleware;
 use OmniApp\Exception\Pass;
+use OmniApp\Exception\Stop;
 
 /**
  * Route
  */
-class Route
+class Route extends Middleware
 {
     const _CLASS_ = __CLASS__;
+
+    protected $path;
+
+    public function __construct($path)
+    {
+        $this->path = $path;
+    }
 
     /**
      * Register a route for path
      *
-     * @static
      * @param string               $path
      * @param \Closure|string      $runner
      * @param \Closure|string|null $more
      */
-    public static function on($path, $runner, $more = null)
+    public function on($path, $runner, $more = null)
     {
         if ($more) {
             $_args = func_get_args();
@@ -32,30 +40,31 @@ class Route
     /**
      * Run route
      *
-     * @static
      * @return array
      * @throws \Exception
      * @return array|mixed
      */
-    public static function dispatch()
+    public function dispatch()
     {
         $routes = (array)App::config('route');
 
-        // Set path
-        $_path = App::isCli() ? '/' . join('/', array_slice($GLOBALS['argv'], 1)) : App::$request->path();
+        // No routes
+        if (!$routes) return false;
 
         //$path = trim($path, '/');
-        if ($_path AND !preg_match('/^[\w\-~\/\.]{1,400}$/', $_path)) $_path = '404';
+        if ($this->path AND !preg_match('/^[\w\-~\/\.]{1,400}$/', $this->path)) {
+            return false;
+        }
 
         // Loop routes for parse and dispatch
         foreach ($routes as $p => $link) {
             if (!$p) continue;
 
             // Try to parse the params
-            if (($params = self::parse($_path, $p)) !== false) {
+            if (($params = self::parseRoute($this->path, $p)) !== false) {
                 // For save if dispatched?
                 try {
-                    return self::next($link, $params);
+                    return $this->nextLink($link, $params);
                     // If multiple controller
                 } catch (Pass $e) {
                     // When catch Next, continue next route
@@ -67,6 +76,21 @@ class Route
     }
 
     /**
+     * Call for middleware
+     */
+    public function call()
+    {
+        ob_start();
+        try {
+            if (!$this->dispatch()) {
+                $this->notFound();
+            }
+        } catch (Stop $e) {
+        }
+        App::$response->write(ob_get_clean(), -1);
+    }
+
+    /**
      * Run next
      *
      * @param array|string $middleware
@@ -74,7 +98,7 @@ class Route
      * @throws Exception\Pass
      * @return bool
      */
-    public static function next($middleware = null, $params = array())
+    public function nextLink($middleware = null, $params = array())
     {
         // Save queue for the controllers
         static $q = null;
@@ -93,10 +117,10 @@ class Route
         if ($q) {
             if ($middleware) {
                 // First call the first controller
-                $_dispatched = self::call(current($q), $a);
+                $_dispatched = $this->run(current($q), $a);
             } elseif ($_next = next($q)) {
                 // After first, use cursor the get controller
-                $_dispatched = self::call($_next, $a);
+                $_dispatched = $this->run($_next, $a);
             } else {
                 // If last controller call the next, pass the next route
                 throw new Pass();
@@ -108,45 +132,18 @@ class Route
     }
 
     /**
-     * Parse the route
-     *
-     * @param $path
-     * @param $route
-     * @return array|bool
-     */
-    public static function parse($path, $route)
-    {
-        $params = false;
-
-        // Regex or Param check
-        if (!strpos($route, ':') && strpos($route, '^') === false) {
-            if ($path === $route) {
-                $params = array();
-            }
-        } else {
-            // Try match
-            if (preg_match(self::toRegex($route), $path, $matches)) {
-                array_shift($matches);
-                $params = $matches;
-            }
-        }
-
-        // When complete the return
-        return $params;
-    }
-
-    /**
      * Control the runner
      *
      * @param       $runner
      * @param array $params
      * @return bool
      */
-    public static function call($runner, $params = array())
+    public function run($runner, $params = array())
     {
+        $self = $this;
         // Save next closure
-        $next = function () {
-            Route::next();
+        $next = function () use ($self) {
+            $self->nextLink();
         };
 
         // Set params
@@ -170,12 +167,12 @@ class Route
      * @param mixed $runner
      * @return mixed
      */
-    public static function notFound($runner = null)
+    public function notFound($runner = null)
     {
         if ($runner) {
             App::config('route.404', $runner, true);
         }
-        return ($_route = App::config('route.404')) ? self::call($_route) : false;
+        return ($_route = App::config('route.404')) ? $this->run($_route) : false;
     }
 
 
@@ -185,7 +182,7 @@ class Route
      * @param mixed $runner
      * @return mixed
      */
-    public static function error($runner = null)
+    public function error($runner = null)
     {
         $_args = array();
         if (!$runner instanceof \Exception) {
@@ -193,12 +190,42 @@ class Route
         } else {
             $_args = array($runner);
         }
-        return ($_route = App::config('route.error')) ? self::call($_route, $_args) : false;
+        return ($_route = App::config('route.error')) ? $this->run($_route, $_args) : false;
+    }
+
+    /**
+     * Parse the route
+     *
+     * @static
+     * @param $path
+     * @param $route
+     * @return array|bool
+     */
+    protected static function parseRoute($path, $route)
+    {
+        $params = false;
+
+        // Regex or Param check
+        if (!strpos($route, ':') && strpos($route, '^') === false) {
+            if ($path === $route) {
+                $params = array();
+            }
+        } else {
+            // Try match
+            if (preg_match(self::toRegex($route), $path, $matches)) {
+                array_shift($matches);
+                $params = $matches;
+            }
+        }
+
+        // When complete the return
+        return $params;
     }
 
     /**
      * To regex
      *
+     * @static
      * @param string $regex
      * @return string
      */

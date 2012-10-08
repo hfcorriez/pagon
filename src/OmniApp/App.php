@@ -24,7 +24,6 @@ class App
 {
     /**
      * @var Config
-     * @todo protect
      */
     protected static $config = array();
 
@@ -47,6 +46,11 @@ class App
      * @var string View engine
      */
     protected static $view;
+
+    /**
+     * @var Route
+     */
+    protected static $route;
 
     /**
      * @var string Mode
@@ -95,12 +99,16 @@ class App
         // Is win
         self::$_win = substr(PHP_OS, 0, 3) == 'WIN';
 
+        // Set io depends on SAPI
         if (!self::$_cli) {
             self::$request = new Http\Request();
             self::$response = new Http\Response();
         } else {
             self::$response = new CLI\Output();
         }
+
+        // Init Route
+        self::$route = new Route(self::$_cli ? '/' . join('/', array_slice($GLOBALS['argv'], 1)) : self::$request->path());
 
         // handle autoload and shutdown
         register_shutdown_function(array(__CLASS__, '__shutdown'));
@@ -110,7 +118,7 @@ class App
         mb_internal_encoding('UTF-8');
 
         // Add default middleware
-        self::$middleware = array(new Middleware\Router());
+        self::$middleware = array(self::$route);
 
         // configure timezone
         self::config('timezone', function ($value) {
@@ -365,9 +373,9 @@ class App
         if (self::$_cli || !self::$request->isGet()) return;
 
         if ($more !== null) {
-            call_user_func_array(Route::_CLASS_ . '::on', func_get_args());
+            call_user_func_array(array(self::$route, 'on'), func_get_args());
         } else {
-            Route::on($path, $runner);
+            self::$route->on($path, $runner);
         }
     }
 
@@ -383,9 +391,9 @@ class App
         if (self::$_cli || !self::$request->isPost()) return;
 
         if ($more !== null) {
-            call_user_func_array(Route::_CLASS_ . '::on', func_get_args());
+            call_user_func_array(array(self::$route, 'on'), func_get_args());
         } else {
-            Route::on($path, $runner);
+            self::$route->on($path, $runner);
         }
     }
 
@@ -401,9 +409,9 @@ class App
         if (self::$_cli || !self::$request->isPut()) return;
 
         if ($more !== null) {
-            call_user_func_array(Route::_CLASS_ . '::on', func_get_args());
+            call_user_func_array(array(self::$route, 'on'), func_get_args());
         } else {
-            Route::on($path, $runner);
+            self::$route->on($path, $runner);
         }
     }
 
@@ -419,9 +427,9 @@ class App
         if (self::$_cli || !self::$request->isDelete()) return;
 
         if ($more !== null) {
-            call_user_func_array(Route::_CLASS_ . '::on', func_get_args());
+            call_user_func_array(array(self::$route, 'on'), func_get_args());
         } else {
-            Route::on($path, $runner);
+            self::$route->on($path, $runner);
         }
     }
 
@@ -437,9 +445,9 @@ class App
         if (self::$_cli || !self::$request->isOptions()) return;
 
         if ($more !== null) {
-            call_user_func_array(Route::_CLASS_ . '::on', func_get_args());
+            call_user_func_array(array(self::$route, 'on'), func_get_args());
         } else {
-            Route::on($path, $runner);
+            self::$route->on($path, $runner);
         }
     }
 
@@ -455,9 +463,9 @@ class App
         if (self::$_cli || !self::$request->isHead()) return;
 
         if ($more !== null) {
-            call_user_func_array(Route::_CLASS_ . '::on', func_get_args());
+            call_user_func_array(array(self::$route, 'on'), func_get_args());
         } else {
-            Route::on($path, $runner);
+            self::$route->on($path, $runner);
         }
     }
 
@@ -473,9 +481,9 @@ class App
         if (self::$_cli) return;
 
         if ($more !== null) {
-            call_user_func_array(Route::_CLASS_ . '::on', func_get_args());
+            call_user_func_array(array(self::$route, 'on'), func_get_args());
         } else {
-            Route::on($path, $runner);
+            self::$route->on($path, $runner);
         }
     }
 
@@ -489,9 +497,9 @@ class App
     public static function map($path, $runner, $more = null)
     {
         if ($more !== null) {
-            call_user_func_array(Route::_CLASS_ . '::on', func_get_args());
+            call_user_func_array(array(self::$route, 'on'), func_get_args());
         } else {
-            Route::on($path, $runner);
+            self::$route->on($path, $runner);
         }
     }
 
@@ -622,11 +630,11 @@ class App
     public static function notFound($runner = null)
     {
         if ($runner instanceof \Closure) {
-            Route::notFound($runner);
+            self::$route->notFound($runner);
         } else {
             self::cleanBuffer();
             ob_start();
-            if (!Route::notFound()) {
+            if (!self::$route->notFound()) {
                 echo "Path not found";
             }
             self::output(404, ob_get_clean());
@@ -639,11 +647,11 @@ class App
     public static function error($runner = null)
     {
         if ($runner instanceof \Closure) {
-            Route::error($runner);
+            self::$route->error($runner);
         } else {
             self::cleanBuffer();
             ob_start();
-            if (!Route::error($runner)) {
+            if (!self::$route->error($runner)) {
                 echo "Error occurred";
             }
             self::output(500, ob_get_clean());
