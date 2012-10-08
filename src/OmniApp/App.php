@@ -370,7 +370,7 @@ class App
         if (self::$_cli || !self::$request->isGet()) return;
 
         if ($more !== null) {
-            call_user_func_array(Route::_CLASS_, func_get_args());
+            call_user_func_array(Route::_CLASS_ . '::on', func_get_args());
         } else {
             Route::on($path, $runner);
         }
@@ -388,7 +388,7 @@ class App
         if (self::$_cli || !self::$request->isPost()) return;
 
         if ($more !== null) {
-            call_user_func_array(Route::_CLASS_, func_get_args());
+            call_user_func_array(Route::_CLASS_ . '::on', func_get_args());
         } else {
             Route::on($path, $runner);
         }
@@ -406,7 +406,7 @@ class App
         if (self::$_cli || !self::$request->isPut()) return;
 
         if ($more !== null) {
-            call_user_func_array(Route::_CLASS_, func_get_args());
+            call_user_func_array(Route::_CLASS_ . '::on', func_get_args());
         } else {
             Route::on($path, $runner);
         }
@@ -424,7 +424,7 @@ class App
         if (self::$_cli || !self::$request->isDelete()) return;
 
         if ($more !== null) {
-            call_user_func_array(Route::_CLASS_, func_get_args());
+            call_user_func_array(Route::_CLASS_ . '::on', func_get_args());
         } else {
             Route::on($path, $runner);
         }
@@ -442,7 +442,7 @@ class App
         if (self::$_cli || !self::$request->isOptions()) return;
 
         if ($more !== null) {
-            call_user_func_array(Route::_CLASS_, func_get_args());
+            call_user_func_array(Route::_CLASS_ . '::on', func_get_args());
         } else {
             Route::on($path, $runner);
         }
@@ -460,7 +460,7 @@ class App
         if (self::$_cli || !self::$request->isHead()) return;
 
         if ($more !== null) {
-            call_user_func_array(Route::_CLASS_, func_get_args());
+            call_user_func_array(Route::_CLASS_ . '::on', func_get_args());
         } else {
             Route::on($path, $runner);
         }
@@ -478,7 +478,7 @@ class App
         if (self::$_cli) return;
 
         if ($more !== null) {
-            call_user_func_array(Route::_CLASS_, func_get_args());
+            call_user_func_array(Route::_CLASS_ . '::on', func_get_args());
         } else {
             Route::on($path, $runner);
         }
@@ -494,7 +494,7 @@ class App
     public static function map($path, $runner, $more = null)
     {
         if ($more !== null) {
-            call_user_func_array(Route::_CLASS_, func_get_args());
+            call_user_func_array(Route::_CLASS_ . '::on', func_get_args());
         } else {
             Route::on($path, $runner);
         }
