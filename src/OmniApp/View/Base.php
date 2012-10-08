@@ -12,7 +12,9 @@ class Base extends \OmniApp\View
     public function render()
     {
         ob_start();
-        extract((array)$this->data);
+        if ($this->data) {
+            extract((array)$this->data);
+        }
         include($this->file);
         return ob_get_clean();
     }

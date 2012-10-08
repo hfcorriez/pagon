@@ -31,7 +31,7 @@ abstract class View
      *
      * @param string $file
      * @param array  $params
-     * @throws \Exception
+     * @throws Exception
      * @return View
      */
     public function __construct($file, $params = array())
