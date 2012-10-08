@@ -4,6 +4,8 @@ namespace OmniApp;
 
 abstract class View
 {
+    const _CLASS_ = __CLASS__;
+
     /**
      * @var string File path
      */

@@ -4,6 +4,8 @@ namespace OmniApp;
 
 abstract class Middleware
 {
+    const _CLASS_ = __CLASS__;
+
     /**
      * @var Middleware
      */

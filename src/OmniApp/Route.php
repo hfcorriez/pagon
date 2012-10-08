@@ -10,6 +10,8 @@ use OmniApp\Exception\Pass;
  */
 class Route
 {
+    const _CLASS_ = __CLASS__;
+
     /**
      * Register a route for path
      *

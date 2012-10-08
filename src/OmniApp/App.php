@@ -128,7 +128,7 @@ class App
         self::config('view.engine', function ($value, $previous) {
             // Auto fix framework views
             if ($value{0} !== '\\') {
-                $value = __NAMESPACE__ . '\\View\\' . $value;
+                $value = View::_CLASS_ . '\\' . $value;
             }
             // Not set ok then configure previous
             if ($value !== self::view($value)) {
@@ -345,7 +345,7 @@ class App
     public static function add($middleware)
     {
         // Check and construct Middleware
-        if (is_string($middleware) && is_subclass_of($middleware, __NAMESPACE__ . '\Middleware')) {
+        if (is_string($middleware) && is_subclass_of($middleware, Middleware::_CLASS_)) {
             $middleware = new $middleware();
         }
 
@@ -370,7 +370,7 @@ class App
         if (self::$_cli || !self::$request->isGet()) return;
 
         if ($more !== null) {
-            call_user_func_array(__NAMESPACE__ . '\\Route::on', func_get_args());
+            call_user_func_array(Route::_CLASS_, func_get_args());
         } else {
             Route::on($path, $runner);
         }
@@ -388,7 +388,7 @@ class App
         if (self::$_cli || !self::$request->isPost()) return;
 
         if ($more !== null) {
-            call_user_func_array(__NAMESPACE__ . '\\Route::on', func_get_args());
+            call_user_func_array(Route::_CLASS_, func_get_args());
         } else {
             Route::on($path, $runner);
         }
@@ -406,7 +406,7 @@ class App
         if (self::$_cli || !self::$request->isPut()) return;
 
         if ($more !== null) {
-            call_user_func_array(__NAMESPACE__ . '\\Route::on', func_get_args());
+            call_user_func_array(Route::_CLASS_, func_get_args());
         } else {
             Route::on($path, $runner);
         }
@@ -424,7 +424,7 @@ class App
         if (self::$_cli || !self::$request->isDelete()) return;
 
         if ($more !== null) {
-            call_user_func_array(__NAMESPACE__ . '\\Route::on', func_get_args());
+            call_user_func_array(Route::_CLASS_, func_get_args());
         } else {
             Route::on($path, $runner);
         }
@@ -442,7 +442,7 @@ class App
         if (self::$_cli || !self::$request->isOptions()) return;
 
         if ($more !== null) {
-            call_user_func_array(__NAMESPACE__ . '\\Route::on', func_get_args());
+            call_user_func_array(Route::_CLASS_, func_get_args());
         } else {
             Route::on($path, $runner);
         }
@@ -460,7 +460,7 @@ class App
         if (self::$_cli || !self::$request->isHead()) return;
 
         if ($more !== null) {
-            call_user_func_array(__NAMESPACE__ . '\\Route::on', func_get_args());
+            call_user_func_array(Route::_CLASS_, func_get_args());
         } else {
             Route::on($path, $runner);
         }
@@ -478,7 +478,7 @@ class App
         if (self::$_cli) return;
 
         if ($more !== null) {
-            call_user_func_array(__NAMESPACE__ . '\\Route::on', func_get_args());
+            call_user_func_array(Route::_CLASS_, func_get_args());
         } else {
             Route::on($path, $runner);
         }
@@ -494,7 +494,7 @@ class App
     public static function map($path, $runner, $more = null)
     {
         if ($more !== null) {
-            call_user_func_array(__NAMESPACE__ . '\\Route::on', func_get_args());
+            call_user_func_array(Route::_CLASS_, func_get_args());
         } else {
             Route::on($path, $runner);
         }
@@ -509,7 +509,7 @@ class App
     public static function view($view = null)
     {
         if ($view) {
-            if (self::$view !== $view && is_subclass_of($view, __NAMESPACE__ . '\View')) {
+            if (self::$view !== $view && is_subclass_of($view, View::_CLASS_)) {
                 self::$view = $view;
             }
         }
