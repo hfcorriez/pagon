@@ -2,6 +2,6 @@
 
 namespace OmniApp\Exception;
 
-class Pass extends \OmniApp\Exception
+class Pass extends \Exception
 {
 }

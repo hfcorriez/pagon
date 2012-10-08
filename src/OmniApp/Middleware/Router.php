@@ -5,9 +5,10 @@ namespace OmniApp\Middleware;
 use OmniApp\App;
 use OmniApp\Event;
 use OmniApp\Route;
+use OmniApp\Middleware;
 use OmniApp\Exception\Stop;
 
-class Router extends \OmniApp\Middleware
+class Router extends Middleware
 {
     /**
      * Call for the middleware

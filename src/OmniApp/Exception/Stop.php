@@ -2,6 +2,6 @@
 
 namespace OmniApp\Exception;
 
-class Stop extends \OmniApp\Exception
+class Stop extends \Exception
 {
 }

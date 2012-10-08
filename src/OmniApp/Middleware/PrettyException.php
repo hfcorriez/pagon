@@ -3,8 +3,9 @@
 namespace OmniApp\Middleware;
 
 use OmniApp\App;
+use OmniApp\Middleware;
 
-class PrettyException extends \OmniApp\Middleware
+class PrettyException extends Middleware
 {
     public function call()
     {
