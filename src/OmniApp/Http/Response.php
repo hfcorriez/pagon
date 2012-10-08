@@ -4,6 +4,7 @@ namespace OmniApp\Http;
 
 use OmniApp\Data\MimeType;
 use OmniApp\Registry;
+use OmniApp\Exception\Stop;
 
 class Response extends Registry
 {
@@ -306,6 +307,16 @@ class Response extends Registry
     {
         $this->status = $status;
         $this->headers['Location'] = $url;
+    }
+
+    /**
+     * Stop
+     *
+     * @throws Stop
+     */
+    public static function stop()
+    {
+        throw new Stop();
     }
 
     /**

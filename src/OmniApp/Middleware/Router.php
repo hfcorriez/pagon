@@ -16,14 +16,13 @@ class Router extends \OmniApp\Middleware
      */
     public function call()
     {
+        ob_start();
         try {
-            ob_start();
             if (!Route::dispatch()) {
                 App::notFound();
             }
-            App::stop();
         } catch (Stop $e) {
-            App::$response->write(ob_get_clean());
         }
+        App::$response->write(ob_get_clean());
     }
 }

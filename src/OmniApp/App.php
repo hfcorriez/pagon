@@ -601,7 +601,7 @@ class App
      */
     public static function stop()
     {
-        throw new Exception\Stop;
+        throw new Exception\Stop();
     }
 
     /**
@@ -618,7 +618,7 @@ class App
     /**
      * Next
      *
-     * @throws Exception\Pass
+     * @throws Exception\Next
      */
     public static function next()
     {
@@ -679,7 +679,7 @@ class App
     /**
      * Clean current output buffer
      */
-    protected static function cleanBuffer()
+    public static function cleanBuffer()
     {
         if (ob_get_level() !== 0) {
             ob_clean();

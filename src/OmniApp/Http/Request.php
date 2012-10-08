@@ -4,6 +4,9 @@ namespace OmniApp\Http;
 
 use OmniApp\Data\MimeType;
 use OmniApp\Registry;
+use OmniApp\Exception\Pass;
+use OmniApp\Exception\Next;
+use OmniApp\App;
 
 class Request extends Registry
 {
@@ -583,6 +586,27 @@ class Request extends Registry
             $this->body = @(string)file_get_contents('php://input');
         }
         return $this->body;
+    }
+
+    /**
+     * Pass
+     *
+     * @throws Pass
+     */
+    public static function pass()
+    {
+        App::cleanBuffer();
+        throw new Pass();
+    }
+
+    /**
+     * Next
+     *
+     * @throws Next
+     */
+    public static function next()
+    {
+        throw new Next();
     }
 
     /**
