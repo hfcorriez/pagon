@@ -110,7 +110,7 @@ class App
         mb_internal_encoding('UTF-8');
 
         // Add default middleware
-        self::$middleware = array(new Middleware\RunTime());
+        self::$middleware = array(new Middleware\Router());
 
         // configure timezone
         self::config('timezone', function ($value) {
@@ -361,90 +361,143 @@ class App
     /**
      * Route get method
      *
-     * @param $path
-     * @param $runner
+     * @param string          $path
+     * @param \Closure|string $runner
+     * @param \Closure|string $more
      */
-    public static function get($path, $runner)
+    public static function get($path, $runner, $more = null)
     {
         if (self::$_cli || !self::$request->isGet()) return;
 
-        self::map($path, $runner);
+        if ($more !== null) {
+            call_user_func_array(__NAMESPACE__ . '\\Route::on', func_get_args());
+        } else {
+            Route::on($path, $runner);
+        }
     }
 
     /**
      * Route post method
      *
-     * @param $path
-     * @param $runner
+     * @param string          $path
+     * @param \Closure|string $runner
+     * @param \Closure|string $more
      */
-    public static function post($path, $runner)
+    public static function post($path, $runner, $more = null)
     {
         if (self::$_cli || !self::$request->isPost()) return;
 
-        self::map($path, $runner);
+        if ($more !== null) {
+            call_user_func_array(__NAMESPACE__ . '\\Route::on', func_get_args());
+        } else {
+            Route::on($path, $runner);
+        }
     }
 
     /**
      * Route put method
      *
-     * @param $path
-     * @param $runner
+     * @param string          $path
+     * @param \Closure|string $runner
+     * @param \Closure|string $more
      */
-    public static function put($path, $runner)
+    public static function put($path, $runner, $more = null)
     {
         if (self::$_cli || !self::$request->isPut()) return;
 
-        self::map($path, $runner);
+        if ($more !== null) {
+            call_user_func_array(__NAMESPACE__ . '\\Route::on', func_get_args());
+        } else {
+            Route::on($path, $runner);
+        }
     }
 
     /**
      * Route delete method
      *
-     * @param $path
-     * @param $runner
+     * @param string          $path
+     * @param \Closure|string $runner
+     * @param \Closure|string $more
      */
-    public static function delete($path, $runner)
+    public static function delete($path, $runner, $more = null)
     {
         if (self::$_cli || !self::$request->isDelete()) return;
 
-        self::map($path, $runner);
+        if ($more !== null) {
+            call_user_func_array(__NAMESPACE__ . '\\Route::on', func_get_args());
+        } else {
+            Route::on($path, $runner);
+        }
     }
 
     /**
      * Route options method
      *
-     * @param $path
-     * @param $runner
+     * @param string          $path
+     * @param \Closure|string $runner
+     * @param \Closure|string $more
      */
-    public static function options($path, $runner)
+    public static function options($path, $runner, $more = null)
     {
         if (self::$_cli || !self::$request->isOptions()) return;
 
-        self::map($path, $runner);
+        if ($more !== null) {
+            call_user_func_array(__NAMESPACE__ . '\\Route::on', func_get_args());
+        } else {
+            Route::on($path, $runner);
+        }
     }
 
     /**
      * Route head method
      *
-     * @param $path
-     * @param $runner
+     * @param string          $path
+     * @param \Closure|string $runner
+     * @param \Closure|string $more
      */
-    public static function head($path, $runner)
+    public static function head($path, $runner, $more = null)
     {
         if (self::$_cli || !self::$request->isHead()) return;
 
-        self::map($path, $runner);
+        if ($more !== null) {
+            call_user_func_array(__NAMESPACE__ . '\\Route::on', func_get_args());
+        } else {
+            Route::on($path, $runner);
+        }
+    }
+
+    /**
+     * Http all route
+     *
+     * @param string          $path
+     * @param \Closure|string $runner
+     * @param \Closure|string $more
+     */
+    public static function all($path, $runner, $more = null)
+    {
+        if (self::$_cli) return;
+
+        if ($more !== null) {
+            call_user_func_array(__NAMESPACE__ . '\\Route::on', func_get_args());
+        } else {
+            Route::on($path, $runner);
+        }
     }
 
     /**
      * Map route
      *
-     * @param $path
-     * @param $runner
+     * @param string          $path
+     * @param \Closure|string $runner
+     * @param \Closure|string $more
      */
-    public static function map($path, $runner)
+    public static function map($path, $runner, $more = null)
     {
-        Route::on($path, $runner);
+        if ($more !== null) {
+            call_user_func_array(__NAMESPACE__ . '\\Route::on', func_get_args());
+        } else {
+            Route::on($path, $runner);
+        }
     }
 
     /**
@@ -502,8 +555,21 @@ class App
 
         if (self::config('error')) self::registerErrorHandler();
 
-        // request app call
-        self::$middleware[0]->call();
+        try {
+            // request app call
+            self::$middleware[0]->call();
+        } catch (\Exception $e) {
+            if (App::config('debug')) {
+                throw $e;
+            } else {
+                try {
+                    App::error($e);
+                } catch (Exception\Stop $e) {
+                    //
+                }
+            }
+            Event::fireEvent('error');
+        }
 
         if (!self::$_cli) {
             // Send headers when http request
@@ -515,76 +581,6 @@ class App
         if (self::config('error')) self::restoreErrorHandler();
 
         Event::fireEvent('end');
-    }
-
-    /**
-     * Call for the middleware
-     *
-     * @throws \Exception
-     */
-    public static function call()
-    {
-        try {
-            $path = self::$_cli ? '/' . join('/', array_slice($GLOBALS['argv'], 1)) : self::$request->path();
-            list($controller, $route, $params) = Route::parse($path);
-
-            Event::fireEvent('start');
-            ob_start();
-            if (!self::dispatch($controller, $params)) {
-                self::notFound();
-            }
-            self::stop();
-        } catch (Exception\Stop $e) {
-            self::$response->write(ob_get_clean());
-            Event::fireEvent('stop');
-        } catch (\Exception $e) {
-            if (self::config('debug')) {
-                throw $e;
-            } else {
-                try {
-                    self::error($e);
-                } catch (Exception\Stop $e) {
-                    //
-                }
-            }
-            Event::fireEvent('error');
-        }
-    }
-
-    /**
-     * Control the runner
-     *
-     * @param       $runner
-     * @param array $params
-     * @return bool
-     */
-    public static function dispatch($runner, $params = array())
-    {
-        $_args = array();
-        foreach ($params as $k => $v) {
-            if (is_int($k)) {
-                $_args[] = $v;
-            }
-        }
-
-        // Set params
-        if (!self::$_cli) self::$request->params = $params;
-
-        if (is_string($runner) && Controller::factory($runner, array(self::$request, self::$response), $_args)) {
-            // Support controller class string
-            return true;
-        } elseif (is_callable($runner)) {
-            if ($_args) {
-                array_unshift($_args, self::$response);
-                array_unshift($_args, self::$request);
-            } else {
-                $_args = array(self::$request, self::$response);
-            }
-            // Closure function support
-            call_user_func_array($runner, $_args);
-            return true;
-        }
-        return false;
     }
 
     /**
@@ -617,6 +613,16 @@ class App
     {
         self::cleanBuffer();
         throw new Exception\Pass();
+    }
+
+    /**
+     * Next
+     *
+     * @throws Exception\Pass
+     */
+    public static function next()
+    {
+        throw new Exception\Next();
     }
 
     /**

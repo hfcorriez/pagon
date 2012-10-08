@@ -2,6 +2,9 @@
 
 namespace OmniApp;
 
+use OmniApp\Exception\Next;
+use OmniApp\Exception\Pass;
+
 /**
  * Route
  */
@@ -16,50 +19,126 @@ class Route
      */
     public static function on($path, $runner)
     {
+        if (func_num_args() > 2) {
+            $_args = func_get_args();
+            $path = array_shift($_args);
+            $runner = $_args;
+        }
         App::config()->route[$path] = $runner;
     }
 
     /**
-     * Parse site path
+     * Run route
      *
      * @static
-     * @param $path
      * @return array
      * @throws \Exception
+     * @return array|mixed
      */
-    public static function parse($path)
+    public static function run()
     {
         $routes = (array)App::config('route');
+
+        // Set path
+        $path = App::isCli() ? '/' . join('/', array_slice($GLOBALS['argv'], 1)) : App::$request->path();
 
         //$path = trim($path, '/');
         if ($path AND !preg_match('/^[\w\-~\/\.]{1,400}$/', $path)) $path = '404';
 
+        // Loop routes for parse and dispatch
         foreach ($routes as $route => $controller) {
             if (!$route) continue;
-            $complete = false;
-            $params = array();
 
-            // Regex or Param check
-            if (!strpos($route, ':') && strpos($route, '^') === false) {
-                if ($path === $route) {
-                    $complete = $route;
+            // Try to parse the params
+            if (($params = self::parse($path, $route)) !== false) {
+                // For save if dispatched?
+                $_dispatched = false;
+                try {
+                    // If multiple controller
+                    if (is_array($controller)) {
+                        foreach ($controller as $c) {
+                            try {
+                                $_dispatched = self::dispatch($c, $params);
+                                break;
+                            } catch (Next $e) {
+                                // When catch Next, continue next controller
+                            }
+                        }
+                    } else {
+                        try {
+                            $_dispatched = self::dispatch($controller);
+                        } catch (Next $e) {
+                            // Only for catch Next exception
+                        }
+                    }
+                    return $_dispatched;
+                } catch (Pass $e) {
+                    // When catch Next, continue next route
                 }
-            } else {
-                // Try match
-                if (preg_match(self::toRegex($route), $path, $matches)) {
-                    $complete = $route;
-                    array_shift($matches);
-                    $params = $matches;
-                }
-            }
-
-            // When complete the return
-            if ($complete) {
-                return array($controller, $complete, $params);
             }
         }
 
-        return self::notFound();
+        return false;
+    }
+
+    /**
+     * Parse the route
+     *
+     * @param $path
+     * @param $route
+     * @return array|bool
+     */
+    public static function parse($path, $route)
+    {
+        $params = false;
+
+        // Regex or Param check
+        if (!strpos($route, ':') && strpos($route, '^') === false) {
+            if ($path === $route) {
+                $params = array();
+            }
+        } else {
+            // Try match
+            if (preg_match(self::toRegex($route), $path, $matches)) {
+                array_shift($matches);
+                $params = $matches;
+            }
+        }
+
+        // When complete the return
+        return $params;
+    }
+
+    /**
+     * Control the runner
+     *
+     * @param       $runner
+     * @param array $params
+     * @return bool
+     */
+    public static function dispatch($runner, $params = array())
+    {
+        // Save next closure
+        static $next = null;
+        if ($next === null) {
+            $next = function () {
+                App::next();
+            };
+        }
+
+        // Set params
+        if (!App::isCli()) App::$request->params = $params;
+
+        // Check runner
+        if (is_string($runner) && Controller::factory($runner, array(App::$request, App::$response, $next))) {
+            // Support controller class string
+            return true;
+        } elseif (is_callable($runner)) {
+            // Closure function support
+            call_user_func_array($runner, array(App::$request, App::$response, $next));
+            return true;
+        }
+        return false;
     }
 
     /**
@@ -97,7 +176,7 @@ class Route
      * @param $regex
      * @return string
      */
-    public static function toRegex($regex)
+    protected static function toRegex($regex)
     {
         if ($regex[1] !== '^') {
             $regex = str_replace(array('/'), array('\\/'), $regex);
