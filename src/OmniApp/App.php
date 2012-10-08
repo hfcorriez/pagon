@@ -553,13 +553,17 @@ class App
 
         Event::fireEvent('run');
 
-        if (self::config('error')) self::registerErrorHandler();
+        $_error = false;
+        if (self::config('error')) {
+            $_error = true;
+            self::registerErrorHandler();
+        }
 
         try {
             // request app call
             self::$middleware[0]->call();
         } catch (\Exception $e) {
-            if (App::config('debug')) {
+            if (self::$config->debug) {
                 throw $e;
             } else {
                 try {
@@ -578,7 +582,7 @@ class App
         // send data
         echo self::$response->body();
 
-        if (self::config('error')) self::restoreErrorHandler();
+        if ($_error) self::restoreErrorHandler();
 
         Event::fireEvent('end');
     }
@@ -630,7 +634,7 @@ class App
      */
     public static function notFound($runner = null)
     {
-        if (is_callable($runner)) {
+        if ($runner instanceof \Closure) {
             Route::notFound($runner);
         } else {
             self::cleanBuffer();
@@ -647,7 +651,7 @@ class App
      */
     public static function error($runner = null)
     {
-        if (is_callable($runner)) {
+        if ($runner instanceof \Closure) {
             Route::error($runner);
         } else {
             self::cleanBuffer();

@@ -23,6 +23,6 @@ class Router extends \OmniApp\Middleware
             }
         } catch (Stop $e) {
         }
-        App::$response->write(ob_get_clean());
+        App::$response->write(ob_get_clean(), -1);
     }
 }

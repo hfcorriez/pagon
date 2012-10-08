@@ -30,7 +30,7 @@ class Output
      */
     public function body($content = null)
     {
-        if ($content !== null) self::write($content, true);
+        if ($content !== null) self::write($content, 0);
 
         return $this->body;
     }
@@ -38,16 +38,20 @@ class Output
     /**
      * Write body
      *
-     * @param      $body
-     * @param bool $replace
+     * @param string $body
+     * @param int    $pos
      * @return string
      */
-    public function write($body, $replace = false)
+    public function write($body, $pos = 1)
     {
-        if ($replace) {
-            $this->body = $body;
+        if (!$body) return $this->body;
+
+        if ($pos === 1) {
+            $this->body .= $body;
+        } elseif ($pos === -1) {
+            $this->body = $body . $this->body;
         } else {
-            $this->body .= (string)$body;
+            $this->body = $body;
         }
 
         return $this->body;

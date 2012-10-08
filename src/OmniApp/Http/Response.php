@@ -79,7 +79,7 @@ class Response extends Registry
      */
     public function body($content = null)
     {
-        if ($content !== null) $this->write($content, true);
+        if ($content !== null) $this->write($content, 0);
 
         return $this->body;
     }
@@ -116,16 +116,20 @@ class Response extends Registry
     /**
      * Write body
      *
-     * @param      $body
-     * @param bool $replace
+     * @param string $body
+     * @param int    $pos
      * @return string
      */
-    public function write($body, $replace = false)
+    public function write($body, $pos = 1)
     {
-        if ($replace) {
-            $this->body = $body;
+        if (!$body) return $this->body;
+
+        if ($pos === 1) {
+            $this->body .= $body;
+        } elseif ($pos === -1) {
+            $this->body = $body . $this->body;
         } else {
-            $this->body .= (string)$body;
+            $this->body = $body;
         }
         $this->length = strlen($this->body);
 
@@ -275,7 +279,7 @@ class Response extends Registry
     /**
      * To jsonp
      *
-     * @param mixed $data
+     * @param mixed  $data
      * @param string $callback
      */
     public function jsonp($data, $callback = 'callback')
