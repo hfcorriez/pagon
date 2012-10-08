@@ -2,7 +2,6 @@
 
 namespace OmniApp;
 
-use OmniApp\Exception\Next;
 use OmniApp\Exception\Pass;
 
 /**
@@ -54,26 +53,9 @@ class Route
             // Try to parse the params
             if (($params = self::parse($path, $route)) !== false) {
                 // For save if dispatched?
-                $_dispatched = false;
                 try {
+                    return self::next($controller, $params);
                     // If multiple controller
-                    if (is_array($controller)) {
-                        foreach ($controller as $c) {
-                            try {
-                                $_dispatched = self::call($c, $params);
-                                break;
-                            } catch (Next $e) {
-                                // When catch Next, continue next controller
-                            }
-                        }
-                    } else {
-                        try {
-                            $_dispatched = self::call($controller);
-                        } catch (Next $e) {
-                            // Only for catch Next exception
-                        }
-                    }
-                    return $_dispatched;
                 } catch (Pass $e) {
                     // When catch Next, continue next route
                 }
@@ -81,6 +63,33 @@ class Route
         }
 
         return false;
+    }
+
+    /**
+     * Run next
+     *
+     * @param array|string $middleware
+     * @param array        $params
+     * @return bool
+     */
+    public static function next($middleware = null, $params = array())
+    {
+        static $queue = null;
+        static $args = null;
+
+        $_dispatched = false;
+
+        if ($middleware) {
+            $queue = (array)$middleware;
+            $args = $params;
+        }
+
+        if ($queue) {
+            $_dispatched = self::call(array_shift($queue), $args);
+            if (!$_dispatched || !$queue) unset($queue, $args);
+        }
+
+        return $_dispatched;
     }
 
     /**
@@ -124,7 +133,7 @@ class Route
         static $next = null;
         if ($next === null) {
             $next = function () {
-                App::next();
+                Route::next();
             };
         }
 

@@ -620,16 +620,6 @@ class App
     }
 
     /**
-     * Next
-     *
-     * @throws Exception\Next
-     */
-    public static function next()
-    {
-        throw new Exception\Next();
-    }
-
-    /**
      * Set or run not found
      */
     public static function notFound($runner = null)
