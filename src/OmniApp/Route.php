@@ -35,7 +35,7 @@ class Route
      * @throws \Exception
      * @return array|mixed
      */
-    public static function run()
+    public static function dispatch()
     {
         $routes = (array)App::config('route');
 
@@ -58,7 +58,7 @@ class Route
                     if (is_array($controller)) {
                         foreach ($controller as $c) {
                             try {
-                                $_dispatched = self::dispatch($c, $params);
+                                $_dispatched = self::call($c, $params);
                                 break;
                             } catch (Next $e) {
                                 // When catch Next, continue next controller
@@ -66,7 +66,7 @@ class Route
                         }
                     } else {
                         try {
-                            $_dispatched = self::dispatch($controller);
+                            $_dispatched = self::call($controller);
                         } catch (Next $e) {
                             // Only for catch Next exception
                         }
@@ -116,7 +116,7 @@ class Route
      * @param array $params
      * @return bool
      */
-    public static function dispatch($runner, $params = array())
+    public static function call($runner, $params = array())
     {
         // Save next closure
         static $next = null;
@@ -152,7 +152,7 @@ class Route
         if ($runner) {
             App::config('route.404', $runner, true);
         }
-        return App::config('route.404');
+        return ($_route = App::config('route.404')) ? self::call($_route) : false;
     }
 
 
@@ -164,16 +164,19 @@ class Route
      */
     public static function error($runner = null)
     {
-        if ($runner) {
+        $_args = array();
+        if (!$runner instanceof \Exception) {
             App::config('route.error', $runner, true);
+        } else {
+            $_args = array($runner);
         }
-        return App::config('route.error');
+        return ($_route = App::config('route.error')) ? self::call($_route, $_args) : false;
     }
 
     /**
      * To regex
      *
-     * @param $regex
+     * @param string $regex
      * @return string
      */
     protected static function toRegex($regex)

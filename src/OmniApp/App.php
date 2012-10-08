@@ -635,9 +635,8 @@ class App
         } else {
             self::cleanBuffer();
             ob_start();
-            $runner = Route::notFound();
-            if (!$runner || !self::dispatch($runner)) {
-                echo "Page not found";
+            if (!Route::notFound()) {
+                echo "Path not found";
             }
             self::output(404, ob_get_clean());
         }
@@ -653,9 +652,7 @@ class App
         } else {
             self::cleanBuffer();
             ob_start();
-            $e = $runner;
-            $runner = Route::error();
-            if (!$runner || !self::dispatch($runner, array($e))) {
+            if (!Route::error($runner)) {
                 echo "Error occurred";
             }
             self::output(500, ob_get_clean());

@@ -18,7 +18,7 @@ class Router extends \OmniApp\Middleware
     {
         try {
             ob_start();
-            if (!Route::run()) {
+            if (!Route::dispatch()) {
                 App::notFound();
             }
             App::stop();
