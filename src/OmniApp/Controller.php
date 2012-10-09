@@ -5,7 +5,7 @@ namespace OmniApp;
 abstract class Controller
 {
     /**
-     * @var \OmniApp\Http\Request|Null
+     * @var \OmniApp\Http\Request|\OmniApp\Cli\Input
      */
     protected $request;
 

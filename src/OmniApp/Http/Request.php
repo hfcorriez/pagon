@@ -5,7 +5,6 @@ namespace OmniApp\Http;
 use OmniApp\Data\MimeType;
 use OmniApp\Registry;
 use OmniApp\Exception\Pass;
-use OmniApp\Exception\Next;
 use OmniApp\App;
 
 class Request extends Registry
@@ -597,16 +596,6 @@ class Request extends Registry
     {
         App::cleanBuffer();
         throw new Pass();
-    }
-
-    /**
-     * Next
-     *
-     * @throws Next
-     */
-    public static function next()
-    {
-        throw new Next();
     }
 
     /**

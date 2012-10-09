@@ -33,7 +33,7 @@ class App
     public static $modules = array();
 
     /**
-     * @var Http\Request
+     * @var Http\Request|Cli\Input
      */
     public static $request;
 
@@ -104,11 +104,12 @@ class App
             self::$request = new Http\Request();
             self::$response = new Http\Response();
         } else {
+            self::$request = new Cli\Input();
             self::$response = new Cli\Output();
         }
 
         // Init Route
-        self::$route = new Route(self::$_cli ? '/' . join('/', array_slice($GLOBALS['argv'], 1)) : self::$request->path());
+        self::$route = new Route(self::$request->path());
 
         // handle autoload and shutdown
         register_shutdown_function(array(__CLASS__, '__shutdown'));
@@ -343,19 +344,21 @@ class App
     /**
      * Add middleware
      *
-     * @param Middleware $middleware
+     * @param Middleware|\Closure|string $middleware
      */
     public static function add($middleware)
     {
         // Check and construct Middleware
         if (is_string($middleware) && is_subclass_of($middleware, Middleware::_CLASS_)) {
             $middleware = new $middleware();
+        } elseif ($middleware instanceof \Closure) {
+            $middleware = new Middleware($middleware);
         }
 
         // Check middleware
         if ($middleware instanceof Middleware) {
             // Set next middleware
-            $middleware->setNext(self::$middleware[0]);
+            $middleware->setNext(self::$middleware[0], self::$request, self::$response);
             // Un-shift middleware
             array_unshift(self::$middleware, $middleware);
         }
