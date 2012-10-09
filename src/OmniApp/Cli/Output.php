@@ -1,6 +1,6 @@
 <?php
 
-namespace OmniApp\CLI;
+namespace OmniApp\Cli;
 
 class Output
 {

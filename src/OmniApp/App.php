@@ -38,7 +38,7 @@ class App
     public static $request;
 
     /**
-     * @var Http\Response|CLI\Output
+     * @var Http\Response|Cli\Output
      */
     public static $response;
 
@@ -104,7 +104,7 @@ class App
             self::$request = new Http\Request();
             self::$response = new Http\Response();
         } else {
-            self::$response = new CLI\Output();
+            self::$response = new Cli\Output();
         }
 
         // Init Route

@@ -10,7 +10,7 @@ abstract class Controller
     protected $request;
 
     /**
-     * @var \OmniApp\Http\Response|\OmniApp\CLI\Output
+     * @var \OmniApp\Http\Response|\OmniApp\Cli\Output
      */
     protected $response;
 

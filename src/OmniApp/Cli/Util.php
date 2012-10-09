@@ -1,11 +1,7 @@
 <?php
 
-namespace OmniApp\CLI;
+namespace OmniApp\Cli;
 
-
-/**
- * Cli
- */
 class Util
 {
     /**
