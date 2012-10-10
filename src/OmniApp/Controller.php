@@ -144,11 +144,17 @@ class Controller
      * Set next controller
      *
      * @param Controller               $controller
-     * @param App                      $app
      */
-    final public function setNext(Controller $controller, App $app)
+    final public function setNext(Controller $controller)
     {
         $this->next = $controller;
+    }
+
+    /**
+     * @param App $app
+     */
+    final public function setApp(App $app)
+    {
         $this->request = $app->request;
         $this->response = $app->response;
     }
@@ -170,7 +176,7 @@ class Controller
      */
     final public function setCall($method)
     {
-        if (!$this->_call && $method) $this->_call = $method;
+        $this->_call = $method;
     }
 
     /**

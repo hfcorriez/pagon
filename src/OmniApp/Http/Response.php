@@ -280,6 +280,17 @@ class Response extends Registry
     }
 
     /**
+     * Render with template
+     *
+     * @param $template
+     * @param $data
+     */
+    public function render($template, $data = array())
+    {
+        $this->app->render($template, $data);
+    }
+
+    /**
      * To json
      *
      * @param mixed $data

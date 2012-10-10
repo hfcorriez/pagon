@@ -12,11 +12,6 @@ class Middleware
     protected $next;
 
     /**
-     * @var \Closure middleware
-     */
-    private $_origin;
-
-    /**
      * @var Http\Request|Cli\Input
      */
     protected $request;
@@ -25,6 +20,11 @@ class Middleware
      * @var Http\Response|Cli\Output
      */
     protected $response;
+
+    /**
+     * @var \Closure middleware
+     */
+    private $_origin;
 
     /**
      * @param callable $middleware
@@ -54,15 +54,24 @@ class Middleware
     /**
      * Set next middleware
      *
-     * @param Middleware               $middleware
-     * @param App                      $app
+     * @param Middleware $middleware
      */
-    final public function setNext(Middleware $middleware, App $app)
+    final public function setNext(Middleware $middleware)
     {
         $this->next = $middleware;
+    }
+
+    /**
+     * Set App
+     *
+     * @param App $app
+     */
+    final public function setApp(App $app)
+    {
         $this->request = $app->request;
         $this->response = $app->response;
     }
+
 
     /**
      * Get next middleware

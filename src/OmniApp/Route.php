@@ -110,8 +110,9 @@ class Route extends Middleware
                 throw new \Exception('Cann\'t use the controller in route with index "' . $k . '"');
                 return false;
             }
+            $c->setApp($this->app);
             // Set next controller and io
-            if ($k > 0) $ctrl[$k - 1]->setNext($c, $this->app);
+            if ($k > 0) $ctrl[$k - 1]->setNext($c);
         }
         // Call the first
         $ctrl[0]->call();

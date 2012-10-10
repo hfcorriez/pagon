@@ -350,7 +350,8 @@ class App
         // Check middleware
         if ($middleware instanceof Middleware) {
             // Set next middleware
-            $middleware->setNext($this->middleware[0], $this);
+            $middleware->setNext($this->middleware[0]);
+            $middleware->setApp($this);
             // Un-shift middleware
             array_unshift($this->middleware, $middleware);
         }
