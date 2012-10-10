@@ -14,7 +14,7 @@ class Middleware
     /**
      * @var \Closure middleware
      */
-    protected $closure;
+    private $_origin;
 
     /**
      * @var Http\Request|Cli\Input
@@ -27,33 +27,35 @@ class Middleware
     protected $response;
 
     /**
-     * @param callable $closure
+     * @param callable $middleware
      */
-    public function __construct(\Closure $closure = null)
+    public function __construct(\Closure $middleware = null)
     {
-        if ($closure) $this->closure = $closure;
+        if ($middleware) $this->_origin = $middleware;
     }
 
     /**
      *  Default call
+     *
+     * @return bool
      */
     public function call()
     {
-        if ($this->closure) {
+        if ($this->_origin) {
             $self = $this;
-            call_user_func_array($this->closure, array($this->request, $this->response, function () use ($self) {
+            call_user_func_array($this->_origin, array($this->request, $this->response, function () use ($self) {
                 $self->getNext()->call();
             }));
-        } else {
-            $this->next();
+            return true;
         }
+        return false;
     }
 
     /**
      * Set next middleware
      *
-     * @param Middleware $middleware
-     * @param Http\Request|Cli\Input $request
+     * @param Middleware               $middleware
+     * @param Http\Request|Cli\Input   $request
      * @param Http\Response|Cli\Output $response
      */
     final public function setNext(Middleware $middleware, $request, $response)
@@ -64,14 +66,6 @@ class Middleware
     }
 
     /**
-     * Call next
-     */
-    final protected function next()
-    {
-        $this->next->call();
-    }
-
-    /**
      * Get next middleware
      *
      * @return Middleware
@@ -79,5 +73,13 @@ class Middleware
     final public function getNext()
     {
         return $this->next;
+    }
+
+    /**
+     * Call next
+     */
+    final protected function next()
+    {
+        $this->next->call();
     }
 }

@@ -5,6 +5,7 @@ namespace OmniApp;
 use OmniApp\Middleware;
 use OmniApp\Exception\Pass;
 use OmniApp\Exception\Stop;
+use OmniApp\App;
 
 /**
  * Route
@@ -42,7 +43,7 @@ class Route extends Middleware
      *
      * @return array
      * @throws \Exception
-     * @return array|mixed
+     * @return bool
      */
     public function dispatch()
     {
@@ -57,14 +58,13 @@ class Route extends Middleware
         }
 
         // Loop routes for parse and dispatch
-        foreach ($routes as $p => $link) {
+        foreach ($routes as $p => $ctrl) {
             if (!$p) continue;
 
             // Try to parse the params
             if (($params = self::parseRoute($this->path, $p)) !== false) {
-                // For save if dispatched?
                 try {
-                    return $this->nextLink($link, $params);
+                    return self::run($ctrl);
                     // If multiple controller
                 } catch (Pass $e) {
                     // When catch Next, continue next route
@@ -76,6 +76,36 @@ class Route extends Middleware
     }
 
     /**
+     * Run the route
+     *
+     * @param $ctrl
+     * @throws \Exception
+     * @return bool
+     */
+    public function run($ctrl)
+    {
+        if (!$ctrl) return false;
+
+        // Force as array
+        $ctrl = (array)$ctrl;
+        // Loop the link
+        foreach ($ctrl as $k => &$c) {
+            // Try to factory a controller
+            $c = Controller::factory($c);
+            // If on controller on the link is unavailable the link will broken
+            if (!$c) {
+                throw new \Exception('Cann\'t use the controller in route with index "' . $k . '"');
+                return false;
+            }
+            // Set next controller and io
+            if ($k > 0) $ctrl[$k - 1]->setNext($c, App::$request, App::$response);
+        }
+        // Call the first
+        $ctrl[0]->call();
+        return true;
+    }
+
+    /**
      * Call for middleware
      */
     public function call()
@@ -83,82 +113,11 @@ class Route extends Middleware
         ob_start();
         try {
             if (!$this->dispatch()) {
-                $this->notFound();
+                App::notFound();
             }
         } catch (Stop $e) {
         }
         App::$response->write(ob_get_clean(), -1);
-    }
-
-    /**
-     * Run next
-     *
-     * @param array|string $middleware
-     * @param array        $params
-     * @throws Exception\Pass
-     * @return bool
-     */
-    public function nextLink($middleware = null, $params = array())
-    {
-        // Save queue for the controllers
-        static $q = null;
-        // Save arguments
-        static $a = null;
-
-        // Default dispatch value
-        $_dispatched = false;
-
-        // Set middleware first
-        if ($middleware) {
-            $q = (array)$middleware;
-            $a = $params;
-        }
-
-        if ($q) {
-            if ($middleware) {
-                // First call the first controller
-                $_dispatched = $this->run(current($q), $a);
-            } elseif ($_next = next($q)) {
-                // After first, use cursor the get controller
-                $_dispatched = $this->run($_next, $a);
-            } else {
-                // If last controller call the next, pass the next route
-                throw new Pass();
-            }
-            if (!$_dispatched) unset($q, $a);
-        }
-
-        return $_dispatched;
-    }
-
-    /**
-     * Control the runner
-     *
-     * @param       $runner
-     * @param array $params
-     * @return bool
-     */
-    public function run($runner, $params = array())
-    {
-        $self = $this;
-        // Save next closure
-        $next = function () use ($self) {
-            $self->nextLink();
-        };
-
-        // Set params
-        if (!App::isCli()) App::$request->params = $params;
-
-        // Check runner
-        if (is_string($runner) && Controller::factory($runner, array(App::$request, App::$response, $next))) {
-            // Support controller class string
-            return true;
-        } elseif (is_callable($runner)) {
-            // Closure function support
-            call_user_func_array($runner, array(App::$request, App::$response, $next));
-            return true;
-        }
-        return false;
     }
 
     /**
