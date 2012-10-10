@@ -144,14 +144,13 @@ class Controller
      * Set next controller
      *
      * @param Controller               $controller
-     * @param Http\Request|Cli\Input   $request
-     * @param Http\Response|Cli\Output $response
+     * @param App                      $app
      */
-    final public function setNext(Controller $controller, $request, $response)
+    final public function setNext(Controller $controller, App $app)
     {
         $this->next = $controller;
-        $this->request = $request;
-        $this->response = $response;
+        $this->request = $app->request;
+        $this->response = $app->response;
     }
 
     /**

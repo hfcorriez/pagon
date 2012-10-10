@@ -14,6 +14,11 @@ class Request extends Registry
      */
     public $params = array();
 
+    /**
+     * @var \OmniApp\App
+     */
+    public $app;
+
     protected $path;
     protected $script_name;
     protected $path_info;
@@ -23,6 +28,13 @@ class Request extends Registry
     protected $accept;
     protected $accept_language;
     protected $accept_encoding;
+
+    /**
+     * @param \OmniApp\App $app
+     */
+    public function __construct(App $app){
+        $this->app = $app;
+    }
 
     /**
      * Get protocol
@@ -592,9 +604,9 @@ class Request extends Registry
      *
      * @throws Pass
      */
-    public static function pass()
+    public function pass()
     {
-        App::cleanBuffer();
+        $this->app->cleanBuffer();
         throw new Pass();
     }
 

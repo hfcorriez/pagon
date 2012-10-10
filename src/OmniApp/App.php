@@ -9,8 +9,6 @@
 
 namespace OmniApp;
 
-spl_autoload_register(array(__NAMESPACE__ . '\\App', '__autoload'));
-
 const VERSION = '0.2';
 
 /*********************
@@ -25,169 +23,164 @@ class App
     /**
      * @var Config
      */
-    protected static $config = array();
+    protected $config = array();
 
     /**
      * @var array Modules for the app
      */
-    public static $modules = array();
+    public $modules = array();
 
     /**
      * @var Http\Request|Cli\Input
      */
-    public static $request;
+    public $request;
 
     /**
      * @var Http\Response|Cli\Output
      */
-    public static $response;
+    public $response;
 
     /**
      * @var string View engine
      */
-    protected static $view;
+    protected $view;
 
     /**
      * @var Route
      */
-    protected static $route;
+    protected $route;
 
     /**
      * @var string Mode
      */
-    private static $mode = 'development';
+    private $mode = 'development';
 
     /**
      * @var Middleware[]
      */
-    private static $middleware = array();
+    private $middleware = array();
 
     /**
      * @var float App start time
      */
-    private static $start_time = null;
+    private $start_time = null;
 
     /**
      * @var bool Initialized?
      */
-    private static $_init = false;
+    private $_init = false;
 
     /**
      * @var bool Is cli?
      */
-    private static $_cli = false;
+    private $_cli = false;
 
     /**
      * @var bool Is win?
      */
-    private static $_win = false;
+    private $_win = false;
 
     /**
      * App init
      *
-     * @static
      * @param array $config
      */
-    public static function init($config = array())
+    public function __construct($config = array())
     {
+        $app = &$this;
         // Record start time
-        self::$start_time = microtime(true);
+        $this->start_time = microtime(true);
 
         // Is cli
-        self::$_cli = PHP_SAPI == 'cli';
+        $this->_cli = PHP_SAPI == 'cli';
 
         // Is win
-        self::$_win = substr(PHP_OS, 0, 3) == 'WIN';
+        $this->_win = substr(PHP_OS, 0, 3) == 'WIN';
+
+        // handle autoload and shutdown
+        register_shutdown_function(array($this, '__shutdown'));
+        spl_autoload_register(array($this, '__autoload'));
 
         // Set io depends on SAPI
-        if (!self::$_cli) {
-            self::$request = new Http\Request();
-            self::$response = new Http\Response();
+        if (!$this->_cli) {
+            $this->request = new Http\Request($app);
+            $this->response = new Http\Response($app);
         } else {
-            self::$request = new Cli\Input();
-            self::$response = new Cli\Output();
+            $this->request = new Cli\Input();
+            $this->response = new Cli\Output();
         }
 
         // Init Route
-        self::$route = new Route(self::$request->path());
-
-        // handle autoload and shutdown
-        register_shutdown_function(array(__CLASS__, '__shutdown'));
+        $this->route = new Route($app, $this->request->path());
 
         // Force use UTF-8 encoding
         iconv_set_encoding("internal_encoding", "UTF-8");
         mb_internal_encoding('UTF-8');
 
         // Add default middleware
-        self::$middleware = array(self::$route);
+        $this->middleware = array($this->route);
 
         // configure timezone
-        self::config('timezone', function ($value) {
+        $this->config('timezone', function ($value) {
             date_default_timezone_set($value);
         });
 
         // configure debug
-        self::config('debug', function ($value) {
+        $this->config('debug', function ($value) use ($app) {
             if ($value == true) {
-                App::add(new \OmniApp\Middleware\PrettyException());
+                $app->add(new \OmniApp\Middleware\PrettyException());
             }
         });
 
         // Set view engine
-        self::config('view.engine', function ($value, $previous) {
+        $this->config('view.engine', function ($value, $previous) use ($app) {
             // Auto fix framework views
             if ($value{0} !== '\\') {
                 $value = View::_CLASS_ . '\\' . $value;
             }
             // Not set ok then configure previous
-            if ($value !== self::view($value)) {
-                App::config('view.engine', $previous);
+            if ($value !== $app->view($value)) {
+                $app->config('view.engine', $previous);
             }
         });
 
         // Config
-        self::config($config);
-
-        // If trigger exists, trigger closure
-        Event::fireEvent('mode:' . self::mode());
+        $this->config($config);
 
         // Fire init
         Event::fireEvent('init');
 
-        self::$_init = true;
+        $this->_init = true;
     }
 
     /**
      * Check if cli
      *
-     * @static
      * @return bool
      */
-    public static function isCli()
+    public function isCli()
     {
-        return self::$_cli;
+        return $this->_cli;
     }
 
     /**
      * Check if windows, if not, it must be *unix
      *
-     * @static
      * @return bool
      */
-    public static function isWin()
+    public function isWin()
     {
-        return self::$_win;
+        return $this->_win;
     }
 
     /**
      * Get app start time
      *
-     * @static
      * @return int
      */
-    public static function startTime()
+    public function startTime()
     {
-        return self::$start_time;
+        return $this->start_time;
     }
 
     /**
@@ -195,20 +188,19 @@ class App
      *
      * @return string
      */
-    public static function runTime()
+    public function runTime()
     {
-        return number_format(microtime(true) - self::startTime(), 6);
+        return number_format(microtime(true) - $this->startTime(), 6);
     }
 
     /**
      * Is init?
      *
-     * @static
      * @return bool
      */
-    public static function isInit()
+    public function isInit()
     {
-        return self::$_init;
+        return $this->_init;
     }
 
     /**
@@ -218,53 +210,53 @@ class App
      * @param null $value
      * @param bool $no_detect_callback
      * @param bool $only_trigger
-     * @return mixed
+     * @return array|bool|\OmniApp\Config
      */
-    public static function config($key = null, $value = null, $no_detect_callback = false, $only_trigger = false)
+    public function config($key = null, $value = null, $no_detect_callback = false, $only_trigger = false)
     {
         // Save early configs
         static $configs = array();
 
         if ($key === null) {
             // If not arguments, return config
-            return self::$config;
+            return $this->config;
         } elseif ($value === null) {
             if (is_array($key) || $key instanceof Config) {
                 // First set config
                 $_first = false;
 
                 // Set config first
-                if (empty(self::$config)) {
+                if (empty($this->config)) {
                     // First set config
                     $_first = true;
 
                     // Check key type
                     if ($key instanceof Config) {
                         // If config instance, use it
-                        self::$config = $key;
+                        $this->config = $key;
                     } else {
                         // Else convert to Dict config
-                        self::$config = new Config\Dict($key);
+                        $this->config = new Config\Dict($key);
                     }
 
                     // Check configs and merge
                     if ($configs) {
                         // Loop config and set
                         foreach ($configs as $k => $v) {
-                            self::$config->set($k, $v);
+                            $this->config->set($k, $v);
                         }
-                        $key = self::$config;
+                        $key = $this->config;
                         $configs = array();
                     }
                 }
 
                 // Loop config
                 foreach ($key as $k => $v) {
-                    self::config($k, $v, false, $_first);
+                    $this->config($k, $v, false, $_first);
                 }
             } else {
                 // When get config
-                return self::$config instanceof Config ? self::$config->get($key) : false;
+                return $this->config instanceof Config ? $this->config->get($key) : false;
             }
         } else {
             if (!$no_detect_callback && $value instanceof \Closure) {
@@ -278,13 +270,13 @@ class App
                 if (is_array($value)) {
                     // If values if array then loop set
                     foreach ($value as $k => $v) {
-                        self::config($key . '.' . $k, $v, false, $only_trigger);
+                        $this->config($key . '.' . $k, $v, false, $only_trigger);
                     }
                 } elseif (!$only_trigger) {
                     //  Set value to key
-                    if (self::$config instanceof Config) {
-                        if (self::$config->get($key) !== $value) {
-                            self::$config->set($key, $value);
+                    if ($this->config instanceof Config) {
+                        if ($this->config->get($key) !== $value) {
+                            $this->config->set($key, $value);
                         } else {
                             $_trigger = false;
                         }
@@ -298,7 +290,7 @@ class App
                 }
 
                 // Fire event when listener exists
-                $_trigger && Event::fireEvent('config:' . $key, $value, self::config($key));
+                $_trigger && Event::fireEvent('config:' . $key, $value, $this->config($key));
             }
         }
         return;
@@ -310,9 +302,9 @@ class App
      *
      * @param          $mode
      * @param callable $closure
-     * @return null|string
+     * @return string
      */
-    public static function mode($mode = null, \Closure $closure = null)
+    public function mode($mode = null, \Closure $closure = null)
     {
         // Save get mode method
         static $mode_get = null;
@@ -333,12 +325,12 @@ class App
         }
 
         // Check
-        if ($mode && is_string($mode) && self::$mode != $mode && !self::$_init) {
+        if ($mode && is_string($mode) && $this->mode != $mode && !$this->_init) {
             // If set mode and mode is string and App is not init
-            self::$mode = $mode;
+            $this->mode = $mode;
         }
 
-        return self::$mode;
+        return $this->mode;
     }
 
     /**
@@ -346,7 +338,7 @@ class App
      *
      * @param Middleware|\Closure|string $middleware
      */
-    public static function add($middleware)
+    public function add($middleware)
     {
         // Check and construct Middleware
         if (is_string($middleware) && is_subclass_of($middleware, Middleware::_CLASS_)) {
@@ -358,9 +350,9 @@ class App
         // Check middleware
         if ($middleware instanceof Middleware) {
             // Set next middleware
-            $middleware->setNext(self::$middleware[0], self::$request, self::$response);
+            $middleware->setNext($this->middleware[0], $this);
             // Un-shift middleware
-            array_unshift(self::$middleware, $middleware);
+            array_unshift($this->middleware, $middleware);
         }
     }
 
@@ -371,14 +363,14 @@ class App
      * @param \Closure|string $runner
      * @param \Closure|string $more
      */
-    public static function get($path, $runner, $more = null)
+    public function get($path, $runner, $more = null)
     {
-        if (self::$_cli || !self::$request->isGet()) return;
+        if ($this->_cli || !$this->request->isGet()) return;
 
         if ($more !== null) {
-            call_user_func_array(array(self::$route, 'on'), func_get_args());
+            call_user_func_array(array($this->route, 'on'), func_get_args());
         } else {
-            self::$route->on($path, $runner);
+            $this->route->on($path, $runner);
         }
     }
 
@@ -389,14 +381,14 @@ class App
      * @param \Closure|string $runner
      * @param \Closure|string $more
      */
-    public static function post($path, $runner, $more = null)
+    public function post($path, $runner, $more = null)
     {
-        if (self::$_cli || !self::$request->isPost()) return;
+        if ($this->_cli || !$this->request->isPost()) return;
 
         if ($more !== null) {
-            call_user_func_array(array(self::$route, 'on'), func_get_args());
+            call_user_func_array(array($this->route, 'on'), func_get_args());
         } else {
-            self::$route->on($path, $runner);
+            $this->route->on($path, $runner);
         }
     }
 
@@ -407,14 +399,14 @@ class App
      * @param \Closure|string $runner
      * @param \Closure|string $more
      */
-    public static function put($path, $runner, $more = null)
+    public function put($path, $runner, $more = null)
     {
-        if (self::$_cli || !self::$request->isPut()) return;
+        if ($this->_cli || !$this->request->isPut()) return;
 
         if ($more !== null) {
-            call_user_func_array(array(self::$route, 'on'), func_get_args());
+            call_user_func_array(array($this->route, 'on'), func_get_args());
         } else {
-            self::$route->on($path, $runner);
+            $this->route->on($path, $runner);
         }
     }
 
@@ -425,14 +417,14 @@ class App
      * @param \Closure|string $runner
      * @param \Closure|string $more
      */
-    public static function delete($path, $runner, $more = null)
+    public function delete($path, $runner, $more = null)
     {
-        if (self::$_cli || !self::$request->isDelete()) return;
+        if ($this->_cli || !$this->request->isDelete()) return;
 
         if ($more !== null) {
-            call_user_func_array(array(self::$route, 'on'), func_get_args());
+            call_user_func_array(array($this->route, 'on'), func_get_args());
         } else {
-            self::$route->on($path, $runner);
+            $this->route->on($path, $runner);
         }
     }
 
@@ -443,14 +435,14 @@ class App
      * @param \Closure|string $runner
      * @param \Closure|string $more
      */
-    public static function options($path, $runner, $more = null)
+    public function options($path, $runner, $more = null)
     {
-        if (self::$_cli || !self::$request->isOptions()) return;
+        if ($this->_cli || !$this->request->isOptions()) return;
 
         if ($more !== null) {
-            call_user_func_array(array(self::$route, 'on'), func_get_args());
+            call_user_func_array(array($this->route, 'on'), func_get_args());
         } else {
-            self::$route->on($path, $runner);
+            $this->route->on($path, $runner);
         }
     }
 
@@ -461,14 +453,14 @@ class App
      * @param \Closure|string $runner
      * @param \Closure|string $more
      */
-    public static function head($path, $runner, $more = null)
+    public function head($path, $runner, $more = null)
     {
-        if (self::$_cli || !self::$request->isHead()) return;
+        if ($this->_cli || !$this->request->isHead()) return;
 
         if ($more !== null) {
-            call_user_func_array(array(self::$route, 'on'), func_get_args());
+            call_user_func_array(array($this->route, 'on'), func_get_args());
         } else {
-            self::$route->on($path, $runner);
+            $this->route->on($path, $runner);
         }
     }
 
@@ -479,14 +471,14 @@ class App
      * @param \Closure|string $runner
      * @param \Closure|string $more
      */
-    public static function all($path, $runner, $more = null)
+    public function all($path, $runner, $more = null)
     {
-        if (self::$_cli) return;
+        if ($this->_cli) return;
 
         if ($more !== null) {
-            call_user_func_array(array(self::$route, 'on'), func_get_args());
+            call_user_func_array(array($this->route, 'on'), func_get_args());
         } else {
-            self::$route->on($path, $runner);
+            $this->route->on($path, $runner);
         }
     }
 
@@ -497,12 +489,12 @@ class App
      * @param \Closure|string $runner
      * @param \Closure|string $more
      */
-    public static function map($path, $runner, $more = null)
+    public function map($path, $runner, $more = null)
     {
         if ($more !== null) {
-            call_user_func_array(array(self::$route, 'on'), func_get_args());
+            call_user_func_array(array($this->route, 'on'), func_get_args());
         } else {
-            self::$route->on($path, $runner);
+            $this->route->on($path, $runner);
         }
     }
 
@@ -512,16 +504,16 @@ class App
      * @param string $view
      * @return string
      */
-    public static function view($view = null)
+    public function view($view = null)
     {
         if ($view) {
-            if (self::$view !== $view && is_subclass_of($view, View::_CLASS_)) {
-                self::$view = $view;
+            if ($this->view !== $view && is_subclass_of($view, View::_CLASS_)) {
+                $this->view = $view;
             }
         } elseif ($view === false) {
-            self::$view = null;
+            $this->view = null;
         }
-        return self::$view;
+        return $this->view;
     }
 
     /**
@@ -529,12 +521,11 @@ class App
      *
      * @param string $file
      * @param array  $params
-     * @throws Exception
      */
-    public static function render($file, $params = array())
+    public function render($file, $params = array())
     {
-        $_view = self::$view ? self::$view : View::_CLASS_;
-        self::$response->write(new $_view($file, $params));
+        $_view = $this->view ? $this->view : View::_CLASS_;
+        $this->response->write(new $_view($file, $params));
     }
 
     /**
@@ -542,40 +533,48 @@ class App
      *
      * @return string
      */
-    public static function root()
+    public function root()
     {
-        return rtrim(getenv('DOCUMENT_ROOT'), '/') . rtrim(self::$request->rootUri(), '/') . '/';
+        return rtrim(getenv('DOCUMENT_ROOT'), '/') . rtrim($this->request->rootUri(), '/') . '/';
     }
 
     /**
      * App will run
      *
-     * @static
      */
-    public static function run()
+    public function run()
     {
         // Check has init?
-        if (!self::$_init) {
+        if (!$this->_init) {
             throw new \Exception('App has not initialized');
         }
 
+        // If trigger exists, trigger closure
+        Event::fireEvent('mode:' . $this->mode());
+
+        // Fire run
         Event::fireEvent('run');
 
         $_error = false;
-        if (self::config('error')) {
+        if ($this->config('error')) {
             $_error = true;
-            self::registerErrorHandler();
+            $this->registerErrorHandler();
         }
 
         try {
+            ob_start();
+
             // request app call
-            self::$middleware[0]->call();
+            $this->middleware[0]->call();
+
+            // Write direct output to the head of buffer
+            $this->response->write(ob_get_clean(), -1);
         } catch (\Exception $e) {
-            if (self::$config->debug) {
+            if ($this->config->debug) {
                 throw $e;
             } else {
                 try {
-                    App::error($e);
+                    $this->error($e);
                 } catch (Exception\Stop $e) {
                     //
                 }
@@ -583,14 +582,14 @@ class App
             Event::fireEvent('error');
         }
 
-        if (!self::$_cli) {
+        if (!$this->_cli) {
             // Send headers when http request
-            self::$response->sendHeader();
+            $this->response->sendHeader();
         }
         // send data
-        echo self::$response->body();
+        echo $this->response->body();
 
-        if ($_error) self::restoreErrorHandler();
+        if ($_error) $this->restoreErrorHandler();
 
         Event::fireEvent('end');
     }
@@ -601,7 +600,7 @@ class App
      * @param $event
      * @param $closure
      */
-    public static function on($event, $closure)
+    public function on($event, $closure)
     {
         Event::attach($event, $closure);
     }
@@ -611,7 +610,7 @@ class App
      *
      * @throws Exception\Stop
      */
-    public static function stop()
+    public function stop()
     {
         throw new Exception\Stop();
     }
@@ -621,43 +620,43 @@ class App
      *
      * @throws Exception\Pass
      */
-    public static function pass()
+    public function pass()
     {
-        self::cleanBuffer();
+        $this->cleanBuffer();
         throw new Exception\Pass();
     }
 
     /**
      * Set or run not found
      */
-    public static function notFound($runner = null)
+    public function notFound($runner = null)
     {
         if ($runner instanceof \Closure) {
-            self::$route->notFound($runner);
+            $this->route->notFound($runner);
         } else {
-            self::cleanBuffer();
+            $this->cleanBuffer();
             ob_start();
-            if (!self::$route->notFound()) {
+            if (!$this->route->notFound()) {
                 echo "Path not found";
             }
-            self::output(404, ob_get_clean());
+            $this->output(404, ob_get_clean());
         }
     }
 
     /**
      * Set or run not found
      */
-    public static function error($runner = null)
+    public function error($runner = null)
     {
         if ($runner instanceof \Closure) {
-            self::$route->error($runner);
+            $this->route->error($runner);
         } else {
-            self::cleanBuffer();
+            $this->cleanBuffer();
             ob_start();
-            if (!self::$route->error($runner)) {
+            if (!$this->route->error($runner)) {
                 echo "Error occurred";
             }
-            self::output(500, ob_get_clean());
+            $this->output(500, ob_get_clean());
         }
     }
 
@@ -667,21 +666,21 @@ class App
      * @param $status
      * @param $data
      */
-    public static function output($status, $data)
+    public function output($status, $data)
     {
-        self::cleanBuffer();
-        if (!self::$_cli) {
-            self::$response->contentType('text/plain');
+        $this->cleanBuffer();
+        if (!$this->_cli) {
+            $this->response->contentType('text/plain');
         }
-        self::$response->body($data);
-        self::$response->status($status);
-        self::stop();
+        $this->response->body($data);
+        $this->response->status($status);
+        $this->stop();
     }
 
     /**
      * Clean current output buffer
      */
-    public static function cleanBuffer()
+    public function cleanBuffer()
     {
         if (ob_get_level() !== 0) {
             ob_clean();
@@ -691,21 +690,19 @@ class App
     /**
      * Register error and exception handlers
      *
-     * @static
 
      */
-    public static function registerErrorHandler()
+    public function registerErrorHandler()
     {
-        set_error_handler(array(__CLASS__, '__error'));
+        set_error_handler(array($this, '__error'));
     }
 
     /**
      * Restore error and exception handlers
      *
-     * @static
 
      */
-    public static function restoreErrorHandler()
+    public function restoreErrorHandler()
     {
         restore_error_handler();
     }
@@ -713,25 +710,23 @@ class App
     /**
      * Auto load class
      *
-     * @static
      * @param $class
      * @return bool
      */
-    public static function __autoload($class)
+    protected function __autoload($class)
     {
-        static $available_path = array();
-
         if ($class{0} == '\\') $class = ltrim($class, '\\');
 
         if (substr($class, 0, strlen(__NAMESPACE__) + 1) == __NAMESPACE__ . '\\') {
             require __DIR__ . '/' . str_replace('\\', '/', substr($class, 8)) . '.php';
         } else {
+            $available_path = false;
             $file_name = '';
-            if (isset(self::$config['classpath']) && !$available_path) {
-                if (is_array(self::$config['classpath'])) {
-                    $available_path = array(self::$config['classpath']['']);
+            if (isset($this->config['classpath'])) {
+                if (is_array($this->config['classpath'])) {
+                    $available_path = array('' => $this->config['classpath']['']);
 
-                    foreach (self::$config['classpath'] as $prefix => $path) {
+                    foreach ($this->config['classpath'] as $prefix => $path) {
                         if ($prefix == '') continue;
 
                         if (substr($class, 0, strlen($prefix)) == $prefix) {
@@ -740,7 +735,7 @@ class App
                         }
                     }
                 } else {
-                    $available_path = array(self::$config['classpath']);
+                    $available_path = array($this->config['classpath']);
                 }
             }
 
@@ -767,14 +762,13 @@ class App
     /**
      * Error handler for app
      *
-     * @static
      * @param $type
      * @param $message
      * @param $file
      * @param $line
      * @throws \ErrorException
      */
-    public static function __error($type, $message, $file, $line)
+    protected function __error($type, $message, $file, $line)
     {
         if (error_reporting() & $type) throw new \ErrorException($message, $type, 0, $file, $line);
     }
@@ -782,15 +776,14 @@ class App
     /**
      * Shutdown handler for app
      *
-     * @static
      * @todo Make as middleware
      */
-    public static function __shutdown()
+    public function __shutdown()
     {
         Event::fireEvent('shutdown');
-        if (!self::$_init) return;
+        if (!$this->_init) return;
 
-        if (self::config('error')
+        if ($this->config('error')
             && ($error = error_get_last())
             && in_array($error['type'], array(E_PARSE, E_ERROR, E_USER_ERROR))
         ) {

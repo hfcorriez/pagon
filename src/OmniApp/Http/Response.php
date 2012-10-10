@@ -5,6 +5,7 @@ namespace OmniApp\Http;
 use OmniApp\Data\MimeType;
 use OmniApp\Registry;
 use OmniApp\Exception\Stop;
+use OmniApp\App;
 
 class Response extends Registry
 {
@@ -62,6 +63,11 @@ class Response extends Registry
         509 => 'Bandwidth Limit Exceeded'
     );
 
+    /**
+     * @var \OmniApp\App
+     */
+    public $app;
+
     protected $status = 200;
     protected $headers = array();
     protected $body = '';
@@ -69,6 +75,14 @@ class Response extends Registry
     protected $content_type = 'text/html';
     protected $charset = 'utf-8';
     protected $length = 0;
+
+    /**
+     * @param \OmniApp\App $app
+     */
+    public function __construct(App $app)
+    {
+        $this->app = $app;
+    }
 
     /**
      * Set body
@@ -233,7 +247,7 @@ class Response extends Registry
         // Check headers
         if (headers_sent() === false) {
             // Send header
-            header(sprintf('HTTP/%s %s %s', \OmniApp\App::$request->protocol(), $this->status, $this->message()));
+            header(sprintf('HTTP/%s %s %s', $this->app->request->protocol(), $this->status, $this->message()));
 
             // Loop headers to send
             if ($this->headers) {

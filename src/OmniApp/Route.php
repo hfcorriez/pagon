@@ -14,10 +14,23 @@ class Route extends Middleware
 {
     const _CLASS_ = __CLASS__;
 
+    /**
+     * @var string Current path
+     */
     protected $path;
 
-    public function __construct($path)
+    /**
+     * @var App
+     */
+    protected $app;
+
+    /**
+     * @param App $app
+     * @param     $path
+     */
+    public function __construct(App $app, $path)
     {
+        $this->app = $app;
         $this->path = $path;
     }
 
@@ -35,7 +48,7 @@ class Route extends Middleware
             $path = array_shift($_args);
             $runner = $_args;
         }
-        App::config()->route[$path] = $runner;
+        $this->app->config()->route[$path] = $runner;
     }
 
     /**
@@ -47,7 +60,7 @@ class Route extends Middleware
      */
     public function dispatch()
     {
-        $routes = (array)App::config('route');
+        $routes = (array)$this->app->config('route');
 
         // No routes
         if (!$routes) return false;
@@ -98,7 +111,7 @@ class Route extends Middleware
                 return false;
             }
             // Set next controller and io
-            if ($k > 0) $ctrl[$k - 1]->setNext($c, App::$request, App::$response);
+            if ($k > 0) $ctrl[$k - 1]->setNext($c, $this->app);
         }
         // Call the first
         $ctrl[0]->call();
@@ -110,14 +123,12 @@ class Route extends Middleware
      */
     public function call()
     {
-        ob_start();
         try {
             if (!$this->dispatch()) {
-                App::notFound();
+                $this->app->notFound();
             }
         } catch (Stop $e) {
         }
-        App::$response->write(ob_get_clean(), -1);
     }
 
     /**
@@ -129,9 +140,9 @@ class Route extends Middleware
     public function notFound($runner = null)
     {
         if ($runner) {
-            App::config('route.404', $runner, true);
+            $this->app->config('route.404', $runner, true);
         }
-        return ($_route = App::config('route.404')) ? $this->run($_route) : false;
+        return ($_route = $this->app->config('route.404')) ? $this->run($_route) : false;
     }
 
 
@@ -145,11 +156,11 @@ class Route extends Middleware
     {
         $_args = array();
         if (!$runner instanceof \Exception) {
-            App::config('route.error', $runner, true);
+            $this->app->config('route.error', $runner, true);
         } else {
             $_args = array($runner);
         }
-        return ($_route = App::config('route.error')) ? $this->run($_route, $_args) : false;
+        return ($_route = $this->app->config('route.error')) ? $this->run($_route, $_args) : false;
     }
 
     /**

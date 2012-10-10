@@ -2,7 +2,6 @@
 
 namespace OmniApp\Middleware;
 
-use OmniApp\App;
 use OmniApp\Middleware;
 
 class PrettyException extends Middleware
@@ -13,7 +12,7 @@ class PrettyException extends Middleware
             $this->next();
         } catch (\Exception $e) {
             ob_clean();
-            App::render(__DIR__ . '/views/error.php', array(
+            $this->request->app->render(__DIR__ . '/views/error.php', array(
                 'file' => $e->getFile(),
                 'line' => $e->getLine(),
                 'code' => $e->getCode(),

@@ -55,14 +55,13 @@ class Middleware
      * Set next middleware
      *
      * @param Middleware               $middleware
-     * @param Http\Request|Cli\Input   $request
-     * @param Http\Response|Cli\Output $response
+     * @param App                      $app
      */
-    final public function setNext(Middleware $middleware, $request, $response)
+    final public function setNext(Middleware $middleware, App $app)
     {
         $this->next = $middleware;
-        $this->request = $request;
-        $this->response = $response;
+        $this->request = $app->request;
+        $this->response = $app->response;
     }
 
     /**
