@@ -60,15 +60,14 @@ class Route extends Middleware
      */
     public function dispatch()
     {
+        // Check path
+        if (!$this->path) return false;
+
+        // Get routes
         $routes = (array)$this->app->config('route');
 
         // No routes
         if (!$routes) return false;
-
-        //$path = trim($path, '/');
-        if ($this->path AND !preg_match('/^[\w\-~\/\.]{1,400}$/', $this->path)) {
-            return false;
-        }
 
         // Loop routes for parse and dispatch
         foreach ($routes as $p => $ctrl) {
@@ -77,6 +76,7 @@ class Route extends Middleware
             // Try to parse the params
             if (($params = self::parseRoute($this->path, $p)) !== false) {
                 try {
+                    $this->app->param($params);
                     return self::run($ctrl);
                     // If multiple controller
                 } catch (Pass $e) {
@@ -207,7 +207,7 @@ class Route extends Middleware
             if ($regex{0} == '^') {
                 $regex = '/' . $regex . '/';
             } elseif (strpos($regex, ':')) {
-                $regex = '/^' . preg_replace('/:([a-zA-Z0-9]+)/', '(?<$1>[a-zA-Z0-9\.\-\+_]+?)', $regex) . '$/';
+                $regex = '/^' . preg_replace('/:([a-zA-Z0-9]+)/', '(?<$1>[^\/]+?)', $regex) . '\/?$/';
             } else {
                 $regex = '/^' . $regex . '$/';
             }

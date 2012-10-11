@@ -662,6 +662,26 @@ class App
     }
 
     /**
+     * Get or set param
+     *
+     * @param string|null $param
+     * @return bool|null
+     */
+    public function param($param = null)
+    {
+        if ($param === null) {
+            return $this->request->params;
+        } else {
+            if (is_array($param)) {
+                $this->request->params = $param;
+                return true;
+            } else {
+                return isset($this->request->params[$param]) ? $this->request->params[$param] : null;
+            }
+        }
+    }
+
+    /**
      * Output
      *
      * @param $status
