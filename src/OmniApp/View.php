@@ -45,7 +45,7 @@ class View
 
         // If file exists?
         if (!is_file($this->file)) {
-            throw new Exception('Template file is not exist: ' . $this->file);
+            throw new \Exception('Template file is not exist: ' . $this->file);
         }
 
         // Set data
