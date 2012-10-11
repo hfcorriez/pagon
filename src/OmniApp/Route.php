@@ -76,7 +76,7 @@ class Route extends Middleware
             // Try to parse the params
             if (($params = self::parseRoute($this->path, $p)) !== false) {
                 try {
-                    $this->app->param($params);
+                    $params && $this->app->param($params);
                     return self::run($ctrl);
                     // If multiple controller
                 } catch (Pass $e) {
