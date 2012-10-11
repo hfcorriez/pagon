@@ -2,7 +2,7 @@
 
 namespace OmniApp;
 
-abstract class Config extends \ArrayObject
+class Config extends \ArrayObject
 {
     public function __construct($input)
     {
@@ -68,7 +68,9 @@ abstract class Config extends \ArrayObject
      * @param $input
      * @return mixed
      */
-    abstract protected function parse($input);
+    protected function parse($input) {
+        return (array)$input;
+    }
 
     /**
      * Set the key

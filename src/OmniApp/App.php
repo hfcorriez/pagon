@@ -236,7 +236,7 @@ class App
                         $this->config = $key;
                     } else {
                         // Else convert to Dict config
-                        $this->config = new Config\Dict($key);
+                        $this->config = new Config($key);
                     }
 
                     // Check configs and merge
