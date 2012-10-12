@@ -230,17 +230,6 @@ class Response extends Registry
     }
 
     /**
-     * Alias for contentType
-     *
-     * @param string $mime_type
-     * @return string
-     */
-    public function type($mime_type = null)
-    {
-        return $this->contentType($mime_type);
-    }
-
-    /**
      * Get or set cookie
      *
      * @param $key

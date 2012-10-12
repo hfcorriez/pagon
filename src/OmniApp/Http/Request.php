@@ -29,11 +29,16 @@ class Request extends Registry
     protected $accept_language;
     protected $accept_encoding;
 
+    protected $env;
+
     /**
      * @param \OmniApp\App $app
      */
-    public function __construct(App $app){
+    public function __construct(App $app)
+    {
         $this->app = $app;
+
+        $this->env = $_SERVER;
     }
 
     /**
@@ -44,7 +49,7 @@ class Request extends Registry
      */
     public function protocol()
     {
-        return getenv('SERVER_PROTOCOL');
+        return $this->env('SERVER_PROTOCOL');
     }
 
     /**
@@ -55,7 +60,7 @@ class Request extends Registry
      */
     public function path()
     {
-        if (null === $this->path) $this->path = parse_url(getenv('REQUEST_URI'), PHP_URL_PATH);
+        if (null === $this->path) $this->path = parse_url($this->env('REQUEST_URI'), PHP_URL_PATH);
 
         return $this->path;
     }
@@ -67,7 +72,7 @@ class Request extends Registry
      */
     public function uri()
     {
-        return getenv('REQUEST_URI');
+        return $this->env('REQUEST_URI');
     }
 
     /**
@@ -78,8 +83,8 @@ class Request extends Registry
     public function scriptName()
     {
         if (null === $this->script_name) {
-            $_script_name = getenv('SCRIPT_NAME');
-            if (strpos(getenv('REQUEST_URI'), $_script_name) !== 0) {
+            $_script_name = $this->env('SCRIPT_NAME');
+            if (strpos($this->env('REQUEST_URI'), $_script_name) !== 0) {
                 $_script_name = str_replace('\\', '/', dirname($_script_name));
             }
             $this->script_name = rtrim($_script_name, '/');
@@ -151,7 +156,7 @@ class Request extends Registry
      */
     public function method()
     {
-        return getenv('REQUEST_METHOD');
+        return $this->env('REQUEST_METHOD');
     }
 
     /**
@@ -233,7 +238,7 @@ class Request extends Registry
      */
     public function isAjax()
     {
-        return !getenv('X-Requested-With') && 'XMLHttpRequest' == getenv('X-Requested-With');
+        return !$this->env('X-Requested-With') && 'XMLHttpRequest' == $this->env('X-Requested-With');
     }
 
     /**
@@ -265,7 +270,7 @@ class Request extends Registry
     public function accept($type = null)
     {
         if ($this->accept === null) {
-            $this->accept = self::buildAcceptMap(getenv('HTTP_ACCEPT'));
+            $this->accept = self::buildAcceptMap($this->env('HTTP_ACCEPT'));
         }
 
         // if no parameter was passed, just return parsed data
@@ -304,7 +309,7 @@ class Request extends Registry
     public function acceptEncoding($type = null)
     {
         if ($this->accept_encoding === null) {
-            $this->accept_encoding = self::buildAcceptMap(getenv('HTTP_ACCEPT_LANGUAGE'));
+            $this->accept_encoding = self::buildAcceptMap($this->env('HTTP_ACCEPT_LANGUAGE'));
         }
 
         // if no parameter was passed, just return parsed data
@@ -334,7 +339,7 @@ class Request extends Registry
     public function acceptLanguage($type = null)
     {
         if ($this->accept_language === null) {
-            $this->accept_language = self::buildAcceptMap(getenv('HTTP_ACCEPT_LANGUAGE'));
+            $this->accept_language = self::buildAcceptMap($this->env('HTTP_ACCEPT_LANGUAGE'));
         }
 
         // if no parameter was passed, just return parsed data
@@ -362,13 +367,13 @@ class Request extends Registry
      */
     public function ip()
     {
-        if ($ip = getenv('X_FORWARDED_FOR')) {
+        if ($ip = $this->env('X_FORWARDED_FOR')) {
             return $ip;
-        } elseif ($ip = getenv('CLIENT_IP')) {
+        } elseif ($ip = $this->env('CLIENT_IP')) {
             return $ip;
         }
 
-        return getenv('REMOTE_ADDR');
+        return $this->env('REMOTE_ADDR');
     }
 
     /**
@@ -379,7 +384,7 @@ class Request extends Registry
      */
     public function refer()
     {
-        return getenv('HTTP_REFERER');
+        return $this->env('HTTP_REFERER');
     }
 
     /**
@@ -389,7 +394,7 @@ class Request extends Registry
      */
     public function host()
     {
-        if ($host = getenv('HTTP_HOST')) {
+        if ($host = $this->env('HTTP_HOST')) {
             if (strpos($host, ':') !== false) {
                 $hostParts = explode(':', $host);
 
@@ -398,7 +403,7 @@ class Request extends Registry
 
             return $host;
         }
-        return getenv('SERVER_NAME');
+        return $this->env('SERVER_NAME');
     }
 
     /**
@@ -418,7 +423,7 @@ class Request extends Registry
      */
     public function scheme()
     {
-        return !getenv('HTTPS') || getenv('HTTPS') === 'off' ? 'http' : 'https';
+        return !$this->env('HTTPS') || $this->env('HTTPS') === 'off' ? 'http' : 'https';
     }
 
     /**
@@ -428,7 +433,7 @@ class Request extends Registry
      */
     public function port()
     {
-        return (int)getenv('SERVER_PORT');
+        return (int)$this->env('SERVER_PORT');
     }
 
     /**
@@ -439,7 +444,7 @@ class Request extends Registry
      */
     public function userAgent()
     {
-        return getenv('HTTP_USER_AGENT');
+        return $this->env('HTTP_USER_AGENT');
     }
 
     /**
@@ -449,7 +454,7 @@ class Request extends Registry
      */
     public function contentType()
     {
-        return getenv('CONTENT_TYPE');
+        return $this->env('CONTENT_TYPE');
     }
 
     /**
@@ -487,7 +492,7 @@ class Request extends Registry
      */
     public function contentLength()
     {
-        if ($len = getenv('CONTENT_LENGTH')) {
+        if ($len = $this->env('CONTENT_LENGTH')) {
             return (int)$len;
         }
         return 0;
@@ -540,7 +545,7 @@ class Request extends Registry
     {
         if (null === $this->headers) {
             $_headers = array();
-            foreach ($_SERVER as $key => $value) {
+            foreach ($this->env as $key => $value) {
                 $_name = false;
                 if ('HTTP_' === substr($key, 0, 5)) {
                     $_name = substr($key, 5);
@@ -608,6 +613,24 @@ class Request extends Registry
     {
         $this->app->cleanBuffer();
         throw new Pass();
+    }
+
+    /**
+     * Env
+     *
+     * @param $key
+     * @return null
+     */
+    public function env($key = null)
+    {
+        if (is_array($key)) {
+            $this->env = $key;
+            return;
+        }
+
+        if ($key === null) return $this->env;
+
+        return isset($this->env[$key]) ? $this->env[$key] : null;
     }
 
     /**
