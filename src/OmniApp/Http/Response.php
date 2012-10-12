@@ -93,7 +93,14 @@ class Response extends Registry
      */
     public function body($content = null)
     {
-        if ($content !== null) $this->write($content, 0);
+        if ($content !== null) {
+            if (ob_get_level() !== 0) {
+                ob_end_clean();
+                ob_start();
+            }
+            $this->body = $content;
+            $this->length = strlen($this->body);
+        }
 
         return $this->body;
     }
@@ -106,7 +113,7 @@ class Response extends Registry
      */
     public function length($length = null)
     {
-        if (!is_null($length)) {
+        if (is_numeric($length)) {
             $this->length = (int)$length;
         }
 
@@ -123,6 +130,7 @@ class Response extends Registry
     {
         if ($charset) {
             $this->charset = $charset;
+            $this->header('Content-Type', $this->content_type . '; charset=' . $this->charset);
         }
         return $this->charset;
     }
@@ -130,24 +138,35 @@ class Response extends Registry
     /**
      * Write body
      *
-     * @param string $body
-     * @param int    $pos
+     * @param string $data
      * @return string
      */
-    public function write($body, $pos = 1)
+    public function write($data)
     {
-        if (!$body) return $this->body;
+        if (!$data) return $this->body;
 
-        if ($pos === 1) {
-            $this->body .= $body;
-        } elseif ($pos === -1) {
-            $this->body = $body . $this->body;
-        } else {
-            $this->body = $body;
+        if (ob_get_level() !== 0) {
+            $data = ob_get_clean() . $data;
+            ob_start();
         }
+
+        $this->body .= $data;
         $this->length = strlen($this->body);
 
         return $this->body;
+    }
+
+    /**
+     * End the response
+     *
+     * @param string $data
+     * @throws \OmniApp\Exception\Stop
+     * @return void
+     */
+    public function end($data = '')
+    {
+        $this->write($data);
+        throw new Stop();
     }
 
     /**
@@ -195,18 +214,30 @@ class Response extends Registry
      * @param $mime_type
      * @return null
      */
-    public function contentType($mime_type)
+    public function contentType($mime_type = null)
     {
         if ($mime_type) {
             if (!strpos($mime_type, '/')) {
-                $mime_type = MimeType::load()->get($mime_type);
-                $mime_type = $mime_type[0];
+                $mime_type = MimeType::load()->{$mime_type}[0];
+                if (!$mime_type) return $this->content_type;
             }
+            $this->content_type = $mime_type;
 
-            $this->header('Content-Type', $mime_type . '; charset=' . $this->charset());
+            $this->header('Content-Type', $this->content_type . '; charset=' . $this->charset);
         }
 
-        return $this->header('Content-Type');
+        return $this->content_type;
+    }
+
+    /**
+     * Alias for contentType
+     *
+     * @param string $mime_type
+     * @return string
+     */
+    public function type($mime_type = null)
+    {
+        return $this->contentType($mime_type);
     }
 
     /**

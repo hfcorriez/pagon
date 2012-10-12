@@ -2,7 +2,7 @@
 
 namespace OmniApp\Data;
 
-class MimeType extends \OmniApp\Config\Dict
+class MimeType extends \OmniApp\Config
 {
     protected static $instance;
 

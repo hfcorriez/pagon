@@ -569,7 +569,7 @@ class App
             $this->middleware[0]->call();
 
             // Write direct output to the head of buffer
-            $this->response->write(ob_get_clean(), -1);
+            $this->response->write(ob_get_clean());
         } catch (\Exception $e) {
             if ($this->config->debug) {
                 throw $e;
