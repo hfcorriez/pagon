@@ -311,7 +311,7 @@ class App
 
         if ($mode === null) {
             // Get or generate mode
-            $mode = $mode_get ? $mode_get() : getenv('OMNIAPP_ENV');
+            $mode = $mode_get ? $mode_get() : $this->request->env('OMNIAPP_ENV');
         } elseif ($closure === null) {
             // Allow set mode get method when mode is closure
             if ($mode instanceof \Closure) {
@@ -536,7 +536,7 @@ class App
      */
     public function root()
     {
-        return rtrim(getenv('DOCUMENT_ROOT'), '/') . rtrim($this->request->rootUri(), '/') . '/';
+        return rtrim($this->request->env('DOCUMENT_ROOT'), '/') . rtrim($this->request->rootUri(), '/') . '/';
     }
 
     /**

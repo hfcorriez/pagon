@@ -28,7 +28,6 @@ class Request extends Registry
     protected $accept;
     protected $accept_language;
     protected $accept_encoding;
-
     protected $env;
 
     /**

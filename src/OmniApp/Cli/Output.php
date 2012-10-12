@@ -2,10 +2,22 @@
 
 namespace OmniApp\Cli;
 
+use OmniApp\App;
+
 class Output
 {
+    public $app;
+
     protected $body;
     protected $status = 0;
+
+    /**
+     * @param \OmniApp\App $app
+     */
+    public function __construct(App $app)
+    {
+        $this->app = $app;
+    }
 
     /**
      * Set or get status
@@ -30,7 +42,13 @@ class Output
      */
     public function body($content = null)
     {
-        if ($content !== null) self::write($content, 0);
+        if ($content !== null) {
+            if (ob_get_level() !== 0) {
+                ob_end_clean();
+                ob_start();
+            }
+            $this->body = $content;
+        }
 
         return $this->body;
     }
@@ -38,21 +56,19 @@ class Output
     /**
      * Write body
      *
-     * @param string $body
-     * @param int    $pos
+     * @param string $data
      * @return string
      */
-    public function write($body, $pos = 1)
+    public function write($data)
     {
-        if (!$body) return $this->body;
+        if (!$data) return $this->body;
 
-        if ($pos === 1) {
-            $this->body .= $body;
-        } elseif ($pos === -1) {
-            $this->body = $body . $this->body;
-        } else {
-            $this->body = $body;
+        if (ob_get_level() !== 0) {
+            $data = ob_get_clean() . $data;
+            ob_start();
         }
+
+        $this->body .= $data;
 
         return $this->body;
     }
