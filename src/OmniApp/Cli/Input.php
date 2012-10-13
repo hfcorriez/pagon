@@ -3,11 +3,13 @@
 namespace OmniApp\Cli;
 
 use OmniApp\App;
+use OmniApp\Exception\Pass;
 
 class Input
 {
     public $app;
 
+    protected $body;
     protected $path;
     protected $env;
 
@@ -34,6 +36,30 @@ class Input
         }
 
         return $this->path;
+    }
+
+    /**
+     * Get body
+     *
+     * @return string
+     */
+    public function body()
+    {
+        if (null === $this->body) {
+            $this->body = @(string)file_get_contents('php://input');
+        }
+        return $this->body;
+    }
+
+    /**
+     * Pass
+     *
+     * @throws Pass
+     */
+    public function pass()
+    {
+        $this->app->cleanBuffer();
+        throw new Pass();
     }
 
     /**

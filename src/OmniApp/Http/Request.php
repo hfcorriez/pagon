@@ -506,7 +506,7 @@ class Request extends Registry
      */
     public function get($key, $default = null)
     {
-        return array_key_exists($key, $_GET) ? $_GET[$key] : $default;
+        return isset($_GET[$key]) ? $_GET[$key] : $default;
     }
 
     /**
@@ -518,7 +518,7 @@ class Request extends Registry
      */
     public function post($key, $default = null)
     {
-        return array_key_exists($key, $_POST) ? $_POST[$key] : $default;
+        return isset($_POST[$key]) ? $_POST[$key] : $default;
 
     }
 
@@ -531,7 +531,7 @@ class Request extends Registry
      */
     public function param($key, $default = null)
     {
-        return array_key_exists($key, $this->params) ? $this->params[$key] : $default;
+        return isset($this->params[$key]) ? $this->params[$key] : $default;
     }
 
     /**
