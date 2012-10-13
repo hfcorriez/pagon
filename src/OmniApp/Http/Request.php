@@ -263,6 +263,16 @@ class Request extends Registry
     }
 
     /**
+     * Is upload request?
+     *
+     * @return bool
+     */
+    public function isUpload()
+    {
+        return !empty($_FILES);
+    }
+
+    /**
      * Check If accept mime type?
      *
      * @param array|string $type
