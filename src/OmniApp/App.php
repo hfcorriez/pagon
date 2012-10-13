@@ -26,11 +26,6 @@ class App
     protected $config = array();
 
     /**
-     * @var array Modules for the app
-     */
-    public $modules = array();
-
-    /**
      * @var Http\Request|Cli\Input
      */
     public $request;
@@ -53,12 +48,17 @@ class App
     /**
      * @var string Mode
      */
-    private $mode = 'development';
+    protected $mode = 'development';
 
     /**
      * @var Middleware[]
      */
-    private $middleware = array();
+    protected $middleware = array();
+
+    /**
+     * @var array Events listeners
+     */
+    protected $events_listeners = array();
 
     /**
      * @var float App start time
@@ -79,6 +79,7 @@ class App
      * @var bool Is win?
      */
     private $_win = false;
+
 
     /**
      * App init
@@ -106,8 +107,8 @@ class App
             $this->request = new Http\Request($app);
             $this->response = new Http\Response($app);
         } else {
-            $this->request = new Cli\Input();
-            $this->response = new Cli\Output();
+            $this->request = new Cli\Input($app);
+            $this->response = new Cli\Output($app);
         }
 
         // Init Route
@@ -148,8 +149,9 @@ class App
         $this->config($config);
 
         // Fire init
-        Event::fireEvent('init');
+        $this->emit('init');
 
+        // Init
         $this->_init = true;
     }
 
@@ -261,9 +263,7 @@ class App
         } else {
             if (!$no_detect_callback && $value instanceof \Closure) {
                 // Auto attach event
-                Event::on('config:' . $key, function (Event $e, $v, $p) use ($value) {
-                    $value($v, $p);
-                });
+                $this->on('config:' . $key, $value);
             } else {
                 $_trigger = true;
 
@@ -290,7 +290,7 @@ class App
                 }
 
                 // Fire event when listener exists
-                $_trigger && Event::fireEvent('config:' . $key, $value, $this->config($key));
+                $_trigger && $this->emit('config:' . $key, $value, $this->config($key));
             }
         }
         return;
@@ -319,7 +319,7 @@ class App
             }
         } elseif ($closure) {
             // Set trigger for the mode
-            Event::on('mode:' . $mode, $closure);
+            $this->on('mode:' . $mode, $closure);
             // Don not change the current mode
             $mode = null;
         }
@@ -354,6 +354,65 @@ class App
             $middleware->setApp($this);
             // Un-shift middleware
             array_unshift($this->middleware, $middleware);
+        }
+    }
+
+
+    /**
+     * fire event
+     *
+     * @static
+     * @param string $name
+     * @param mixed  $args
+     */
+    public function emit($name, $args = null)
+    {
+        $name = strtolower($name);
+
+        if (!empty($this->events_listeners[$name])) {
+            if ($args !== null) {
+                // Check arguments, set inline args more than 1
+                $args = array_slice(func_get_args(), 1);
+            } else {
+                $args = array();
+            }
+
+            // Loop listeners for callback
+            foreach ($this->events_listeners[$name] as $listener) {
+                // Closure Listener
+                call_user_func_array($listener, $args);
+            }
+        }
+    }
+
+    /**
+     * Attach a event listener
+     *
+     * @static
+     * @param array|string $name
+     * @param \Closure     $listener
+     */
+    protected function on($name, \Closure $listener)
+    {
+        $this->events_listeners[strtolower($name)][] = $listener;
+    }
+
+    /**
+     * Detach a event listener
+     *
+     * @static
+     * @param string   $name
+     * @param \Closure $listener
+     */
+    protected function off($name, \Closure $listener)
+    {
+        $name = strtolower($name);
+        if (!empty($this->events_listeners[$name])) {
+            // Find Listener index
+            if (($key = array_search($listener, $name)) !== false) {
+                // Remove it
+                unset($this->events_listeners[$name][$key]);
+            }
         }
     }
 
@@ -551,10 +610,10 @@ class App
         }
 
         // If trigger exists, trigger closure
-        Event::fireEvent('mode:' . $this->mode());
+        $this->emit('mode:' . $this->mode());
 
         // Fire run
-        Event::fireEvent('run');
+        $this->emit('run');
 
         $_error = false;
         if ($this->config('error')) {
@@ -580,7 +639,7 @@ class App
                     //
                 }
             }
-            Event::fireEvent('error');
+            $this->emit('error');
         }
 
         if (!$this->_cli) {
@@ -592,18 +651,7 @@ class App
 
         if ($_error) $this->restoreErrorHandler();
 
-        Event::fireEvent('end');
-    }
-
-    /**
-     * Event register
-     *
-     * @param $event
-     * @param $closure
-     */
-    public function on($event, $closure)
-    {
-        Event::attach($event, $closure);
+        $this->emit('end');
     }
 
     /**
@@ -801,7 +849,7 @@ class App
      */
     public function __shutdown()
     {
-        Event::fireEvent('shutdown');
+        $this->emit('shutdown');
         if (!$this->_init) return;
 
         if ($this->config('error')
