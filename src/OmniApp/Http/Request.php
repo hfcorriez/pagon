@@ -112,7 +112,8 @@ class Request extends Registry
         if (null === $this->path_info) {
             $_path_info = substr_replace($this->uri(), '', 0, strlen($this->scriptName()));
             if (strpos($_path_info, '?') !== false) {
-                $_path_info = substr_replace($_path_info, '', strpos($_path_info, '?')); //query string is not removed automatically
+                // Query string is not removed automatically
+                $_path_info = substr_replace($_path_info, '', strpos($_path_info, '?'));
             }
             $this->path_info = $_path_info;
         }
@@ -177,7 +178,7 @@ class Request extends Registry
      */
     public function isGet()
     {
-        return $this->is('get');
+        return $this->method() === 'GET';
     }
 
     /**
@@ -187,7 +188,7 @@ class Request extends Registry
      */
     public function isPost()
     {
-        return $this->is('post');
+        return $this->method() === 'POST';
     }
 
     /**
@@ -197,7 +198,7 @@ class Request extends Registry
      */
     public function isPut()
     {
-        return $this->is('put');
+        return $this->method() === 'PUT';
     }
 
     /**
@@ -207,7 +208,7 @@ class Request extends Registry
      */
     public function isDelete()
     {
-        return $this->is('delete');
+        return $this->method() === 'DELETE';
     }
 
     /**
@@ -217,7 +218,7 @@ class Request extends Registry
      */
     public function isHead()
     {
-        return $this->is('head');
+        return $this->method() === 'HEAD';
     }
 
     /**
@@ -227,7 +228,7 @@ class Request extends Registry
      */
     public function isOptions()
     {
-        return $this->is('options');
+        return $this->method() === 'OPTIONS';
     }
 
     /**
@@ -407,7 +408,7 @@ class Request extends Registry
     }
 
     /**
-     * Get domain
+     * Get domain. Alias for host
      *
      * @return string
      */
@@ -502,7 +503,7 @@ class Request extends Registry
      * Get the param from query string
      *
      * @param string $key
-     * @param mixed $default
+     * @param mixed  $default
      * @return mixed
      */
     public function get($key, $default = null)
@@ -514,7 +515,7 @@ class Request extends Registry
      * Get post data by key
      *
      * @param string $key
-     * @param mixed $default
+     * @param mixed  $default
      * @return mixed
      */
     public function post($key, $default = null)
@@ -527,7 +528,7 @@ class Request extends Registry
      * Get any params from get or post
      *
      * @param string $key
-     * @param mixed $default
+     * @param mixed  $default
      * @return mixed
      */
     public function param($key, $default = null)
@@ -580,7 +581,7 @@ class Request extends Registry
      * Get cookie
      *
      * @param string $key
-     * @param mixed $default
+     * @param mixed  $default
      * @return mixed
      */
     public function cookie($key = null, $default = null)
