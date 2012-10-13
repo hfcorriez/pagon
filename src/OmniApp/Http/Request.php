@@ -6,6 +6,7 @@ use OmniApp\Data\MimeType;
 use OmniApp\Registry;
 use OmniApp\Exception\Pass;
 use OmniApp\App;
+use OmniApp\Config;
 
 class Request extends Registry
 {
@@ -37,7 +38,7 @@ class Request extends Registry
     {
         $this->app = $app;
 
-        $this->env = $_SERVER;
+        $this->env = new Config($_SERVER);
     }
 
     /**
@@ -623,7 +624,7 @@ class Request extends Registry
     public function env($key = null)
     {
         if (is_array($key)) {
-            $this->env = $key;
+            $this->env = new Config($key);
             return;
         }
 

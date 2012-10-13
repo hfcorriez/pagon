@@ -4,6 +4,7 @@ namespace OmniApp\Cli;
 
 use OmniApp\App;
 use OmniApp\Exception\Pass;
+use OmniApp\Config;
 
 class Input
 {
@@ -20,7 +21,7 @@ class Input
     {
         $this->app = $app;
 
-        $this->env = $_SERVER;
+        $this->env = new Config($_SERVER);
     }
 
     /**
@@ -71,7 +72,7 @@ class Input
     public function env($key = null)
     {
         if (is_array($key)) {
-            $this->env = $key;
+            $this->env = new Config($key);
             return;
         }
 
