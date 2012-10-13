@@ -56,9 +56,9 @@ class App
     protected $middleware = array();
 
     /**
-     * @var array Events listeners
+     * @var Emitter
      */
-    protected $events_listeners = array();
+    protected $emitter;
 
     /**
      * @var float App start time
@@ -79,7 +79,6 @@ class App
      * @var bool Is win?
      */
     private $_win = false;
-
 
     /**
      * App init
@@ -110,6 +109,9 @@ class App
             $this->request = new Cli\Input($app);
             $this->response = new Cli\Output($app);
         }
+
+        // Init emitter
+        $this->emitter = new Emitter();
 
         // Init Route
         $this->route = new Route($app, $this->request->path());
@@ -149,7 +151,7 @@ class App
         $this->config($config);
 
         // Fire init
-        $this->emit('init');
+        $this->emitter->emit('init');
 
         // Init
         $this->_init = true;
@@ -263,7 +265,7 @@ class App
         } else {
             if (!$no_detect_callback && $value instanceof \Closure) {
                 // Auto attach event
-                $this->on('config:' . $key, $value);
+                $this->emitter->on('config:' . $key, $value);
             } else {
                 $_trigger = true;
 
@@ -290,7 +292,7 @@ class App
                 }
 
                 // Fire event when listener exists
-                $_trigger && $this->emit('config:' . $key, $value, $this->config($key));
+                $_trigger && $this->emitter->emit('config:' . $key, $value, $this->config($key));
             }
         }
         return;
@@ -319,7 +321,7 @@ class App
             }
         } elseif ($closure) {
             // Set trigger for the mode
-            $this->on('mode:' . $mode, $closure);
+            $this->emitter->on('mode:' . $mode, $closure);
             // Don not change the current mode
             $mode = null;
         }
@@ -331,6 +333,43 @@ class App
         }
 
         return $this->mode;
+    }
+
+    /**
+     * Attach event listener
+     *
+     * @param string   $event
+     * @param \Closure $listener
+     */
+    public function on($event, $listener)
+    {
+        $this->emitter->on($event, $listener);
+    }
+
+    /**
+     * Detach event listener
+     *
+     * @param string   $event
+     * @param \Closure $listener
+     */
+    public function off($event, $listener)
+    {
+        $this->emitter->off($event, $listener);
+    }
+
+    /**
+     * Emit the event
+     *
+     * @param string $event
+     * @param mixed  $args
+     */
+    public function emit($event, $args = null)
+    {
+        if ($args !== null) {
+            call_user_func_array(array($this->emitter, 'emit'), func_get_args());
+        } else {
+            $this->emitter->emit($event);
+        }
     }
 
     /**
@@ -354,65 +393,6 @@ class App
             $middleware->setApp($this);
             // Un-shift middleware
             array_unshift($this->middleware, $middleware);
-        }
-    }
-
-
-    /**
-     * fire event
-     *
-     * @static
-     * @param string $name
-     * @param mixed  $args
-     */
-    public function emit($name, $args = null)
-    {
-        $name = strtolower($name);
-
-        if (!empty($this->events_listeners[$name])) {
-            if ($args !== null) {
-                // Check arguments, set inline args more than 1
-                $args = array_slice(func_get_args(), 1);
-            } else {
-                $args = array();
-            }
-
-            // Loop listeners for callback
-            foreach ($this->events_listeners[$name] as $listener) {
-                // Closure Listener
-                call_user_func_array($listener, $args);
-            }
-        }
-    }
-
-    /**
-     * Attach a event listener
-     *
-     * @static
-     * @param array|string $name
-     * @param \Closure     $listener
-     */
-    protected function on($name, \Closure $listener)
-    {
-        $this->events_listeners[strtolower($name)][] = $listener;
-    }
-
-    /**
-     * Detach a event listener
-     *
-     * @static
-     * @param string   $name
-     * @param \Closure $listener
-     */
-    protected function off($name, \Closure $listener)
-    {
-        $name = strtolower($name);
-        if (!empty($this->events_listeners[$name])) {
-            // Find Listener index
-            if (($key = array_search($listener, $name)) !== false) {
-                // Remove it
-                unset($this->events_listeners[$name][$key]);
-            }
         }
     }
 
@@ -610,10 +590,10 @@ class App
         }
 
         // If trigger exists, trigger closure
-        $this->emit('mode:' . $this->mode());
+        $this->emitter->emit('mode:' . $this->mode());
 
         // Fire run
-        $this->emit('run');
+        $this->emitter->emit('run');
 
         $_error = false;
         if ($this->config('error')) {
@@ -639,7 +619,7 @@ class App
                     //
                 }
             }
-            $this->emit('error');
+            $this->emitter->emit('error');
         }
 
         if (!$this->_cli) {
@@ -651,7 +631,7 @@ class App
 
         if ($_error) $this->restoreErrorHandler();
 
-        $this->emit('end');
+        $this->emitter->emit('end');
     }
 
     /**
@@ -849,7 +829,7 @@ class App
      */
     public function __shutdown()
     {
-        $this->emit('shutdown');
+        $this->emitter->emit('shutdown');
         if (!$this->_init) return;
 
         if ($this->config('error')
