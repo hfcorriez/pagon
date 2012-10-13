@@ -8,10 +8,14 @@ use OmniApp\Config;
 
 class Input
 {
+    /**
+     * @var \OmniApp\App App
+     */
     public $app;
 
-    protected $body;
-    protected $path;
+    /**
+     * @var \OmniApp\Config Env
+     */
     protected $env;
 
     /**
@@ -32,11 +36,11 @@ class Input
      */
     public function path()
     {
-        if (null === $this->path) {
-            $this->path = '/' . join('/', array_slice($this->env('argv'), 1));
+        if (null === $this->env->path) {
+            $this->env->path = '/' . join('/', array_slice($this->env('argv'), 1));
         }
 
-        return $this->path;
+        return $this->env->path;
     }
 
     /**
@@ -46,10 +50,10 @@ class Input
      */
     public function body()
     {
-        if (null === $this->body) {
-            $this->body = @(string)file_get_contents('php://input');
+        if (null === $this->env->body) {
+            $this->env->body = @(string)file_get_contents('php://input');
         }
-        return $this->body;
+        return $this->env->body;
     }
 
     /**
