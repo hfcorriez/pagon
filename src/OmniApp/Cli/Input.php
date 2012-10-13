@@ -30,7 +30,7 @@ class Input
     public function path()
     {
         if (null === $this->path) {
-            $this->path = '/' . join('/', array_slice($GLOBALS['argv'], 1));
+            $this->path = '/' . join('/', array_slice($this->env('argv'), 1));
         }
 
         return $this->path;
