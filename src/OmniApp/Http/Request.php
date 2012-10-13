@@ -474,7 +474,7 @@ class Request extends Registry
     }
 
     /**
-     * @return null
+     * @return string
      */
     public function contentCharset()
     {
@@ -501,9 +501,9 @@ class Request extends Registry
     /**
      * Get the param from query string
      *
-     * @param      $key
-     * @param null $default
-     * @return null
+     * @param string $key
+     * @param mixed $default
+     * @return mixed
      */
     public function get($key, $default = null)
     {
@@ -513,9 +513,9 @@ class Request extends Registry
     /**
      * Get post data by key
      *
-     * @param      $key
-     * @param null $default
-     * @return null
+     * @param string $key
+     * @param mixed $default
+     * @return mixed
      */
     public function post($key, $default = null)
     {
@@ -526,9 +526,9 @@ class Request extends Registry
     /**
      * Get any params from get or post
      *
-     * @param      $key
-     * @param null $default
-     * @return null
+     * @param string $key
+     * @param mixed $default
+     * @return mixed
      */
     public function param($key, $default = null)
     {
@@ -538,7 +538,7 @@ class Request extends Registry
     /**
      * Get header or headers
      *
-     * @param null $name
+     * @param string $name
      * @return mixed
      */
     public function header($name = null)
@@ -579,16 +579,16 @@ class Request extends Registry
     /**
      * Get cookie
      *
-     * @param      $key
-     * @param null $default
-     * @return null
+     * @param string $key
+     * @param mixed $default
+     * @return mixed
      */
     public function cookie($key = null, $default = null)
     {
         if ($key === null) {
             return $_COOKIE;
         }
-        return array_key_exists($key, $_COOKIE) ? $_COOKIE[$key] : $default;
+        return isset($_COOKIE[$key]) ? $_COOKIE[$key] : $default;
     }
 
     /**
@@ -619,7 +619,7 @@ class Request extends Registry
      * Env
      *
      * @param $key
-     * @return null
+     * @return mixed
      */
     public function env($key = null)
     {

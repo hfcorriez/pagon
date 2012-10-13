@@ -67,7 +67,7 @@ class Input
      * Env
      *
      * @param $key
-     * @return null
+     * @return mixed
      */
     public function env($key = null)
     {
