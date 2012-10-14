@@ -71,7 +71,6 @@ class Response extends Registry
     protected $status = 200;
     protected $headers = array();
     protected $body = '';
-    protected $cookies = array();
     protected $content_type = 'text/html';
     protected $charset = 'utf-8';
     protected $length = 0;
@@ -234,16 +233,22 @@ class Response extends Registry
      *
      * @param $key
      * @param $value
+     * @param $expires
      * @return array|string|bool
      */
-    public function cookie($key = null, $value = null)
+    public function cookie($key, $value, $expires = 0)
     {
-        if ($key === null) {
-            return $_COOKIE;
-        } elseif ($value) {
-            setcookie($key, $value);
+        static $_config = null;
+        if ($_config === null) {
+            $_config = (array)$this->app->config('cookie') + array(
+                'path'     => '/',
+                'domain'   => null,
+                'secure'   => false,
+                'httponly' => false
+            );
         }
-        return $_COOKIE[$key];
+        setcookie($key, $value, $expires, $_config['path'], $_config['domain'], $_config['secure'], $_config['httponly']);
+        return $value;
     }
 
     /**

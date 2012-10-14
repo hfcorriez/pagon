@@ -590,10 +590,10 @@ class Request extends Registry
      */
     public function cookie($key = null, $default = null)
     {
-        if ($key === null) {
-            return $_COOKIE;
+        if ($this->env->cookie === null) {
+            $this->env->cookie = $_COOKIE;
         }
-        return isset($_COOKIE[$key]) ? $_COOKIE[$key] : $default;
+        return isset($this->env->cookie[$key]) ? $this->env->cookie[$key] : $default;
     }
 
     /**
