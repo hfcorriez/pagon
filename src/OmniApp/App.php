@@ -21,11 +21,6 @@ const VERSION = '0.2';
 class App
 {
     /**
-     * @var Config
-     */
-    protected $config = array();
-
-    /**
      * @var Http\Request|Cli\Input
      */
     public $request;
@@ -34,6 +29,11 @@ class App
      * @var Http\Response|Cli\Output
      */
     public $response;
+
+    /**
+     * @var Config
+     */
+    protected $config;
 
     /**
      * @var string View engine
