@@ -39,9 +39,9 @@ class Output
     public function status($status = null)
     {
         if (is_numeric($status)) {
-            $this->env->status = $status;
+            $this->env['status'] = $status;
         }
-        return $this->env->status;
+        return $this->env['status'];
     }
 
     /**
@@ -58,10 +58,10 @@ class Output
                 ob_end_clean();
                 ob_start();
             }
-            $this->env->body = $content;
+            $this->env['body'] = $content;
         }
 
-        return $this->env->body;
+        return $this->env['body'];
     }
 
     /**
@@ -72,16 +72,16 @@ class Output
      */
     public function write($data)
     {
-        if (!$data) return $this->env->body;
+        if (!$data) return $this->env['body'];
 
         if (ob_get_level() !== 0) {
             $data = ob_get_clean() . $data;
             ob_start();
         }
 
-        $this->env->body .= $data;
+        $this->env['body'] .= $data;
 
-        return $this->env->body;
+        return $this->env['body'];
     }
 
     /**
@@ -91,7 +91,7 @@ class Output
      */
     public function isOk()
     {
-        return $this->env->status === 0;
+        return $this->env['status'] === 0;
     }
 
     /**

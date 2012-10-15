@@ -36,11 +36,11 @@ class Input
      */
     public function path()
     {
-        if (null === $this->env->path) {
-            $this->env->path = '/' . join('/', array_slice($this->env('argv'), 1));
+        if (!isset($this->env['path'])) {
+            $this->env['path'] = '/' . join('/', array_slice($this->env('argv'), 1));
         }
 
-        return $this->env->path;
+        return $this->env['path'];
     }
 
     /**
@@ -50,10 +50,10 @@ class Input
      */
     public function body()
     {
-        if (null === $this->env->body) {
-            $this->env->body = @(string)file_get_contents('php://input');
+        if (!isset($this->env['body'])) {
+            $this->env['body'] = @(string)file_get_contents('php://input');
         }
-        return $this->env->body;
+        return $this->env['body'];
     }
 
     /**

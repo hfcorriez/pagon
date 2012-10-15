@@ -54,9 +54,9 @@ class Request extends Registry
      */
     public function path()
     {
-        if (null === $this->env->path) $this->env->path = parse_url($this->env('REQUEST_URI'), PHP_URL_PATH);
+        if (!isset($this->env['path'])) $this->env['path'] = parse_url($this->env('REQUEST_URI'), PHP_URL_PATH);
 
-        return $this->env->path;
+        return $this->env['path'];
     }
 
     /**
@@ -76,14 +76,14 @@ class Request extends Registry
      */
     public function scriptName()
     {
-        if (null === $this->env->script_name) {
+        if (!isset($this->env['script_name'])) {
             $_script_name = $this->env('SCRIPT_NAME');
             if (strpos($this->env('REQUEST_URI'), $_script_name) !== 0) {
                 $_script_name = str_replace('\\', '/', dirname($_script_name));
             }
-            $this->env->script_name = rtrim($_script_name, '/');
+            $this->env['script_name'] = rtrim($_script_name, '/');
         }
-        return $this->env->script_name;
+        return $this->env['script_name'];
     }
 
     /**
@@ -103,15 +103,15 @@ class Request extends Registry
      */
     public function pathInfo()
     {
-        if (null === $this->env->path_info) {
+        if (!isset($this->env['path_info'])) {
             $_path_info = substr_replace($this->uri(), '', 0, strlen($this->scriptName()));
             if (strpos($_path_info, '?') !== false) {
                 // Query string is not removed automatically
                 $_path_info = substr_replace($_path_info, '', strpos($_path_info, '?'));
             }
-            $this->env->path_info = $_path_info;
+            $this->env['path_info'] = $_path_info;
         }
-        return $this->env->path_info;
+        return $this->env['path_info'];
     }
 
     /**
@@ -132,15 +132,15 @@ class Request extends Registry
      */
     public function url()
     {
-        if (null === $this->env->url) {
+        if (!isset($this->env['url'])) {
             $_url = $this->scheme() . '://' . $this->host();
             if (($this->scheme() === 'https' && $this->port() !== 443) || ($this->scheme() === 'http' && $this->port() !== 80)) {
                 $_url .= sprintf(':%s', $this->port());
             }
-            $this->env->url = $_url;
+            $this->env['url'] = $_url;
         }
 
-        return $this->env->url;
+        return $this->env['url'];
     }
 
     /**
@@ -274,16 +274,16 @@ class Request extends Registry
      */
     public function accept($type = null)
     {
-        if ($this->env->accept === null) {
-            $this->env->accept = self::buildAcceptMap($this->env('HTTP_ACCEPT'));
+        if (!isset($this->env['accept'])) {
+            $this->env['accept'] = self::buildAcceptMap($this->env('HTTP_ACCEPT'));
         }
 
         // if no parameter was passed, just return parsed data
-        if (!$type) return $this->env->accept;
+        if (!$type) return $this->env['accept'];
         // Support get best match
         if ($type === true) {
-            reset($this->env->accept);
-            return key($this->env->accept);
+            reset($this->env['accept']);
+            return key($this->env['accept']);
         }
 
         // If type is 'txt', 'xml' and so on, use smarty stracy
@@ -296,12 +296,12 @@ class Request extends Registry
         $type = (array)$type;
 
         // let’s check our supported types:
-        foreach ($this->env->accept as $mime => $q) {
+        foreach ($this->env['accept'] as $mime => $q) {
             if ($q && in_array($mime, $type)) return $mime;
         }
 
         // All match
-        if (isset($this->env->accept['*/*'])) return $type[0];
+        if (isset($this->env['accept']['*/*'])) return $type[0];
         return null;
     }
 
@@ -313,23 +313,23 @@ class Request extends Registry
      */
     public function acceptEncoding($type = null)
     {
-        if ($this->env->accept_encoding === null) {
-            $this->env->accept_encoding = self::buildAcceptMap($this->env('HTTP_ACCEPT_LANGUAGE'));
+        if (!isset($this->env['accept_encoding'])) {
+            $this->env['accept_encoding'] = self::buildAcceptMap($this->env('HTTP_ACCEPT_LANGUAGE'));
         }
 
         // if no parameter was passed, just return parsed data
-        if (!$type) return $this->env->accept_encoding;
+        if (!$type) return $this->env['accept_encoding'];
         // Support get best match
         if ($type === true) {
-            reset($this->env->accept_encoding);
-            return key($this->env->accept_encoding);
+            reset($this->env['accept_encoding']);
+            return key($this->env['accept_encoding']);
         }
 
         // Force to array
         $type = (array)$type;
 
         // let’s check our supported types:
-        foreach ($this->env->accept_encoding as $lang => $q) {
+        foreach ($this->env['accept_encoding'] as $lang => $q) {
             if ($q && in_array($lang, $type)) return $lang;
         }
         return null;
@@ -343,23 +343,23 @@ class Request extends Registry
      */
     public function acceptLanguage($type = null)
     {
-        if ($this->env->accept_language === null) {
-            $this->env->accept_language = self::buildAcceptMap($this->env('HTTP_ACCEPT_LANGUAGE'));
+        if (!isset($this->env['accept_language'])) {
+            $this->env['accept_language'] = self::buildAcceptMap($this->env('HTTP_ACCEPT_LANGUAGE'));
         }
 
         // if no parameter was passed, just return parsed data
-        if (!$type) return $this->env->accept_language;
+        if (!$type) return $this->env['accept_language'];
         // Support get best match
         if ($type === true) {
-            reset($this->env->accept_language);
-            return key($this->env->accept_language);
+            reset($this->env['accept_language']);
+            return key($this->env['accept_language']);
         }
 
         // Force to array
         $type = (array)$type;
 
         // let’s check our supported types:
-        foreach ($this->env->accept_language as $lang => $q) {
+        foreach ($this->env['accept_language'] as $lang => $q) {
             if ($q && in_array($lang, $type)) return $lang;
         }
         return null;
@@ -409,6 +409,16 @@ class Request extends Registry
             return $host;
         }
         return $this->env('SERVER_NAME');
+    }
+
+    /**
+     * Host with port
+     *
+     * @return string
+     */
+    public function hostPort()
+    {
+        return $this->host() . ':' . $this->port();
     }
 
     /**
@@ -548,7 +558,7 @@ class Request extends Registry
      */
     public function header($name = null)
     {
-        if (null === $this->env->headers) {
+        if (!isset($this->env['headers'])) {
             $_headers = array();
             foreach ($this->env as $key => $value) {
                 $_name = false;
@@ -572,13 +582,13 @@ class Request extends Registry
                 $pass = isset($_SERVER['PHP_AUTH_PW']) ? $_SERVER['PHP_AUTH_PW'] : '';
                 $_headers['AUTHORIZATION'] = 'Basic ' . base64_encode($_SERVER['PHP_AUTH_USER'] . ':' . $pass);
             }
-            $this->env->headers = $_headers;
+            $this->env['headers'] = $_headers;
             unset($_headers);
         }
 
-        if ($name === null) return $this->env->headers;
+        if ($name === null) return $this->env['headers'];
         $name = strtoupper($name);
-        return isset($this->env->headers[$name]) ? $this->env->headers[$name] : null;
+        return isset($this->env['headers'][$name]) ? $this->env['headers'][$name] : null;
     }
 
     /**
@@ -590,10 +600,10 @@ class Request extends Registry
      */
     public function cookie($key = null, $default = null)
     {
-        if ($this->env->cookie === null) {
-            $this->env->cookie = $_COOKIE;
+        if (!isset($this->env['cookie'])) {
+            $this->env['cookie'] = $_COOKIE;
         }
-        return isset($this->env->cookie[$key]) ? $this->env->cookie[$key] : $default;
+        return isset($this->env['cookie'][$key]) ? $this->env['cookie'][$key] : $default;
     }
 
     /**
@@ -603,10 +613,10 @@ class Request extends Registry
      */
     public function body()
     {
-        if (null === $this->env->body) {
-            $this->env->body = @(string)file_get_contents('php://input');
+        if (!isset($this->env['body'])) {
+            $this->env['body'] = @(string)file_get_contents('php://input');
         }
-        return $this->env->body;
+        return $this->env['body'];
     }
 
     /**
