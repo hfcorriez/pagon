@@ -5,6 +5,7 @@ namespace OmniApp\Http;
 use OmniApp\Data\MimeType;
 use OmniApp\Registry;
 use OmniApp\Exception\Stop;
+use OmniApp\Config;
 use OmniApp\App;
 
 class Response extends Registry
@@ -68,12 +69,10 @@ class Response extends Registry
      */
     public $app;
 
-    protected $status = 200;
-    protected $headers = array();
-    protected $body = '';
-    protected $content_type = 'text/html';
-    protected $charset = 'utf-8';
-    protected $length = 0;
+    /**
+     * @var \OmniApp\Config Env
+     */
+    protected $env;
 
     /**
      * @param \OmniApp\App $app
@@ -81,6 +80,16 @@ class Response extends Registry
     public function __construct(App $app)
     {
         $this->app = $app;
+
+        $this->env = new Config(array(
+            'status'       => 200,
+            'body'         => '',
+            'content_type' => 'text/html',
+            'length'       => 0,
+            'charset'      => 'utf-8',
+            'headers'      => array('CONTENT-TYPE' => 'text/html; charset=utf-8'),
+            'cookies'      => array()
+        ));
     }
 
     /**
@@ -97,26 +106,11 @@ class Response extends Registry
                 ob_end_clean();
                 ob_start();
             }
-            $this->body = $content;
-            $this->length = strlen($this->body);
+            $this->env->body = $content;
+            $this->env->length = strlen($this->env->body);
         }
 
-        return $this->body;
-    }
-
-    /**
-     * Get and set length
-     *
-     * @param  int|null $length
-     * @return int
-     */
-    public function length($length = null)
-    {
-        if (is_numeric($length)) {
-            $this->length = (int)$length;
-        }
-
-        return $this->length;
+        return $this->env->body;
     }
 
     /**
@@ -128,10 +122,10 @@ class Response extends Registry
     public function charset($charset = null)
     {
         if ($charset) {
-            $this->charset = $charset;
-            $this->header('Content-Type', $this->content_type . '; charset=' . $this->charset);
+            $this->env->charset = $charset;
+            $this->header('content-type', $this->env->content_type . '; charset=' . $this->env->charset);
         }
-        return $this->charset;
+        return $this->env->charset;
     }
 
     /**
@@ -142,17 +136,17 @@ class Response extends Registry
      */
     public function write($data)
     {
-        if (!$data) return $this->body;
+        if (!$data) return $this->env->body;
 
         if (ob_get_level() !== 0) {
             $data = ob_get_clean() . $data;
             ob_start();
         }
 
-        $this->body .= $data;
-        $this->length = strlen($this->body);
+        $this->env->body .= $data;
+        $this->env->length = strlen($this->env->body);
 
-        return $this->body;
+        return $this->env->body;
     }
 
     /**
@@ -179,9 +173,9 @@ class Response extends Registry
     public function status($status = null)
     {
         if ($status === null) {
-            return $this->status;
-        } elseif (array_key_exists($status, self::$messages)) {
-            return $this->status = (int)$status;
+            return $this->env->status;
+        } elseif (isset(self::$messages[$status])) {
+            return $this->env->status = (int)$status;
         } else throw new \Exception('Unknown status :value', array(':value' => $status));
     }
 
@@ -196,13 +190,13 @@ class Response extends Registry
     public function header($name = null, $value = null, $replace = false)
     {
         if ($name === null) {
-            return $this->headers;
+            return $this->env->headers;
         } else {
             $name = strtoupper(str_replace('_', '-', $name));
             if ($value === null) {
-                return $this->headers[$name];
+                return $this->env->headers[$name];
             } else {
-                return $this->headers[$name] = !$replace && !empty($this->headers[$name]) ? $this->headers[$name] . "\n" . $value : $value;
+                return $this->env->headers[$name] = !$replace && !empty($this->env->headers[$name]) ? $this->env->headers[$name] . "\n" . $value : $value;
             }
         }
     }
@@ -218,14 +212,14 @@ class Response extends Registry
         if ($mime_type) {
             if (!strpos($mime_type, '/')) {
                 $mime_type = MimeType::load()->{$mime_type}[0];
-                if (!$mime_type) return $this->content_type;
+                if (!$mime_type) return $this->env->content_type;
             }
-            $this->content_type = $mime_type;
+            $this->env->content_type = $mime_type;
 
-            $this->header('Content-Type', $this->content_type . '; charset=' . $this->charset);
+            $this->header('Content-Type', $this->env->content_type . '; charset=' . $this->env->charset);
         }
 
-        return $this->content_type;
+        return $this->env->content_type;
     }
 
     /**
@@ -233,22 +227,16 @@ class Response extends Registry
      *
      * @param $key
      * @param $value
-     * @param $expires
      * @return array|string|bool
      */
-    public function cookie($key, $value, $expires = 0)
+    public function cookie($key = null, $value = null)
     {
-        static $_config = null;
-        if ($_config === null) {
-            $_config = (array)$this->app->config('cookie') + array(
-                'path'     => '/',
-                'domain'   => null,
-                'secure'   => false,
-                'httponly' => false
-            );
+        if ($value !== null) {
+            $this->env->cookies[$key] = $value;
         }
-        setcookie($key, $value, $expires, $_config['path'], $_config['domain'], $_config['secure'], $_config['httponly']);
-        return $value;
+
+        if ($key === null) return $this->env->cookie;
+        return isset($this->env->cookies[$key]) ? $this->env->cookies[$key] : null;
     }
 
     /**
@@ -258,8 +246,8 @@ class Response extends Registry
      */
     public function message()
     {
-        if (isset(self::$messages[$this->status])) {
-            return self::$messages[$this->status];
+        if (isset(self::$messages[$this->env->status])) {
+            return self::$messages[$this->env->status];
         }
         return null;
     }
@@ -272,16 +260,32 @@ class Response extends Registry
         // Check headers
         if (headers_sent() === false) {
             // Send header
-            header(sprintf('HTTP/%s %s %s', $this->app->request->protocol(), $this->status, $this->message()));
+            header(sprintf('HTTP/%s %s %s', $this->app->request->protocol(), $this->env->status, $this->message()));
 
             // Loop headers to send
-            if ($this->headers) {
-                foreach ($this->headers as $name => $value) {
+            if ($this->env->headers) {
+                foreach ($this->env->headers as $name => $value) {
                     // Multiple line headers support
                     $h_values = explode("\n", $value);
                     foreach ($h_values as $h_val) {
                         header("$name: $h_val", false);
                     }
+                }
+            }
+
+            // Set cookies
+            if ($this->env->cookies) {
+                // Merge config
+                $_config = (array)$this->app->config('cookie') + array(
+                    'path'     => '/',
+                    'domain'   => null,
+                    'secure'   => false,
+                    'httponly' => false
+                );
+                // Loop for set
+                foreach ($this->env->cookies as $key => $value) {
+                    // Set cookie
+                    setcookie($key, $value, $_config['expires'], $_config['path'], $_config['domain'], $_config['secure'], $_config['httponly']);
                 }
             }
         }
@@ -359,7 +363,7 @@ class Response extends Registry
      */
     public function redirect($url, $status = 302)
     {
-        $this->status = $status;
+        $this->env->status = $status;
         $this->headers['Location'] = $url;
     }
 
@@ -380,7 +384,7 @@ class Response extends Registry
      */
     public function isEmpty()
     {
-        return in_array($this->status, array(201, 204, 304));
+        return in_array($this->env->status, array(201, 204, 304));
     }
 
     /**
@@ -390,7 +394,7 @@ class Response extends Registry
      */
     public function isOk()
     {
-        return $this->status === 200;
+        return $this->env->status === 200;
     }
 
     /**
@@ -400,7 +404,7 @@ class Response extends Registry
      */
     public function isSuccessful()
     {
-        return $this->status >= 200 && $this->status < 300;
+        return $this->env->status >= 200 && $this->env->status < 300;
     }
 
     /**
@@ -410,7 +414,7 @@ class Response extends Registry
      */
     public function isRedirect()
     {
-        return in_array($this->status, array(301, 302, 303, 307));
+        return in_array($this->env->status, array(301, 302, 303, 307));
     }
 
     /**
@@ -420,7 +424,7 @@ class Response extends Registry
      */
     public function isForbidden()
     {
-        return $this->status === 403;
+        return $this->env->status === 403;
     }
 
     /**
@@ -430,7 +434,7 @@ class Response extends Registry
      */
     public function isNotFound()
     {
-        return $this->status === 404;
+        return $this->env->status === 404;
     }
 
     /**
@@ -440,7 +444,7 @@ class Response extends Registry
      */
     public function isClientError()
     {
-        return $this->status >= 400 && $this->status < 500;
+        return $this->env->status >= 400 && $this->env->status < 500;
     }
 
     /**
@@ -450,6 +454,24 @@ class Response extends Registry
      */
     public function isServerError()
     {
-        return $this->status >= 500 && $this->status < 600;
+        return $this->env->status >= 500 && $this->env->status < 600;
+    }
+
+    /**
+     * Env
+     *
+     * @param $key
+     * @return mixed
+     */
+    public function env($key = null)
+    {
+        if (is_array($key)) {
+            $this->env = new Config($key);
+            return $this->env;
+        }
+
+        if ($key === null) return $this->env;
+
+        return isset($this->env[$key]) ? $this->env[$key] : null;
     }
 }

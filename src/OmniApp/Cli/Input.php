@@ -77,7 +77,7 @@ class Input
     {
         if (is_array($key)) {
             $this->env = new Config($key);
-            return;
+            return $this->env;
         }
 
         if ($key === null) return $this->env;

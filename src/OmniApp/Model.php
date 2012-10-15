@@ -142,7 +142,7 @@ abstract class Model
         if ($key && !$this->has($key)) return null;
 
         if ($key) {
-            return array_key_exists($key, $this->_defaults) ? $this->_defaults[$key] : null;
+            return isset($this->_defaults[$key]) ? $this->_defaults[$key] : null;
         }
 
         return $this->_defaults;
@@ -159,7 +159,7 @@ abstract class Model
         if ($key && !$this->has($key)) return null;
 
         if ($key) {
-            return array_key_exists($key, $this->_data) ? $this->_data[$key] : null;
+            return isset($this->_data[$key]) ? $this->_data[$key] : null;
         }
 
         return $this->_data;
@@ -176,7 +176,7 @@ abstract class Model
         if ($key && !$this->has($key)) return null;
 
         if ($key) {
-            return array_key_exists($key, $this->_previous) ? $this->_previous[$key] : null;
+            return isset($this->_previous[$key]) ? $this->_previous[$key] : null;
         }
 
         return $this->_previous;

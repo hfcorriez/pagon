@@ -630,7 +630,7 @@ class Request extends Registry
     {
         if (is_array($key)) {
             $this->env = new Config($key);
-            return;
+            return $this->env;
         }
 
         if ($key === null) return $this->env;

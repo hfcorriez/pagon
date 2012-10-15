@@ -3,13 +3,19 @@
 namespace OmniApp\Cli;
 
 use OmniApp\App;
+use OmniApp\Config;
 
 class Output
 {
+    /**
+     * @var \OmniApp\App App
+     */
     public $app;
 
-    protected $body;
-    protected $status = 0;
+    /**
+     * @var \OmniApp\Config Env
+     */
+    protected $env;
 
     /**
      * @param \OmniApp\App $app
@@ -17,6 +23,11 @@ class Output
     public function __construct(App $app)
     {
         $this->app = $app;
+
+        $this->env = new Config(array(
+            'status'       => 0,
+            'body'         => '',
+        ));
     }
 
     /**
@@ -28,9 +39,9 @@ class Output
     public function status($status = null)
     {
         if (is_numeric($status)) {
-            $this->status = $status;
+            $this->env->status = $status;
         }
-        return $this->status;
+        return $this->env->status;
     }
 
     /**
@@ -47,10 +58,10 @@ class Output
                 ob_end_clean();
                 ob_start();
             }
-            $this->body = $content;
+            $this->env->body = $content;
         }
 
-        return $this->body;
+        return $this->env->body;
     }
 
     /**
@@ -61,16 +72,16 @@ class Output
      */
     public function write($data)
     {
-        if (!$data) return $this->body;
+        if (!$data) return $this->env->body;
 
         if (ob_get_level() !== 0) {
             $data = ob_get_clean() . $data;
             ob_start();
         }
 
-        $this->body .= $data;
+        $this->env->body .= $data;
 
-        return $this->body;
+        return $this->env->body;
     }
 
     /**
@@ -80,6 +91,24 @@ class Output
      */
     public function isOk()
     {
-        return $this->status === 0;
+        return $this->env->status === 0;
+    }
+
+    /**
+     * Env
+     *
+     * @param $key
+     * @return mixed
+     */
+    public function env($key = null)
+    {
+        if (is_array($key)) {
+            $this->env = new Config($key);
+            return $this->env;
+        }
+
+        if ($key === null) return $this->env;
+
+        return isset($this->env[$key]) ? $this->env[$key] : null;
     }
 }

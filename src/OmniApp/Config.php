@@ -25,7 +25,7 @@ class Config extends \ArrayObject
             $ks = explode('.', $key);
             $tmp = $this;
             foreach ($ks as $k) {
-                if (!array_key_exists($k, $tmp)) return $default;
+                if (!isset($tmp[$k])) return $default;
 
                 $tmp = &$tmp[$k];
             }
@@ -68,7 +68,8 @@ class Config extends \ArrayObject
      * @param $input
      * @return mixed
      */
-    protected function parse($input) {
+    protected function parse($input)
+    {
         return (array)$input;
     }
 
@@ -91,7 +92,7 @@ class Config extends \ArrayObject
      */
     public function &__get($name)
     {
-        if (!array_key_exists($name, $this)) {
+        if (!isset($this[$name])) {
             $this[$name] = null;
         }
         $ret = &$this[$name];
