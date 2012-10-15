@@ -88,6 +88,7 @@ class App
     public function __construct($config = array())
     {
         $app = &$this;
+
         // Record start time
         $this->start_time = microtime(true);
 
@@ -97,8 +98,9 @@ class App
         // Is win
         $this->_win = substr(PHP_OS, 0, 3) == 'WIN';
 
-        // handle autoload and shutdown
+        // Register shutdown
         register_shutdown_function(array($this, '__shutdown'));
+        // Register autoload
         spl_autoload_register(array($this, '__autoload'));
 
         // Set io depends on SAPI
@@ -602,15 +604,16 @@ class App
         }
 
         try {
+            // Start buffer
             ob_start();
 
-            // request app call
+            // Request app call
             $this->middleware[0]->call();
 
             // Write direct output to the head of buffer
             $this->response->write(ob_get_clean());
         } catch (\Exception $e) {
-            if ($this->config->debug) {
+            if ($this->config('debug')) {
                 throw $e;
             } else {
                 try {
@@ -622,16 +625,20 @@ class App
             $this->emitter->emit('error');
         }
 
+        // Send start
+        $this->emitter->emit('start');
+
         if (!$this->_cli) {
             // Send headers when http request
             $this->response->sendHeader();
         }
-        // send data
+        // Send data
         echo $this->response->body();
 
-        if ($_error) $this->restoreErrorHandler();
-
+        // Send end
         $this->emitter->emit('end');
+
+        if ($_error) $this->restoreErrorHandler();
     }
 
     /**
