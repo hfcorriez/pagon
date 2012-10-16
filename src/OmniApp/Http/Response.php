@@ -88,7 +88,8 @@ class Response extends Registry
             'length'       => 0,
             'charset'      => 'utf-8',
             'headers'      => array('CONTENT-TYPE' => 'text/html; charset=utf-8'),
-            'cookies'      => array()
+            'cookies'      => array(),
+            'sessions'     => &$_SESSION,
         ));
     }
 
@@ -240,6 +241,23 @@ class Response extends Registry
     }
 
     /**
+     * Get or set session
+     *
+     * @param $key
+     * @param $value
+     * @return array|string|bool
+     */
+    public function session($key = null, $value = null)
+    {
+        if ($value !== null) {
+            $this->env['sessions'][$key] = $value;
+        }
+
+        if ($key === null) return $this->env['sessions'];
+        return isset($this->env['sessions'][$key]) ? $this->env['sessions'][$key] : null;
+    }
+
+    /**
      * Get message by code
      *
      * @return string|null
@@ -280,7 +298,8 @@ class Response extends Registry
                     'path'     => '/',
                     'domain'   => null,
                     'secure'   => false,
-                    'httponly' => false
+                    'httponly' => false,
+                    'expires'  => 0
                 );
                 // Loop for set
                 foreach ($this->env['cookies'] as $key => $value) {

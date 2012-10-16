@@ -600,10 +600,25 @@ class Request extends Registry
      */
     public function cookie($key = null, $default = null)
     {
-        if (!isset($this->env['cookie'])) {
-            $this->env['cookie'] = $_COOKIE;
+        if (!isset($this->env['cookies'])) {
+            $this->env['cookies'] = $_COOKIE;
         }
-        return isset($this->env['cookie'][$key]) ? $this->env['cookie'][$key] : $default;
+        return isset($this->env['cookies'][$key]) ? $this->env['cookies'][$key] : $default;
+    }
+
+    /**
+     * Get session
+     *
+     * @param string $key
+     * @param mixed  $default
+     * @return mixed
+     */
+    public function session($key = null, $default = null)
+    {
+        if (!isset($this->env['sessions'])) {
+            $this->env['sessions'] = $_SESSION;
+        }
+        return isset($this->env['sessions'][$key]) ? $this->env['sessions'][$key] : $default;
     }
 
     /**
