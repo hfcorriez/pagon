@@ -7,7 +7,7 @@ class Emitter
     /**
      * @var array Events listeners
      */
-    protected $listeners = array();
+    protected $_listeners = array();
 
     /**
      * fire event
@@ -20,7 +20,7 @@ class Emitter
     {
         $event = strtolower($event);
 
-        if (!empty($this->listeners[$event])) {
+        if (!empty($this->_listeners[$event])) {
             if ($args !== null) {
                 // Check arguments, set inline args more than 1
                 $args = array_slice(func_get_args(), 1);
@@ -29,7 +29,7 @@ class Emitter
             }
 
             // Loop listeners for callback
-            foreach ($this->listeners[$event] as $listener) {
+            foreach ($this->_listeners[$event] as $listener) {
                 // Closure Listener
                 call_user_func_array($listener, $args);
             }
@@ -45,7 +45,7 @@ class Emitter
      */
     public function on($event, \Closure $listener)
     {
-        $this->listeners[strtolower($event)][] = $listener;
+        $this->_listeners[strtolower($event)][] = $listener;
     }
 
     /**
@@ -58,11 +58,11 @@ class Emitter
     public function off($event, \Closure $listener)
     {
         $event = strtolower($event);
-        if (!empty($this->listeners[$event])) {
+        if (!empty($this->_listeners[$event])) {
             // Find Listener index
             if (($key = array_search($listener, $event)) !== false) {
                 // Remove it
-                unset($this->listeners[$event][$key]);
+                unset($this->_listeners[$event][$key]);
             }
         }
     }
