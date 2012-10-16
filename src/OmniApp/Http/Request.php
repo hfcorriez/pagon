@@ -602,7 +602,13 @@ class Request extends Registry
     {
         if (!isset($this->env['cookies'])) {
             $this->env['cookies'] = $_COOKIE;
+            foreach ($this->env['cookies'] as &$value) {
+                if (strpos($value, 'j:') === 0) {
+                    $value = json_decode(substr($value, 2), true);
+                }
+            }
         }
+        if ($key === null) return $this->env['cookies'];
         return isset($this->env['cookies'][$key]) ? $this->env['cookies'][$key] : $default;
     }
 

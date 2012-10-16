@@ -230,10 +230,10 @@ class Response extends Registry
      * @param $value
      * @return array|string|bool
      */
-    public function cookie($key = null, $value = null)
+    public function cookie($key = null, $value = null, $option = array())
     {
         if ($value !== null) {
-            $this->env['cookies'][$key] = $value;
+            $this->env['cookies'][$key] = array($value, $option);
         }
 
         if ($key === null) return $this->env['cookie'];
@@ -293,18 +293,21 @@ class Response extends Registry
 
             // Set cookies
             if ($this->env['cookies']) {
-                // Merge config
-                $_config = (array)$this->app->config('cookie') + array(
-                    'path'     => '/',
-                    'domain'   => null,
-                    'secure'   => false,
-                    'httponly' => false,
-                    'expires'  => 0
-                );
                 // Loop for set
                 foreach ($this->env['cookies'] as $key => $value) {
+                    $_option = (array)$value[1] + array(
+                        'path'     => '/',
+                        'domain'   => null,
+                        'secure'   => false,
+                        'httponly' => false,
+                        'expires'  => 0,
+                    );
+                    $value = $value[0];
+                    if (is_array($value)) {
+                        $value = 'j:' . json_encode($value);
+                    }
                     // Set cookie
-                    setcookie($key, $value, $_config['expires'], $_config['path'], $_config['domain'], $_config['secure'], $_config['httponly']);
+                    setcookie($key, $value, $_option['expires'], $_option['path'], $_option['domain'], $_option['secure'], $_option['httponly']);
                 }
             }
         }
