@@ -32,7 +32,9 @@ class Request extends Registry
     {
         $this->app = $app;
 
-        $this->env = new Config($_SERVER);
+        $this->env = new Config(array(
+            'sessions' => &$_SESSION
+        ) + $_SERVER);
     }
 
     /**
@@ -621,9 +623,6 @@ class Request extends Registry
      */
     public function session($key = null, $default = null)
     {
-        if (!isset($this->env['sessions'])) {
-            $this->env['sessions'] = $_SESSION;
-        }
         if ($key === null) return $this->env['sessions'];
         return isset($this->env['sessions'][$key]) ? $this->env['sessions'][$key] : $default;
     }
