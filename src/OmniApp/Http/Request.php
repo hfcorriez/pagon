@@ -604,8 +604,21 @@ class Request extends Registry
     {
         if (!isset($this->env['cookies'])) {
             $this->env['cookies'] = $_COOKIE;
+            $_option = $this->app->config('cookie');
             foreach ($this->env['cookies'] as &$value) {
-                if (strpos($value, 'j:') === 0) {
+                // Parse signed cookie
+                if ($value && strpos($value, 's:') === 0 && $_option['secret']) {
+                    $_pos = strrpos($value, '.');
+                    $_data = substr($value, 2, $_pos - 2);
+                    $_hash = substr($value, $_pos + 1);
+                    if ($_hash === hash_hmac('sha1', $_data, $_option['secret'])) {
+                        $value = $_data;
+                    } else {
+                        $value = false;
+                    }
+                }
+                // Parse json cookie
+                if ($value && strpos($value, 'j:') === 0) {
                     $value = json_decode(substr($value, 2), true);
                 }
             }

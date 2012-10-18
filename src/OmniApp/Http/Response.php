@@ -225,9 +225,9 @@ class Response extends Registry
     /**
      * Get or set cookie
      *
-     * @param string       $key
+     * @param string             $key
      * @param array|string|mixed $value
-     * @param array        $option
+     * @param array              $option
      * @return array|string|bool
      */
     public function cookie($key = null, $value = null, $option = array())
@@ -276,18 +276,29 @@ class Response extends Registry
 
             // Set cookies
             if ($this->env['cookies']) {
-                // Loop for set
-                foreach ($this->env['cookies'] as $key => $value) {
-                    $_option = (array)$value[1] + array(
+                $_default = $this->app->config('cookie');
+                if (!$_default) {
+                    $_default = array(
                         'path'     => '/',
                         'domain'   => null,
                         'secure'   => false,
                         'httponly' => false,
                         'expires'  => 0,
+                        'sign'     => false,
+                        'secret'   => ''
                     );
+                }
+                // Loop for set
+                foreach ($this->env['cookies'] as $key => $value) {
+                    $_option = (array)$value[1] + $_default;
                     $value = $value[0];
+                    // Json object cookie
                     if (is_array($value)) {
                         $value = 'j:' . json_encode($value);
+                    }
+                    // Sign cookie
+                    if ($_option['sign'] && $_default['secret']) {
+                        $value = 's:' . $value . '.' . hash_hmac('sha1', $value, $_default['secret']);
                     }
                     // Set cookie
                     setcookie($key, $value, $_option['expires'], $_option['path'], $_option['domain'], $_option['secure'], $_option['httponly']);
