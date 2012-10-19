@@ -122,9 +122,6 @@ class App
         iconv_set_encoding("internal_encoding", "UTF-8");
         mb_internal_encoding('UTF-8');
 
-        // Add default middleware
-        $this->middleware = array($this->route);
-
         // configure timezone
         $this->config('timezone', function ($value) {
             date_default_timezone_set($value);
@@ -133,7 +130,7 @@ class App
         // configure debug
         $this->config('debug', function ($value) use ($app) {
             if ($value == true) {
-                $app->add(new \OmniApp\Middleware\PrettyException());
+                $app->add(new Middleware\PrettyException());
             }
         });
 
@@ -378,24 +375,24 @@ class App
      * Add middleware
      *
      * @param Middleware|\Closure|string $middleware
+     * @throws \Exception
      */
     public function add($middleware)
     {
         // Check and construct Middleware
         if (is_string($middleware) && is_subclass_of($middleware, Middleware::_CLASS_)) {
+            // Class string support
             $middleware = new $middleware();
         } elseif ($middleware instanceof \Closure) {
+            // Closure support
             $middleware = new Middleware($middleware);
+        } elseif (!$middleware instanceof Middleware) {
+            // Not base middleware
+            throw new \Exception("Bad middleware can not be added");
         }
 
-        // Check middleware
-        if ($middleware instanceof Middleware) {
-            // Set next middleware
-            $middleware->setNext($this->middleware[0]);
-            $middleware->setApp($this);
-            // Un-shift middleware
-            array_unshift($this->middleware, $middleware);
-        }
+        // Add to the end
+        $this->middleware[] = $middleware;
     }
 
     /**
@@ -507,21 +504,11 @@ class App
     }
 
     /**
-     * Http all route
-     *
-     * @param string          $path
-     * @param \Closure|string $runner
-     * @param \Closure|string $more
+     * Add controllers to match route
      */
-    public function all($path, $runner, $more = null)
+    public function all()
     {
-        if ($this->_cli) return;
-
-        if ($more !== null) {
-            call_user_func_array(array($this->route, 'on'), func_get_args());
-        } else {
-            $this->route->on($path, $runner);
-        }
+        throw new \BadMethodCallException('Method App::all is not implements');
     }
 
     /**
@@ -538,6 +525,26 @@ class App
         } else {
             $this->route->on($path, $runner);
         }
+    }
+
+    /**
+     * Get or set route
+     *
+     * @param null $path
+     * @param null $runner
+     * @param null $more
+     * @return Route
+     */
+    public function route($path = null, $runner = null, $more = null)
+    {
+        if ($path === null) return $this->route;
+        if ($runner === null) return $this->route->get($path);
+        if ($more !== null) {
+            call_user_func_array(array($this->route, 'on'), func_get_args());
+        } else {
+            $this->route->on($path, $runner);
+        }
+        return;
     }
 
     /**
@@ -601,6 +608,25 @@ class App
         if ($this->config('error')) {
             $_error = true;
             $this->registerErrorHandler();
+        }
+
+        // Check middleware list
+        if ($this->middleware) {
+            if (!in_array($this->route, $this->middleware)) {
+                $this->middleware[] = $this->route;
+            }
+            // Loop middleware
+            foreach ($this->middleware as $_i => $_m) {
+                // Set next middleware
+                if (isset($this->middleware[$_i + 1])) {
+                    $_m->setNext($this->middleware[$_i + 1]);
+                }
+                // Set app
+                $_m->setApp($this);
+            }
+        } else {
+            // Set middleware
+            $this->middleware[] = $this->route;
         }
 
         try {

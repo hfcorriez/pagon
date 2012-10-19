@@ -52,6 +52,17 @@ class Route extends Middleware
     }
 
     /**
+     * Get the controllers
+     *
+     * @param $path
+     * @return mixed
+     */
+    public function get($path)
+    {
+        return $this->app->config()->route[$path];
+    }
+
+    /**
      * Run route
      *
      * @return array
