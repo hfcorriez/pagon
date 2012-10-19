@@ -9,7 +9,7 @@
 
 namespace OmniApp;
 
-const VERSION = '0.2';
+const VERSION = '0.3';
 
 /*********************
  * core app
