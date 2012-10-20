@@ -298,6 +298,48 @@ class App
     }
 
     /**
+     * Set config as true
+     *
+     * @param $key
+     */
+    public function enable($key)
+    {
+        $this->config($key, true);
+    }
+
+    /**
+     * Set config as false
+     *
+     * @param $key
+     */
+    public function disable($key)
+    {
+        $this->config($key, false);
+    }
+
+    /**
+     * Check config if true
+     *
+     * @param $key
+     * @return bool
+     */
+    public function enabled($key)
+    {
+        return $this->config($key) === true;
+    }
+
+    /**
+     * Check config if false
+     *
+     * @param $key
+     * @return bool
+     */
+    public function disabled($key)
+    {
+        return $this->config($key) === false;
+    }
+
+    /**
      * Config mode
      * # Manuel call must before App::init
      *
