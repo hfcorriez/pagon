@@ -34,12 +34,13 @@ class Output
      * Set or get status
      *
      * @param null $status
-     * @return int|string
+     * @return int|Output
      */
     public function status($status = null)
     {
         if (is_numeric($status)) {
             $this->env['status'] = $status;
+            return $this;
         }
         return $this->env['status'];
     }
@@ -49,7 +50,7 @@ class Output
      *
      * @static
      * @param string $content
-     * @return string
+     * @return string|Output
      */
     public function body($content = null)
     {
@@ -59,6 +60,7 @@ class Output
                 ob_start();
             }
             $this->env['body'] = $content;
+            return $this;
         }
 
         return $this->env['body'];
@@ -68,7 +70,7 @@ class Output
      * Write body
      *
      * @param string $data
-     * @return string
+     * @return string|Output
      */
     public function write($data)
     {
@@ -81,7 +83,7 @@ class Output
 
         $this->env['body'] .= $data;
 
-        return $this->env['body'];
+        return $this;
     }
 
     /**

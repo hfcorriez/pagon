@@ -97,7 +97,7 @@ class Response extends Registry
      *
      * @static
      * @param string $content
-     * @return string
+     * @return string|Response
      */
     public function body($content = null)
     {
@@ -108,6 +108,7 @@ class Response extends Registry
             }
             $this->env['body'] = $content;
             $this->env['length'] = strlen($this->env['body']);
+            return $this;
         }
 
         return $this->env['body'];
@@ -117,13 +118,14 @@ class Response extends Registry
      * Get or set charset
      *
      * @param $charset
-     * @return string
+     * @return string|Response
      */
     public function charset($charset = null)
     {
         if ($charset) {
             $this->env['charset'] = $charset;
             $this->header('content-type', $this->env['content_type'] . '; charset=' . $this->env['charset']);
+            return $this;
         }
         return $this->env['charset'];
     }
@@ -132,7 +134,7 @@ class Response extends Registry
      * Write body
      *
      * @param string $data
-     * @return string
+     * @return string|Response
      */
     public function write($data)
     {
@@ -146,7 +148,7 @@ class Response extends Registry
         $this->env['body'] .= $data;
         $this->env['length'] = strlen($this->env['body']);
 
-        return $this->env['body'];
+        return $this;
     }
 
     /**
@@ -175,17 +177,20 @@ class Response extends Registry
         if ($status === null) {
             return $this->env['status'];
         } elseif (isset(self::$messages[$status])) {
-            return $this->env['status'] = (int)$status;
+            $this->env['status'] = (int)$status;
+            return $this;
         } else throw new \Exception('Unknown status :value', array(':value' => $status));
     }
 
     /**
      * Set or get header
      *
+     * @todo Array Support
+     *
      * @param string $name
      * @param string $value
      * @param bool   $replace
-     * @return array|null
+     * @return array|Response
      */
     public function header($name = null, $value = null, $replace = false)
     {
@@ -196,7 +201,8 @@ class Response extends Registry
             if ($value === null) {
                 return $this->env['headers'][$name];
             } else {
-                return $this->env['headers'][$name] = !$replace && !empty($this->env['headers'][$name]) ? $this->env['headers'][$name] . "\n" . $value : $value;
+                $this->env['headers'][$name] = !$replace && !empty($this->env['headers'][$name]) ? $this->env['headers'][$name] . "\n" . $value : $value;
+                return $this;
             }
         }
     }
@@ -204,8 +210,8 @@ class Response extends Registry
     /**
      * Set content type
      *
-     * @param $mime_type
-     * @return null
+     * @param string $mime_type
+     * @return string|Response
      */
     public function contentType($mime_type = null)
     {
@@ -217,6 +223,7 @@ class Response extends Registry
             $this->env['content_type'] = $mime_type;
 
             $this->header('Content-Type', $this->env['content_type'] . '; charset=' . $this->env['charset']);
+            return $this;
         }
 
         return $this->env['content_type'];
@@ -228,12 +235,13 @@ class Response extends Registry
      * @param string             $key
      * @param array|string|mixed $value
      * @param array              $option
-     * @return array|string|bool
+     * @return array|string|Response
      */
     public function cookie($key = null, $value = null, $option = array())
     {
         if ($value !== null) {
             $this->env['cookies'][$key] = array($value, $option);
+            return $this;
         }
 
         if ($key === null) return $this->env['cookie'];
@@ -305,6 +313,7 @@ class Response extends Registry
                 }
             }
         }
+        return $this;
     }
 
     /**
@@ -320,6 +329,7 @@ class Response extends Registry
                 $time = strtotime($time);
             }
             $this->header('Expires', gmdate(DATE_RFC1123, $time));
+            return $this;
         }
         return $this->header('Expires');
     }
@@ -329,21 +339,25 @@ class Response extends Registry
      *
      * @param $template
      * @param $data
+     * @return Response
      */
     public function render($template, $data = array())
     {
         $this->app->render($template, $data);
+        return $this;
     }
 
     /**
      * To json
      *
      * @param mixed $data
+     * @return Response
      */
     public function json($data)
     {
         $this->contentType('application/json');
         $this->body(json_encode($data));
+        return $this;
     }
 
     /**
@@ -351,11 +365,13 @@ class Response extends Registry
      *
      * @param mixed  $data
      * @param string $callback
+     * @return Response
      */
     public function jsonp($data, $callback = 'callback')
     {
         $this->contentType('application/javascript');
         $this->body($callback . '(' . json_encode($data) . ');');
+        return $this;
     }
 
     /**
@@ -364,11 +380,13 @@ class Response extends Registry
      * @param object|array $data
      * @param string       $root
      * @param string       $item
+     * @return Response
      */
     public function xml($data, $root = 'root', $item = 'item')
     {
         $this->contentType('application/xml');
         $this->body(\OmniApp\Helper\XML::fromArray($data, $root, $item));
+        return $this;
     }
 
     /**
@@ -376,11 +394,13 @@ class Response extends Registry
      *
      * @param string $url
      * @param int    $status
+     * @return Response
      */
     public function redirect($url, $status = 302)
     {
         $this->env['status'] = $status;
-        $this->headers['Location'] = $url;
+        $this->env['headers']['LOCATION'] = $url;
+        return $this;
     }
 
     /**
