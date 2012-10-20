@@ -122,27 +122,22 @@ class App
         iconv_set_encoding("internal_encoding", "UTF-8");
         mb_internal_encoding('UTF-8');
 
-        // configure timezone
-        $this->config('timezone', function ($value) {
-            date_default_timezone_set($value);
-        });
+        // Default things to do before run
+        $this->emitter->on('run', function () use ($app) {
+            // configure timezone
+            if ($app->config('timezone')) date_default_timezone_set($app->config('timezone'));
+            // configure debug
+            if ($app->config('debug')) $app->add(new Middleware\PrettyException());
 
-        // configure debug
-        $this->config('debug', function ($value) use ($app) {
-            if ($value == true) {
-                $app->add(new Middleware\PrettyException());
-            }
-        });
-
-        // Set view engine
-        $this->config('view.engine', function ($value, $previous) use ($app) {
-            // Auto fix framework views
-            if ($value{0} !== '\\') {
-                $value = View::_CLASS_ . '\\' . $value;
-            }
-            // Not set ok then configure previous
-            if ($value !== $app->view($value)) {
-                $app->config('view.engine', $previous);
+            if ($view = $app->config('view.engine')) {
+                // Auto fix framework views
+                if ($view{0} !== '\\') {
+                    $view = View::_CLASS_ . '\\' . $view;
+                }
+                // Not set ok then configure previous
+                if ($view !== $app->view($view)) {
+                    throw new \Exception('Unknown view engine: ' . $view);
+                }
             }
         });
 
@@ -212,10 +207,9 @@ class App
      * @param      $key
      * @param null $value
      * @param bool $no_detect_callback
-     * @param bool $only_trigger
      * @return array|bool|\OmniApp\Config
      */
-    public function config($key = null, $value = null, $no_detect_callback = false, $only_trigger = false)
+    public function config($key = null, $value = null, $no_detect_callback = false)
     {
         // Save early configs
         static $configs = array();
@@ -225,14 +219,8 @@ class App
             return $this->config;
         } elseif ($value === null) {
             if (is_array($key) || $key instanceof Config) {
-                // First set config
-                $_first = false;
-
                 // Set config first
                 if (empty($this->config)) {
-                    // First set config
-                    $_first = true;
-
                     // Check key type
                     if ($key instanceof Config) {
                         // If config instance, use it
@@ -246,16 +234,10 @@ class App
                     if ($configs) {
                         // Loop config and set
                         foreach ($configs as $k => $v) {
-                            $this->config->set($k, $v);
+                            $this->config($k, $v);
                         }
-                        $key = $this->config;
                         $configs = array();
                     }
-                }
-
-                // Loop config
-                foreach ($key as $k => $v) {
-                    $this->config($k, $v, false, $_first);
                 }
             } else {
                 // When get config
@@ -271,9 +253,9 @@ class App
                 if (is_array($value)) {
                     // If values if array then loop set
                     foreach ($value as $k => $v) {
-                        $this->config($key . '.' . $k, $v, false, $only_trigger);
+                        $this->config($key . '.' . $k, $v, true);
                     }
-                } elseif (!$only_trigger) {
+                } else {
                     //  Set value to key
                     if ($this->config instanceof Config) {
                         if ($this->config->get($key) !== $value) {
@@ -305,7 +287,7 @@ class App
      */
     public function set($key, $value)
     {
-        $this->config->set($key, $value);
+        $this->config($key, $value);
     }
 
     /**
