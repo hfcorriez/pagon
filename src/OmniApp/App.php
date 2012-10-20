@@ -701,13 +701,13 @@ class App
 
         try {
             // Start buffer
-            ob_start();
+            if (!$_buffer_disabled = $this->config('disable_buffer')) ob_start();
 
             // Request app call
             $this->middleware[0]->call();
 
             // Write direct output to the head of buffer
-            $this->response->write(ob_get_clean());
+            if (!$_buffer_disabled) $this->response->write(ob_get_clean());
         } catch (\Exception $e) {
             if ($this->config('debug')) {
                 throw $e;
