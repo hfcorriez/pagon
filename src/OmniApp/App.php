@@ -298,6 +298,17 @@ class App
     }
 
     /**
+     * Set with no event emit
+     *
+     * @param $key
+     * @param $value
+     */
+    public function set($key, $value)
+    {
+        $this->config->set($key, $value);
+    }
+
+    /**
      * Set config as true
      *
      * @param $key
@@ -443,9 +454,15 @@ class App
      * @param string          $path
      * @param \Closure|string $runner
      * @param \Closure|string $more
+     * @return mixed
      */
-    public function get($path, $runner, $more = null)
+    public function get($path, $runner = null, $more = null)
     {
+        // Get config for use
+        if ($runner === null) {
+            return $this->config->get($path);
+        }
+
         if ($this->_cli || !$this->input->isGet()) return;
 
         if ($more !== null) {
