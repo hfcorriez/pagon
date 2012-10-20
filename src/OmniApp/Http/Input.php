@@ -8,7 +8,7 @@ use OmniApp\Exception\Pass;
 use OmniApp\App;
 use OmniApp\Config;
 
-class Request extends Registry
+class Input extends Registry
 {
     /**
      * @var array Route params

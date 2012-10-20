@@ -8,7 +8,7 @@ use OmniApp\Exception\Stop;
 use OmniApp\Config;
 use OmniApp\App;
 
-class Response extends Registry
+class Output extends Registry
 {
     public static $messages = array(
         // Informational 1xx
@@ -97,7 +97,7 @@ class Response extends Registry
      *
      * @static
      * @param string $content
-     * @return string|Response
+     * @return string|Output
      */
     public function body($content = null)
     {
@@ -118,7 +118,7 @@ class Response extends Registry
      * Get or set charset
      *
      * @param $charset
-     * @return string|Response
+     * @return string|Output
      */
     public function charset($charset = null)
     {
@@ -134,7 +134,7 @@ class Response extends Registry
      * Write body
      *
      * @param string $data
-     * @return string|Response
+     * @return string|Output
      */
     public function write($data)
     {
@@ -169,7 +169,7 @@ class Response extends Registry
      *
      * @static
      * @param int $status
-     * @return int|Response
+     * @return int|Output
      * @throws \Exception
      */
     public function status($status = null)
@@ -190,7 +190,7 @@ class Response extends Registry
      * @param string $name
      * @param string $value
      * @param bool   $replace
-     * @return array|Response
+     * @return array|Output
      */
     public function header($name = null, $value = null, $replace = false)
     {
@@ -211,7 +211,7 @@ class Response extends Registry
      * Set content type
      *
      * @param string $mime_type
-     * @return string|Response
+     * @return string|Output
      */
     public function contentType($mime_type = null)
     {
@@ -235,7 +235,7 @@ class Response extends Registry
      * @param string             $key
      * @param array|string|mixed $value
      * @param array              $option
-     * @return array|string|Response
+     * @return array|string|Output
      */
     public function cookie($key = null, $value = null, $option = array())
     {
@@ -269,7 +269,7 @@ class Response extends Registry
         // Check headers
         if (headers_sent() === false) {
             // Send header
-            header(sprintf('HTTP/%s %s %s', $this->app->request->protocol(), $this->env['status'], $this->message()));
+            header(sprintf('HTTP/%s %s %s', $this->app->input->protocol(), $this->env['status'], $this->message()));
 
             // Loop headers to send
             if ($this->env['headers']) {
@@ -339,7 +339,7 @@ class Response extends Registry
      *
      * @param $template
      * @param $data
-     * @return Response
+     * @return Output
      */
     public function render($template, $data = array())
     {
@@ -351,7 +351,7 @@ class Response extends Registry
      * To json
      *
      * @param mixed $data
-     * @return Response
+     * @return Output
      */
     public function json($data)
     {
@@ -365,7 +365,7 @@ class Response extends Registry
      *
      * @param mixed  $data
      * @param string $callback
-     * @return Response
+     * @return Output
      */
     public function jsonp($data, $callback = 'callback')
     {
@@ -380,7 +380,7 @@ class Response extends Registry
      * @param object|array $data
      * @param string       $root
      * @param string       $item
-     * @return Response
+     * @return Output
      */
     public function xml($data, $root = 'root', $item = 'item')
     {
@@ -394,7 +394,7 @@ class Response extends Registry
      *
      * @param string $url
      * @param int    $status
-     * @return Response
+     * @return Output
      */
     public function redirect($url, $status = 302)
     {

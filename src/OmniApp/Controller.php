@@ -7,14 +7,14 @@ use OmniApp\Exception\Pass;
 class Controller
 {
     /**
-     * @var \OmniApp\Http\Request|\OmniApp\Cli\Input
+     * @var \OmniApp\Http\Input|\OmniApp\Cli\Input
      */
-    protected $request;
+    protected $input;
 
     /**
-     * @var \OmniApp\Http\Response|\OmniApp\Cli\Output
+     * @var \OmniApp\Http\Output|\OmniApp\Cli\Output
      */
-    protected $response;
+    protected $output;
 
     /*
      * @var Controller
@@ -59,7 +59,7 @@ class Controller
         if ($this->_origin) {
             // Callable will run as the following
             $self = $this;
-            call_user_func_array($this->_origin, array($this->request, $this->response, function () use ($self) {
+            call_user_func_array($this->_origin, array($this->input, $this->output, function () use ($self) {
                 $self->getNext()->call();
             }));
         } else {
@@ -155,8 +155,8 @@ class Controller
      */
     final public function setApp(App $app)
     {
-        $this->request = $app->request;
-        $this->response = $app->response;
+        $this->input = $app->input;
+        $this->output = $app->output;
     }
 
     /**

@@ -21,14 +21,14 @@ const VERSION = '0.3';
 class App
 {
     /**
-     * @var Http\Request|Cli\Input
+     * @var Http\Input|Cli\Input
      */
-    public $request;
+    public $input;
 
     /**
-     * @var Http\Response|Cli\Output
+     * @var Http\Output|Cli\Output
      */
-    public $response;
+    public $output;
 
     /**
      * @var Config
@@ -105,18 +105,18 @@ class App
 
         // Set io depends on SAPI
         if (!$this->_cli) {
-            $this->request = new Http\Request($app);
-            $this->response = new Http\Response($app);
+            $this->input = new Http\Input($app);
+            $this->output = new Http\Output($app);
         } else {
-            $this->request = new Cli\Input($app);
-            $this->response = new Cli\Output($app);
+            $this->input = new Cli\Input($app);
+            $this->output = new Cli\Output($app);
         }
 
         // Init emitter
         $this->emitter = new Emitter();
 
         // Init Route
-        $this->route = new Route($app, $this->request->path());
+        $this->route = new Route($app, $this->input->path());
 
         // Force use UTF-8 encoding
         iconv_set_encoding("internal_encoding", "UTF-8");
@@ -354,7 +354,7 @@ class App
 
         if ($mode === null) {
             // Get or generate mode
-            $mode = $mode_get ? $mode_get() : $this->request->env('OMNIAPP_ENV');
+            $mode = $mode_get ? $mode_get() : $this->input->env('OMNIAPP_ENV');
         } elseif ($closure === null) {
             // Allow set mode get method when mode is closure
             if ($mode instanceof \Closure) {
@@ -446,7 +446,7 @@ class App
      */
     public function get($path, $runner, $more = null)
     {
-        if ($this->_cli || !$this->request->isGet()) return;
+        if ($this->_cli || !$this->input->isGet()) return;
 
         if ($more !== null) {
             call_user_func_array(array($this->route, 'on'), func_get_args());
@@ -464,7 +464,7 @@ class App
      */
     public function post($path, $runner, $more = null)
     {
-        if ($this->_cli || !$this->request->isPost()) return;
+        if ($this->_cli || !$this->input->isPost()) return;
 
         if ($more !== null) {
             call_user_func_array(array($this->route, 'on'), func_get_args());
@@ -482,7 +482,7 @@ class App
      */
     public function put($path, $runner, $more = null)
     {
-        if ($this->_cli || !$this->request->isPut()) return;
+        if ($this->_cli || !$this->input->isPut()) return;
 
         if ($more !== null) {
             call_user_func_array(array($this->route, 'on'), func_get_args());
@@ -500,7 +500,7 @@ class App
      */
     public function delete($path, $runner, $more = null)
     {
-        if ($this->_cli || !$this->request->isDelete()) return;
+        if ($this->_cli || !$this->input->isDelete()) return;
 
         if ($more !== null) {
             call_user_func_array(array($this->route, 'on'), func_get_args());
@@ -518,7 +518,7 @@ class App
      */
     public function options($path, $runner, $more = null)
     {
-        if ($this->_cli || !$this->request->isOptions()) return;
+        if ($this->_cli || !$this->input->isOptions()) return;
 
         if ($more !== null) {
             call_user_func_array(array($this->route, 'on'), func_get_args());
@@ -536,7 +536,7 @@ class App
      */
     public function head($path, $runner, $more = null)
     {
-        if ($this->_cli || !$this->request->isHead()) return;
+        if ($this->_cli || !$this->input->isHead()) return;
 
         if ($more !== null) {
             call_user_func_array(array($this->route, 'on'), func_get_args());
@@ -561,13 +561,13 @@ class App
             foreach ($_args as $i => &$_arg) {
                 if ($i === 0) continue;
                 if (is_string($_arg) && !strpos($_arg, '::')) {
-                    $_arg .= '::' . strtolower($this->request->method());
+                    $_arg .= '::' . strtolower($this->input->method());
                 }
             }
             call_user_func_array(array($this->route, 'on'), $_args);
         } else {
             if (is_string($runner) && !strpos($runner, '::')) {
-                $runner .= '::' . strtolower($this->request->method());
+                $runner .= '::' . strtolower($this->input->method());
             }
             $this->route->on($path, $runner);
         }
@@ -644,7 +644,7 @@ class App
     public function render($file, $params = array())
     {
         $_view = $this->view ? $this->view : View::_CLASS_;
-        $this->response->write(new $_view($file, $params));
+        $this->output->write(new $_view($file, $params));
     }
 
     /**
@@ -654,7 +654,7 @@ class App
      */
     public function root()
     {
-        return rtrim($this->request->env('DOCUMENT_ROOT'), '/') . rtrim($this->request->rootUri(), '/') . '/';
+        return rtrim($this->input->env('DOCUMENT_ROOT'), '/') . rtrim($this->input->rootUri(), '/') . '/';
     }
 
     /**
@@ -707,7 +707,7 @@ class App
             $this->middleware[0]->call();
 
             // Write direct output to the head of buffer
-            if (!$_buffer_disabled) $this->response->write(ob_get_clean());
+            if (!$_buffer_disabled) $this->output->write(ob_get_clean());
         } catch (\Exception $e) {
             if ($this->config('debug')) {
                 throw $e;
@@ -726,10 +726,10 @@ class App
 
         if (!$this->_cli) {
             // Send headers when http request
-            $this->response->sendHeader();
+            $this->output->sendHeader();
         }
         // Send data
-        echo $this->response->body();
+        echo $this->output->body();
 
         // Send end
         $this->emitter->emit('end');
@@ -801,13 +801,13 @@ class App
     public function param($param = null)
     {
         if ($param === null) {
-            return $this->request->params;
+            return $this->input->params;
         } else {
             if (is_array($param)) {
-                $this->request->params = $param;
+                $this->input->params = $param;
                 return true;
             } else {
-                return isset($this->request->params[$param]) ? $this->request->params[$param] : null;
+                return isset($this->input->params[$param]) ? $this->input->params[$param] : null;
             }
         }
     }
@@ -822,10 +822,10 @@ class App
     {
         $this->cleanBuffer();
         if (!$this->_cli) {
-            $this->response->contentType('text/plain');
+            $this->output->contentType('text/plain');
         }
-        $this->response->body($data);
-        $this->response->status($status);
+        $this->output->body($data);
+        $this->output->status($status);
         $this->stop();
     }
 

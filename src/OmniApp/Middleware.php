@@ -12,12 +12,12 @@ class Middleware
     protected $next;
 
     /**
-     * @var Http\Request|Cli\Input
+     * @var Http\Input|Cli\Input
      */
     protected $request;
 
     /**
-     * @var Http\Response|Cli\Output
+     * @var Http\Output|Cli\Output
      */
     protected $response;
 
@@ -68,8 +68,8 @@ class Middleware
      */
     final public function setApp(App $app)
     {
-        $this->request = $app->request;
-        $this->response = $app->response;
+        $this->request = $app->input;
+        $this->response = $app->output;
     }
 
 
