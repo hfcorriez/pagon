@@ -4,7 +4,7 @@ namespace OmniApp\Module;
 
 use OmniApp\Event;
 use OmniApp\App;
-use OmniApp\Http\Request;
+use OmniApp\Http\Input;
 
 /**
  * Log
@@ -79,7 +79,7 @@ class Log
 
         $micro_time = microtime(true);
         $message = array(
-            'id'       => Request::trackId(),
+            'id'       => Input::trackId(),
             'time'     => $micro_time,
             'text'     => $text,
             'ip'       => getenv('REMOTE_ADDR'),
