@@ -546,6 +546,34 @@ class App
     }
 
     /**
+     * Restful route
+     *
+     * @param string $path
+     * @param mixed  $runner
+     * @param mixed  $more
+     */
+    public function restful($path, $runner, $more = null)
+    {
+        if ($this->_cli) return;
+
+        if ($more !== null) {
+            $_args = func_get_args();
+            foreach ($_args as $i => &$_arg) {
+                if ($i === 0) continue;
+                if (is_string($_arg) && !strpos($_arg, '::')) {
+                    $_arg .= '::' . strtolower($this->request->method());
+                }
+            }
+            call_user_func_array(array($this->route, 'on'), $_args);
+        } else {
+            if (is_string($runner) && !strpos($runner, '::')) {
+                $runner .= '::' . strtolower($this->request->method());
+            }
+            $this->route->on($path, $runner);
+        }
+    }
+
+    /**
      * Add controllers to match route
      */
     public function all()
