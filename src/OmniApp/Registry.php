@@ -4,8 +4,6 @@ namespace OmniApp;
 
 class Registry
 {
-    protected $_registry;
-
     /**
      * Add registry
      *
@@ -14,7 +12,7 @@ class Registry
      */
     public function __set($key, $value)
     {
-        $this->_registry[$key] = $value;
+        $this->{$key} = $value;
     }
 
     /**
@@ -25,7 +23,7 @@ class Registry
      */
     public function __get($key)
     {
-        return isset($this->_registry[$key]) ? $this->_registry[$key] : null;
+        return isset($this->{$key}) ? $this->{$key} : null;
     }
 
     /**
@@ -36,7 +34,7 @@ class Registry
      */
     public function __isset($key)
     {
-        return isset($this->_registry[$key]);
+        return isset($this->{$key});
     }
 
     /**
@@ -46,7 +44,7 @@ class Registry
      */
     public function __unset($key)
     {
-        unset($this->_registry[$key]);
+        unset($this->{$key});
     }
 
     /**
@@ -59,8 +57,8 @@ class Registry
      */
     public function __call($method, $args)
     {
-        if (isset($this->_registry[$method]) && $this->_registry[$method] instanceof \Closure) {
-            return call_user_func_array($this->_registry[$method], $args);
+        if (isset($this->{$method}) && $this->{$method} instanceof \Closure) {
+            return call_user_func_array($this->{$method}, $args);
         }
         throw new \BadMethodCallException('Call to undefined method ' . __CLASS__ . '::' . $method . '()');
     }
