@@ -36,6 +36,7 @@ class ArgParser
         'args'     => array(),
         'enum'     => array(),
         'help'     => null,
+        'default'  => null,
     );
 
     const ERROR_FEW_ARGS = 1;
@@ -135,6 +136,9 @@ class ArgParser
 
         // Set short
         if (!$_param) $_param = $opt['args'][0];
+
+        // Default support
+        if (isset($opt['default'])) $this->params[$_param] = $opt['default'];
 
         // Save options
         $this->options[$_param] = $opt;
