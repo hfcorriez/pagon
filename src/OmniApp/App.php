@@ -551,7 +551,7 @@ class App
      * @param mixed  $runner
      * @param mixed  $more
      */
-    public function restful($path, $runner, $more = null)
+    public function rest($path, $runner, $more = null)
     {
         if ($this->_cli) return;
 
