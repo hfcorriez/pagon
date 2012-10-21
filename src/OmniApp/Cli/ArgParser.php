@@ -76,16 +76,29 @@ class ArgParser
      *
      *  $parser->add('x')           // => params.x with position 0
      *
+     *  $parser->add(array(
+     *      array('-l|--long', array('type' => 'bool')),
+     *      array('x')
+     *  ));
+     *
      * @param string $param
      * @param array  $opt
      *
-     *  `type`  int|bool    the type of value
-     *  `long`  string      long arg name
-     *  `short` string      short arg name
-     *  `help`  string      help text
+     *  `type`      string      the type of value   <int|bool|array>
+     *  `args`      string      args name
+     *  `enum`      string      enumerable list
+     *  `help`      string      help text
+     *  `default`   string      default value
      */
     public function add($param, $opt = array())
     {
+        // Array support
+        if (is_array($param)) {
+            foreach ($param as $p) {
+                $this->add($p[0], $p[1]);
+            }
+            return;
+        }
         // Merge with default options
         $opt += self::$default_options;
 
