@@ -264,9 +264,12 @@ class App
      *
      * @param string|\Closure $mode
      */
-    public function mode($mode)
+    public function mode($mode = null)
     {
-        $this->mode = $mode;
+        if ($mode) {
+            $this->mode = $mode;
+        }
+        return $this->mode;
     }
 
     /**
@@ -280,7 +283,7 @@ class App
         if ($closure === null) {
             // Allow set mode get method when mode is closure
             if ($mode instanceof \Closure) {
-                $this->emitter->on('mode', $closure);
+                $this->emitter->on('mode', $mode);
             }
         } else {
             // Set trigger for the mode
@@ -550,9 +553,6 @@ class App
             throw new \Exception('App has not initialized');
         }
 
-        // Trigger default mode
-        $this->emitter->emit('mode');
-
         if (!$this->mode) {
             // Set mode
             $this->mode = ($_mode = getenv('OMNI_ENV')) ? $_mode : 'development';
@@ -561,6 +561,9 @@ class App
             $_mode = $this->mode;
             $this->mode = $_mode();
         }
+
+        // Trigger default mode
+        $this->emitter->emit('mode', $this->mode);
 
         // If trigger exists, trigger closure
         $this->emitter->emit('mode:' . $this->mode);
