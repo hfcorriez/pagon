@@ -768,39 +768,44 @@ class App
     {
         if ($class{0} == '\\') $class = ltrim($class, '\\');
 
+        // If with OmniApp path, force require
         if (substr($class, 0, strlen(__NAMESPACE__) + 1) == __NAMESPACE__ . '\\') {
             require __DIR__ . '/' . str_replace('\\', '/', substr($class, 8)) . '.php';
+            return true;
         } else {
-            $available_path = false;
-            $file_name = '';
-            if (isset($this->config['classpath'])) {
-                if (is_array($this->config['classpath'])) {
-                    $available_path = array('' => $this->config['classpath']['']);
-
-                    foreach ($this->config['classpath'] as $prefix => $path) {
-                        if ($prefix == '') continue;
-
-                        if (substr($class, 0, strlen($prefix)) == $prefix) {
-                            array_unshift($available_path, $path);
-                            break;
-                        }
+            // Set the 99 high order for default autoload
+            $available_path = array(99 => $this->config->autoload);
+            // Check other namespaces
+            if (isset($this->config['autoload_namespaces'])) {
+                // Loop namespaces as autoload
+                foreach ($this->config['autoload_namespaces'] as $_prefix => $_path) {
+                    // Check if match prefix
+                    if (($_pos = strpos($class, $_prefix)) === 0) {
+                        // Set ordered path
+                        $available_path[strlen($_prefix)] = $_path;
                     }
-                } else {
-                    $available_path = array($this->config['classpath']);
                 }
+                // Sort by order
+                ksort($available_path);
             }
 
+            // No available path, no continue
             if (!$available_path) return false;
 
+            // Set default file name
+            $file_name = '';
+            // PSR-0 check
             if ($last_pos = strrpos($class, '\\')) {
                 $namespace = substr($class, 0, $last_pos);
                 $class = substr($class, $last_pos + 1);
                 $file_name = str_replace('\\', '/', $namespace) . '/';
             }
+            // Get last file name
             $file_name .= str_replace('_', '/', $class) . '.php';
-            foreach ($available_path as $path) {
-                $file = stream_resolve_include_path($path . '/' . $file_name);
-                if ($file) {
+            // Loop available path for check
+            foreach ($available_path as $_path) {
+                // Check file if exists
+                if ($file = stream_resolve_include_path($_path . '/' . $file_name)) {
                     require $file;
                     return true;
                 }
