@@ -132,6 +132,7 @@ class App
             // configure debug
             if ($app->config->debug) $app->add(new Middleware\PrettyException());
 
+            // Check view engine
             if ($_view = $app->config->get('view.engine')) {
                 // Auto fix framework views
                 if ($_view{0} !== '\\') {
