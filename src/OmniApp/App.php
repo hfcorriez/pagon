@@ -33,7 +33,12 @@ class App
     /**
      * @var Config
      */
-    protected $config;
+    public $config;
+
+    /**
+     * @var Emitter
+     */
+    public $emitter;
 
     /**
      * @var string View engine
@@ -48,17 +53,12 @@ class App
     /**
      * @var string Mode
      */
-    protected $mode = 'development';
+    protected $mode;
 
     /**
      * @var Middleware[]
      */
     protected $middleware = array();
-
-    /**
-     * @var Emitter
-     */
-    protected $emitter;
 
     /**
      * @var float App start time
@@ -84,10 +84,11 @@ class App
      * App init
      *
      * @param array $config
+     * @throws \Exception
      */
     public function __construct($config = array())
     {
-        $app = &$this;
+        $app = & $this;
 
         // Record start time
         $this->start_time = microtime(true);
@@ -100,6 +101,7 @@ class App
 
         // Register shutdown
         register_shutdown_function(array($this, '__shutdown'));
+
         // Register autoload
         spl_autoload_register(array($this, '__autoload'));
 
@@ -125,24 +127,25 @@ class App
         // Default things to do before run
         $this->emitter->on('run', function () use ($app) {
             // configure timezone
-            if ($app->config('timezone')) date_default_timezone_set($app->config('timezone'));
-            // configure debug
-            if ($app->config('debug')) $app->add(new Middleware\PrettyException());
+            if ($_timezone = $app->config->timezone) date_default_timezone_set($_timezone);
 
-            if ($view = $app->config('view.engine')) {
+            // configure debug
+            if ($app->config->debug) $app->add(new Middleware\PrettyException());
+
+            if ($_view = $app->config->get('view.engine')) {
                 // Auto fix framework views
-                if ($view{0} !== '\\') {
-                    $view = View::_CLASS_ . '\\' . $view;
+                if ($_view{0} !== '\\') {
+                    $_view = View::_CLASS_ . '\\' . $_view;
                 }
                 // Not set ok then configure previous
-                if ($view !== $app->view($view)) {
-                    throw new \Exception('Unknown view engine: ' . $view);
+                if ($_view !== $app->view($_view)) {
+                    throw new \Exception('Unknown view engine: ' . $_view);
                 }
             }
         });
 
         // Config
-        $this->config($config);
+        $this->config = $config instanceof Config ? $config : new Config($config);
 
         // Fire init
         $this->emitter->emit('init');
@@ -202,84 +205,6 @@ class App
     }
 
     /**
-     * Config get or set after init
-     *
-     * @param      $key
-     * @param null $value
-     * @param bool $no_detect_callback
-     * @return array|bool|\OmniApp\Config
-     */
-    public function config($key = null, $value = null, $no_detect_callback = false)
-    {
-        // Save early configs
-        static $configs = array();
-
-        if ($key === null) {
-            // If not arguments, return config
-            return $this->config;
-        } elseif ($value === null) {
-            if (is_array($key) || $key instanceof Config) {
-                // Set config first
-                if (empty($this->config)) {
-                    // Check key type
-                    if ($key instanceof Config) {
-                        // If config instance, use it
-                        $this->config = $key;
-                    } else {
-                        // Else convert to Dict config
-                        $this->config = new Config($key);
-                    }
-
-                    // Check configs and merge
-                    if ($configs) {
-                        // Loop config and set
-                        foreach ($configs as $k => $v) {
-                            $this->config($k, $v);
-                        }
-                        $configs = array();
-                    }
-                }
-            } else {
-                // When get config
-                return $this->config instanceof Config ? $this->config->get($key) : false;
-            }
-        } else {
-            if (!$no_detect_callback && $value instanceof \Closure) {
-                // Auto attach event
-                $this->emitter->on('config:' . $key, $value);
-            } else {
-                $_trigger = true;
-
-                if (is_array($value)) {
-                    // If values if array then loop set
-                    foreach ($value as $k => $v) {
-                        $this->config($key . '.' . $k, $v, true);
-                    }
-                } else {
-                    //  Set value to key
-                    if ($this->config instanceof Config) {
-                        if ($this->config->get($key) !== $value) {
-                            $this->config->set($key, $value);
-                        } else {
-                            $_trigger = false;
-                        }
-                    } else {
-                        if (isset($configs[$key]) && $configs[$key] !== $value) {
-                            $configs[$key] = $value;
-                        } else {
-                            $_trigger = false;
-                        }
-                    }
-                }
-
-                // Fire event when listener exists
-                $_trigger && $this->emitter->emit('config:' . $key, $value, $this->config($key));
-            }
-        }
-        return;
-    }
-
-    /**
      * Set with no event emit
      *
      * @param $key
@@ -287,7 +212,7 @@ class App
      */
     public function set($key, $value)
     {
-        $this->config($key, $value);
+        $this->config->set($key, $value);
     }
 
     /**
@@ -297,7 +222,7 @@ class App
      */
     public function enable($key)
     {
-        $this->config($key, true);
+        $this->config->set($key, true);
     }
 
     /**
@@ -307,7 +232,7 @@ class App
      */
     public function disable($key)
     {
-        $this->config($key, false);
+        $this->config->set($key, false);
     }
 
     /**
@@ -318,7 +243,7 @@ class App
      */
     public function enabled($key)
     {
-        return $this->config($key) === true;
+        return $this->config->set($key) === true;
     }
 
     /**
@@ -329,80 +254,39 @@ class App
      */
     public function disabled($key)
     {
-        return $this->config($key) === false;
+        return $this->config->set($key) === false;
     }
 
     /**
      * Config mode
+     *
      * # Manuel call must before App::init
      *
-     * @param          $mode
-     * @param callable $closure
+     * @param string|\Closure $mode
      * @return string
      */
-    public function mode($mode = null, \Closure $closure = null)
+    public function mode($mode = null)
     {
-        // Save get mode method
-        static $mode_get = null;
+        $this->mode = $mode;
+    }
 
-        if ($mode === null) {
-            // Get or generate mode
-            $mode = $mode_get ? $mode_get() : $this->input->env('OMNIAPP_ENV');
-        } elseif ($closure === null) {
+    /**
+     * Configure app
+     *
+     * @param string|\Closure $mode
+     * @param \Closure        $closure
+     */
+    public function configure($mode = null, \Closure $closure = null)
+    {
+        if ($closure === null) {
             // Allow set mode get method when mode is closure
             if ($mode instanceof \Closure) {
-                $mode_get = $mode;
+                $this->emitter->on('run', $closure);
             }
         } elseif ($closure) {
             // Set trigger for the mode
             $this->emitter->on('mode:' . $mode, $closure);
             // Don not change the current mode
-            $mode = null;
-        }
-
-        // Check
-        if ($mode && is_string($mode) && $this->mode != $mode && !$this->_init) {
-            // If set mode and mode is string and App is not init
-            $this->mode = $mode;
-        }
-
-        return $this->mode;
-    }
-
-    /**
-     * Attach event listener
-     *
-     * @param string   $event
-     * @param \Closure $listener
-     */
-    public function on($event, $listener)
-    {
-        $this->emitter->on($event, $listener);
-    }
-
-    /**
-     * Detach event listener
-     *
-     * @param string   $event
-     * @param \Closure $listener
-     */
-    public function off($event, $listener)
-    {
-        $this->emitter->off($event, $listener);
-    }
-
-    /**
-     * Emit the event
-     *
-     * @param string $event
-     * @param mixed  $args
-     */
-    public function emit($event, $args = null)
-    {
-        if ($args !== null) {
-            call_user_func_array(array($this->emitter, 'emit'), func_get_args());
-        } else {
-            $this->emitter->emit($event);
         }
     }
 
@@ -667,14 +551,24 @@ class App
             throw new \Exception('App has not initialized');
         }
 
-        // If trigger exists, trigger closure
-        $this->emitter->emit('mode:' . $this->mode());
-
-        // Fire run
+        // run
         $this->emitter->emit('run');
 
+        if (!$this->mode) {
+            // Set mode
+            $this->mode = ($_mode = getenv('OMNI_ENV')) ? $_mode : 'development';
+        } elseif ($this->mode instanceof \Closure) {
+            // Make mode
+            $_mode = $this->mode;
+            $this->mode = $_mode();
+        }
+
+        // If trigger exists, trigger closure
+        $this->emitter->emit('mode:' . $this->mode);
+
         $_error = false;
-        if ($this->config('error')) {
+        if ($this->config->error) {
+            // If config error, register error handle and set flag
             $_error = true;
             $this->registerErrorHandler();
         }
@@ -700,7 +594,7 @@ class App
 
         try {
             // Start buffer
-            if (!$_buffer_disabled = $this->config('disable_buffer')) ob_start();
+            if (!$_buffer_disabled = $this->config->disable_buffer) ob_start();
 
             // Request app call
             $this->middleware[0]->call();
@@ -708,7 +602,7 @@ class App
             // Write direct output to the head of buffer
             if (!$_buffer_disabled) $this->output->write(ob_get_clean());
         } catch (\Exception $e) {
-            if ($this->config('debug')) {
+            if ($this->config['debug']) {
                 throw $e;
             } else {
                 try {
@@ -727,6 +621,7 @@ class App
             // Send headers when http request
             $this->output->sendHeader();
         }
+
         // Send data
         echo $this->output->body();
 
@@ -934,7 +829,7 @@ class App
         $this->emitter->emit('shutdown');
         if (!$this->_init) return;
 
-        if ($this->config('error')
+        if ($this->config['error']
             && ($error = error_get_last())
             && in_array($error['type'], array(E_PARSE, E_ERROR, E_USER_ERROR))
         ) {

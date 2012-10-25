@@ -284,7 +284,7 @@ class Output extends Registry
 
             // Set cookies
             if ($this->env['cookies']) {
-                $_default = $this->app->config('cookie');
+                $_default = $this->app->config->cookie;
                 if (!$_default) {
                     $_default = array(
                         'path'     => '/',

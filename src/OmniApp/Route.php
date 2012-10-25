@@ -48,7 +48,7 @@ class Route extends Middleware
             $path = array_shift($_args);
             $runner = $_args;
         }
-        $this->app->config()->route[$path] = $runner;
+        $this->app->config['route'][$path] = $runner;
     }
 
     /**
@@ -59,7 +59,7 @@ class Route extends Middleware
      */
     public function get($path)
     {
-        return $this->app->config()->route[$path];
+        return $this->app->config['route'][$path];
     }
 
     /**
@@ -75,7 +75,7 @@ class Route extends Middleware
         if (!$this->path) return false;
 
         // Get routes
-        $routes = (array)$this->app->config('route');
+        $routes = (array)$this->app->config['route'];
 
         // No routes
         if (!$routes) return false;
@@ -152,9 +152,9 @@ class Route extends Middleware
     public function notFound($runner = null)
     {
         if ($runner) {
-            $this->app->config('route.404', $runner, true);
+            $this->app->config['route']['404'] = $runner;
         }
-        return ($_route = $this->app->config('route.404')) ? $this->run($_route) : false;
+        return (isset($this->app->config['route']['404'])) ? $this->run($this->app->config['route']['404']) : false;
     }
 
 
@@ -168,11 +168,11 @@ class Route extends Middleware
     {
         $_args = array();
         if (!$runner instanceof \Exception) {
-            $this->app->config('route.error', $runner, true);
+            $this->app->config['route']['error'] = $runner;
         } else {
             $_args = array($runner);
         }
-        return ($_route = $this->app->config('route.error')) ? $this->run($_route, $_args) : false;
+        return (isset($this->app->config['route']['error'])) ? $this->run($this->app->config['route']['error'], $_args) : false;
     }
 
     /**

@@ -604,7 +604,7 @@ class Input extends Registry
     {
         if (!isset($this->env['cookies'])) {
             $this->env['cookies'] = $_COOKIE;
-            $_option = $this->app->config('cookie');
+            $_option = $this->app->config->cookie;
             foreach ($this->env['cookies'] as &$value) {
                 // Parse signed cookie
                 if ($value && strpos($value, 's:') === 0 && $_option['secret']) {
