@@ -127,7 +127,7 @@ class App
         // Default things to do before run
         $this->emitter->on('run', function () use ($app) {
             // configure timezone
-            if ($_timezone = $app->config->timezone) date_default_timezone_set($_timezone);
+            if ($_timezone = $app->config->get('timezone')) date_default_timezone_set($_timezone);
 
             // configure debug
             if ($app->config->debug) $app->add(new Middleware\PrettyException());
@@ -263,9 +263,8 @@ class App
      * # Manuel call must before App::init
      *
      * @param string|\Closure $mode
-     * @return string
      */
-    public function mode($mode = null)
+    public function mode($mode)
     {
         $this->mode = $mode;
     }
@@ -276,14 +275,14 @@ class App
      * @param string|\Closure $mode
      * @param \Closure        $closure
      */
-    public function configure($mode = null, \Closure $closure = null)
+    public function configure($mode, \Closure $closure = null)
     {
         if ($closure === null) {
             // Allow set mode get method when mode is closure
             if ($mode instanceof \Closure) {
-                $this->emitter->on('run', $closure);
+                $this->emitter->on('mode', $closure);
             }
-        } elseif ($closure) {
+        } else {
             // Set trigger for the mode
             $this->emitter->on('mode:' . $mode, $closure);
             // Don not change the current mode
@@ -551,8 +550,8 @@ class App
             throw new \Exception('App has not initialized');
         }
 
-        // run
-        $this->emitter->emit('run');
+        // Trigger default mode
+        $this->emitter->emit('mode');
 
         if (!$this->mode) {
             // Set mode
@@ -565,6 +564,9 @@ class App
 
         // If trigger exists, trigger closure
         $this->emitter->emit('mode:' . $this->mode);
+
+        // run
+        $this->emitter->emit('run');
 
         $_error = false;
         if ($this->config->error) {
@@ -829,7 +831,7 @@ class App
         $this->emitter->emit('shutdown');
         if (!$this->_init) return;
 
-        if ($this->config['error']
+        if ($this->config->error
             && ($error = error_get_last())
             && in_array($error['type'], array(E_PARSE, E_ERROR, E_USER_ERROR))
         ) {
