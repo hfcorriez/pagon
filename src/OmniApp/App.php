@@ -66,11 +66,6 @@ class App
     private $start_time = null;
 
     /**
-     * @var bool Initialized?
-     */
-    private $_init = false;
-
-    /**
      * @var bool Is cli?
      */
     private $_cli = false;
@@ -79,6 +74,11 @@ class App
      * @var bool Is win?
      */
     private $_win = false;
+
+    /**
+     * @var bool Is run?
+     */
+    private $_run = false;
 
     /**
      * App init
@@ -138,9 +138,6 @@ class App
 
         // Fire init
         $this->emitter->emit('init');
-
-        // Init
-        $this->_init = true;
     }
 
     /**
@@ -181,16 +178,6 @@ class App
     public function runTime()
     {
         return number_format(microtime(true) - $this->startTime(), 6);
-    }
-
-    /**
-     * Is init?
-     *
-     * @return bool
-     */
-    public function isInit()
-    {
-        return $this->_init;
     }
 
     /**
@@ -546,11 +533,6 @@ class App
      */
     public function run()
     {
-        // Check has init?
-        if (!$this->_init) {
-            throw new \Exception('App has not initialized');
-        }
-
         if (!$this->mode) {
             // Set mode
             $this->mode = ($_mode = getenv('OMNI_ENV')) ? $_mode : 'development';
@@ -568,6 +550,8 @@ class App
 
         // run
         $this->emitter->emit('run');
+
+        $this->_run = true;
 
         $_error = false;
         if ($this->config->error) {
@@ -605,28 +589,21 @@ class App
             // Write direct output to the head of buffer
             if (!$_buffer_disabled) $this->output->write(ob_get_clean());
         } catch (\Exception $e) {
-            if ($this->config['debug']) {
+            if ($this->config->debug) {
                 throw $e;
             } else {
-                try {
-                    $this->error($e);
-                } catch (Exception\Stop $e) {
-                    //
-                }
+                $this->route->error($e);
             }
             $this->emitter->emit('error');
         }
 
+        $this->_run = false;
+
         // Send start
         $this->emitter->emit('start');
 
-        if (!$this->_cli) {
-            // Send headers when http request
-            $this->output->sendHeader();
-        }
-
-        // Send data
-        echo $this->output->body();
+        // Send
+        $this->output->send();
 
         // Send end
         $this->emitter->emit('end');
@@ -651,42 +628,8 @@ class App
      */
     public function pass()
     {
-        $this->cleanBuffer();
+        ob_get_level() && ob_clean();
         throw new Exception\Pass();
-    }
-
-    /**
-     * Set or run not found
-     */
-    public function notFound($runner = null)
-    {
-        if ($runner instanceof \Closure) {
-            $this->route->notFound($runner);
-        } else {
-            $this->cleanBuffer();
-            ob_start();
-            if (!$this->route->notFound()) {
-                echo "Path not found";
-            }
-            $this->output(404, ob_get_clean());
-        }
-    }
-
-    /**
-     * Set or run not found
-     */
-    public function error($runner = null)
-    {
-        if ($runner instanceof \Closure) {
-            $this->route->error($runner);
-        } else {
-            $this->cleanBuffer();
-            ob_start();
-            if (!$this->route->error($runner)) {
-                echo "Error occurred";
-            }
-            $this->output(500, ob_get_clean());
-        }
     }
 
     /**
@@ -717,23 +660,13 @@ class App
      */
     public function output($status, $data)
     {
-        $this->cleanBuffer();
+        ob_get_level() && ob_clean();
         if (!$this->_cli) {
             $this->output->contentType('text/plain');
         }
         $this->output->body($data);
         $this->output->status($status);
-        $this->stop();
-    }
-
-    /**
-     * Clean current output buffer
-     */
-    public function cleanBuffer()
-    {
-        if (ob_get_level() !== 0) {
-            ob_clean();
-        }
+        $this->output->send();
     }
 
     /**
@@ -829,20 +762,21 @@ class App
 
     /**
      * Shutdown handler for app
-     *
-     * @todo Make as middleware
      */
     public function __shutdown()
     {
         $this->emitter->emit('shutdown');
-        if (!$this->_init) return;
+        if (!$this->_run) return;
 
-        if ($this->config->error
-            && ($error = error_get_last())
-            && in_array($error['type'], array(E_PARSE, E_ERROR, E_USER_ERROR))
+        if (!$this->config->debug && ($error = error_get_last())
+            && in_array($error['type'], array(E_PARSE, E_ERROR, E_USER_ERROR, E_COMPILE_ERROR))
         ) {
-            ob_get_level() and ob_clean();
-            echo new \ErrorException($error['message'], $error['type'], 0, $error['file'], $error['line']);
+            ob_get_level() && ob_clean();
+            ob_start();
+            if (!$this->route->crash(new \ErrorException($error['message'], $error['type'], 0, $error['file'], $error['line']))) {
+                echo "Server is down";
+            }
+            $this->output(500, ob_get_clean());
         }
     }
 }

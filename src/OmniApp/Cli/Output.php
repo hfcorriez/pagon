@@ -17,6 +17,9 @@ class Output
      */
     protected $env;
 
+    // Send?
+    private $_send = false;
+
     /**
      * @param \OmniApp\App $app
      */
@@ -84,6 +87,17 @@ class Output
         $this->env['body'] .= $data;
 
         return $this;
+    }
+
+    /**
+     * Send
+     */
+    public function send()
+    {
+        if ($this->_send) return;
+        echo $this->env['body'];
+        $this->env['body'] = '';
+        $this->_send = true;
     }
 
     /**

@@ -52,6 +52,17 @@ class Route extends Middleware
     }
 
     /**
+     * Set route
+     *
+     * @param $path
+     * @param $route
+     */
+    public function set($path, $route)
+    {
+        $this->app->config['route'][$path] = $route;
+    }
+
+    /**
      * Get the controllers
      *
      * @param $path
@@ -88,7 +99,8 @@ class Route extends Middleware
             if (($params = self::parseRoute($this->path, $p)) !== false) {
                 try {
                     $params && $this->app->param($params);
-                    return self::run($ctrl);
+
+                    return self::work($ctrl);
                     // If multiple controller
                 } catch (Pass $e) {
                     // When catch Next, continue next route
@@ -102,11 +114,12 @@ class Route extends Middleware
     /**
      * Run the route
      *
-     * @param $ctrl
+     * @param array|string $ctrl
+     * @param array        $params
      * @throws \Exception
      * @return bool
      */
-    public function run($ctrl)
+    public function work($ctrl)
     {
         if (!$ctrl) return false;
 
@@ -131,6 +144,21 @@ class Route extends Middleware
     }
 
     /**
+     * Run the route
+     *
+     * @param string $route
+     * @param array  $args
+     * @return void
+     */
+    public function run($route, $args = array())
+    {
+        if (isset($this->app->config['route'][$route])) {
+            $args && $this->app->param($args);
+            $this->work($this->app->config['route'][$route], $args);
+        }
+    }
+
+    /**
      * Call for middleware
      */
     public function call()
@@ -151,12 +179,8 @@ class Route extends Middleware
      */
     public function notFound($runner = null)
     {
-        if ($runner) {
-            $this->app->config['route']['404'] = $runner;
-        }
-        return (isset($this->app->config['route']['404'])) ? $this->run($this->app->config['route']['404']) : false;
+        $this->shoot('404', $runner);
     }
-
 
     /**
      * Get or set error runner
@@ -166,13 +190,33 @@ class Route extends Middleware
      */
     public function error($runner = null)
     {
-        $_args = array();
+        $this->shoot('error', $runner);
+    }
+
+    /**
+     * Get or set error runner
+     *
+     * @param mixed $runner
+     * @return mixed
+     */
+    public function crash($runner = null)
+    {
+        $this->shoot('crash', $runner);
+    }
+
+    /**
+     * Shoot the path
+     *
+     * @param      $type
+     * @param null $runner
+     */
+    public function shoot($type, $runner = null)
+    {
         if (!$runner instanceof \Exception) {
-            $this->app->config['route']['error'] = $runner;
-        } else {
-            $_args = array($runner);
+            $this->set($type, $runner);
+            return;
         }
-        return (isset($this->app->config['route']['error'])) ? $this->run($this->app->config['route']['error'], $_args) : false;
+        $this->run($type, $runner ? array($runner) : null);
     }
 
     /**

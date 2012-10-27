@@ -74,6 +74,9 @@ class Output extends Registry
      */
     protected $env;
 
+    // Send?
+    protected $_send = false;
+
     /**
      * @param \OmniApp\App $app
      */
@@ -314,6 +317,18 @@ class Output extends Registry
             }
         }
         return $this;
+    }
+
+    /**
+     * Send
+     */
+    public function send()
+    {
+        if ($this->_send) return;
+        $this->sendHeader();
+        echo $this->env['body'];
+        $this->env['body'] = '';
+        $this->_send = true;
     }
 
     /**
