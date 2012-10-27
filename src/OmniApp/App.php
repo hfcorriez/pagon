@@ -43,7 +43,7 @@ class App
     /**
      * @var string View engine
      */
-    protected $view;
+    protected $engines;
 
     /**
      * @var Route
@@ -131,18 +131,6 @@ class App
 
             // configure debug
             if ($app->config->debug) $app->add(new Middleware\PrettyException());
-
-            // Check view engine
-            if ($_view = $app->config->get('view.engine')) {
-                // Auto fix framework views
-                if ($_view{0} !== '\\') {
-                    $_view = View::_CLASS_ . '\\' . $_view;
-                }
-                // Not set ok then configure previous
-                if ($_view !== $app->view($_view)) {
-                    throw new \Exception('Unknown view engine: ' . $_view);
-                }
-            }
         });
 
         // Config
@@ -506,31 +494,40 @@ class App
     /**
      * Set or get view
      *
-     * @param string $view
+     * @param string $name
+     * @param string $engine
      * @return string
      */
-    public function view($view = null)
+    public function engine($name, $engine = null)
     {
-        if ($view) {
-            if ($this->view !== $view && is_subclass_of($view, View::_CLASS_)) {
-                $this->view = $view;
-            }
-        } elseif ($view === false) {
-            $this->view = null;
+        if ($engine) {
+            $this->engines[$name] = $engine;
         }
-        return $this->view;
+        return isset($this->engines[$name]) ? $this->engines[$name] : null;
     }
 
     /**
      * Render template
      *
-     * @param string $file
-     * @param array  $params
+     * @param string $path
+     * @param array  $data
      */
-    public function render($file, $params = array())
+    public function render($path, $data = array())
     {
-        $_view = $this->view ? $this->view : View::_CLASS_;
-        $this->output->write(new $_view($file, $params));
+        $ext = pathinfo($path, PATHINFO_EXTENSION);
+        $engine = false;
+        if ($ext && isset($this->engines[$ext])) {
+            if (is_string($this->engines[$ext]) && class_exists($this->engines[$ext])) {
+                $this->engines[$ext] = $engine = new $this->engines[$ext]();
+            } else {
+                $engine = $this->engines[$ext];
+            }
+        }
+        $view = new View($path, $data, array(
+            'engine' => $engine,
+            'dir'    => $this->config->views
+        ));
+        $this->output->write($view);
     }
 
     /**

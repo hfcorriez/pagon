@@ -9,7 +9,7 @@ class View
     /**
      * @var string File path
      */
-    protected $file;
+    protected $path;
 
     /**
      * @var array The data for view
@@ -19,71 +19,78 @@ class View
     /**
      * @var string Directory for the template path
      */
-    protected static $dir;
+    protected $dir;
 
     /**
-     * @var string Extension for file
+     * @var Object
      */
-    protected static $ext = 'php';
-
-    /**
-     * Construct a view
-     *
-     * @param string $file
-     * @param array  $params
-     * @throws \Exception
-     * @return View
-     */
-    public function __construct($file, $params = array())
-    {
-        // Set file path
-        if ($file{0} == '/') {
-            $this->file = $file;
-        } else {
-            $this->file = static::$dir . '/' . strtolower(trim($file, '/')) . static::$ext;
-        }
-
-        // If file exists?
-        if (!is_file($this->file)) {
-            throw new \Exception('Template file is not exist: ' . $this->file);
-        }
-
-        // Set data
-        $this->data = $params;
-    }
+    protected $engine;
 
     /**
      * Create a new view
      *
-     * @param       $file
-     * @param array $params
+     * @param string $path
+     * @param array  $data
      * @return mixed
      */
-    public static function factory($file, $params = array())
+    public static function factory($path, $data = array())
     {
         $view = get_called_class();
-        return new $view($file, $params);
+        return new $view($path, $data);
     }
 
     /**
-     * Set ext
+     * Construct a view
      *
-     * @param string $ext
-     * @return void
+     * @param string $path
+     * @param array  $data
+     * @param array  $opt
+     * @throws \Exception
+     * @return View
      */
-    public static function setExt($ext)
+    public function __construct($path, $data = array(), $opt = array())
     {
-        static::$ext = $ext;
+        // Set file path
+        if ($path{0} == '/') {
+            $this->path = $path;
+        } else {
+            $this->path = $this->dir . '/' . strtolower(ltrim($path, '/'));
+        }
+
+        if (isset($opt['engine'])) $this->engine = $opt['engine'];
+        if (isset($opt['dir'])) $this->dir = $opt['dir'];
+
+        // If file exists?
+        if (!is_file($this->path)) {
+            throw new \Exception('Template file is not exist: ' . $this->path);
+        }
+
+        // Set data
+        $this->data = $data;
+    }
+
+    /**
+     * Set engine
+     *
+     * @param $engine
+     * @return \OmniApp\View
+     */
+    public function setEngine($engine)
+    {
+        $this->engine = $engine;
+        return $this;
     }
 
     /**
      * Set path
      *
      * @param string $dir
+     * @return View
      */
-    public static function setDir($dir)
+    public function setDir($dir)
     {
-        static::$dir = $dir;
+        $this->dir = $dir;
+        return $this;
     }
 
     /**
@@ -103,13 +110,18 @@ class View
      *
      * @return string
      */
-    public function render(){
-        ob_start();
-        if ($this->data) {
-            extract((array)$this->data);
+    public function render()
+    {
+        if (!$this->engine) {
+            ob_start();
+            if ($this->data) {
+                extract((array)$this->data);
+            }
+            include($this->path);
+            return ob_get_clean();
         }
-        include($this->file);
-        return ob_get_clean();
+
+        return $this->engine->render($this->path, $this->data);
     }
 
     /**
