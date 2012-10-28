@@ -62,6 +62,18 @@ class Input
     }
 
     /**
+     * Get any params from get or post
+     *
+     * @param string $key
+     * @param mixed  $default
+     * @return mixed
+     */
+    public function param($key, $default = null)
+    {
+        return isset($this->params[$key]) ? $this->params[$key] : $default;
+    }
+
+    /**
      * Pass
      *
      * @throws Pass
