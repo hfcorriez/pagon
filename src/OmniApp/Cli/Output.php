@@ -4,24 +4,22 @@ namespace OmniApp\Cli;
 
 use OmniApp\App;
 use OmniApp\Config;
+use OmniApp\Exception\Stop;
 
 class Output
 {
     /**
-     * @var \OmniApp\App App
+     * @var App App
      */
     public $app;
 
     /**
-     * @var \OmniApp\Config Env
+     * @var Config Env
      */
     protected $env;
 
-    // Send?
-    private $_send = false;
-
     /**
-     * @param \OmniApp\App $app
+     * @param App $app
      */
     public function __construct(App $app)
     {
@@ -90,14 +88,26 @@ class Output
     }
 
     /**
+     * End the response
+     *
+     * @param string $data
+     * @throws Stop
+     * @return void
+     */
+    public function end($data = '')
+    {
+        $this->write($data);
+        throw new Stop();
+    }
+
+    /**
      * Send
      */
     public function send()
     {
-        if ($this->_send) return;
-        echo $this->env['body'];
+        $_body = $this->env['body'];
         $this->env['body'] = '';
-        $this->_send = true;
+        return $_body;
     }
 
     /**

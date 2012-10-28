@@ -592,7 +592,7 @@ class App
             if ($this->config->debug) {
                 throw $e;
             } else {
-                $this->route->error($e);
+                $this->error($e);
             }
             $this->emitter->emit('error');
         }
@@ -603,12 +603,69 @@ class App
         $this->emitter->emit('start');
 
         // Send
-        $this->output->send();
+        echo $this->output->send();
 
         // Send end
         $this->emitter->emit('end');
 
         if ($_error) $this->restoreErrorHandler();
+    }
+
+    /**
+     * Register or run error
+     *
+     * @param callable $runner
+     */
+    public function error($runner = null)
+    {
+        if (is_callable($runner) && !$runner instanceof \Exception) {
+            $this->route->set('error', $runner);
+        } else {
+            ob_get_level() && ob_clean();
+            ob_start();
+            if (!$this->route->run('error', array($runner))) {
+                echo 'Error occurred';
+            }
+            $this->output->status(500)->body(ob_get_clean());
+        }
+    }
+
+    /**
+     * Register or run not found
+     *
+     * @param callable $runner
+     */
+    public function notFound($runner = null)
+    {
+        if (is_callable($runner) && !$runner instanceof \Exception) {
+            $this->route->set('404', $runner);
+        } else {
+            ob_get_level() && ob_clean();
+            ob_start();
+            if (!$this->route->run('404', array($runner))) {
+                echo 'Path not found';
+            }
+            $this->output->status(404)->body(ob_get_clean());
+        }
+    }
+
+    /**
+     * Register or run not found
+     *
+     * @param callable $runner
+     */
+    public function crash($runner = null)
+    {
+        if (is_callable($runner) && !$runner instanceof \Exception) {
+            $this->route->set('crash', $runner);
+        } else {
+            ob_get_level() && ob_clean();
+            ob_start();
+            if (!$this->route->run('crash', array($runner))) {
+                echo 'App is down';
+            }
+            $this->output->status(500)->body(ob_get_clean());
+        }
     }
 
     /**
@@ -636,7 +693,7 @@ class App
      * Get or set param
      *
      * @param string|null $param
-     * @return bool|null
+     * @return array|bool|null
      */
     public function param($param = null)
     {
@@ -650,23 +707,6 @@ class App
                 return isset($this->input->params[$param]) ? $this->input->params[$param] : null;
             }
         }
-    }
-
-    /**
-     * Output
-     *
-     * @param $status
-     * @param $data
-     */
-    public function output($status, $data)
-    {
-        ob_get_level() && ob_clean();
-        if (!$this->_cli) {
-            $this->output->contentType('text/plain');
-        }
-        $this->output->body($data);
-        $this->output->status($status);
-        $this->output->send();
     }
 
     /**
@@ -771,12 +811,8 @@ class App
         if (!$this->config->debug && ($error = error_get_last())
             && in_array($error['type'], array(E_PARSE, E_ERROR, E_USER_ERROR, E_COMPILE_ERROR))
         ) {
-            ob_get_level() && ob_clean();
-            ob_start();
-            if (!$this->route->crash(new \ErrorException($error['message'], $error['type'], 0, $error['file'], $error['line']))) {
-                echo "Server is down";
-            }
-            $this->output(500, ob_get_clean());
+            $this->crash();
+            echo $this->output->send();
         }
     }
 }

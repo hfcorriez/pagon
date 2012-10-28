@@ -115,7 +115,6 @@ class Route extends Middleware
      * Run the route
      *
      * @param array|string $ctrl
-     * @param array        $params
      * @throws \Exception
      * @return bool
      */
@@ -132,7 +131,6 @@ class Route extends Middleware
             // If on controller on the link is unavailable the link will broken
             if (!$c) {
                 throw new \Exception('Cann\'t use the controller in route with index "' . $k . '"');
-                return false;
             }
             $c->setApp($this->app);
             // Set next controller and io
@@ -154,8 +152,9 @@ class Route extends Middleware
     {
         if (isset($this->app->config['route'][$route])) {
             $args && $this->app->param($args);
-            $this->work($this->app->config['route'][$route], $args);
+            return $this->work($this->app->config['route'][$route]);
         }
+        return false;
     }
 
     /**
@@ -169,54 +168,6 @@ class Route extends Middleware
             }
         } catch (Stop $e) {
         }
-    }
-
-    /**
-     * Get or set not found route
-     *
-     * @param mixed $runner
-     * @return mixed
-     */
-    public function notFound($runner = null)
-    {
-        $this->shoot('404', $runner);
-    }
-
-    /**
-     * Get or set error runner
-     *
-     * @param mixed $runner
-     * @return mixed
-     */
-    public function error($runner = null)
-    {
-        $this->shoot('error', $runner);
-    }
-
-    /**
-     * Get or set error runner
-     *
-     * @param mixed $runner
-     * @return mixed
-     */
-    public function crash($runner = null)
-    {
-        $this->shoot('crash', $runner);
-    }
-
-    /**
-     * Shoot the path
-     *
-     * @param      $type
-     * @param null $runner
-     */
-    public function shoot($type, $runner = null)
-    {
-        if (!$runner instanceof \Exception) {
-            $this->set($type, $runner);
-            return;
-        }
-        $this->run($type, $runner ? array($runner) : null);
     }
 
     /**

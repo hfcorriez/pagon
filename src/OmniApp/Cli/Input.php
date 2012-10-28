@@ -9,6 +9,11 @@ use OmniApp\Config;
 class Input
 {
     /**
+     * @var array Route params
+     */
+    public $params = array();
+
+    /**
      * @var \OmniApp\App App
      */
     public $app;
@@ -63,7 +68,7 @@ class Input
      */
     public function pass()
     {
-        $this->app->cleanBuffer();
+        ob_get_level() && ob_clean();
         throw new Pass();
     }
 

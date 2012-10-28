@@ -65,20 +65,17 @@ class Output extends Registry
     );
 
     /**
-     * @var \OmniApp\App
+     * @var App
      */
     public $app;
 
     /**
-     * @var \OmniApp\Config Env
+     * @var Config Env
      */
     protected $env;
 
-    // Send?
-    protected $_send = false;
-
     /**
-     * @param \OmniApp\App $app
+     * @param App $app
      */
     public function __construct(App $app)
     {
@@ -324,11 +321,10 @@ class Output extends Registry
      */
     public function send()
     {
-        if ($this->_send) return;
         $this->sendHeader();
-        echo $this->env['body'];
+        $_body = $this->env['body'];
         $this->env['body'] = '';
-        $this->_send = true;
+        return $_body;
     }
 
     /**
