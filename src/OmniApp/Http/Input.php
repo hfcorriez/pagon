@@ -68,7 +68,7 @@ class Input extends Registry
      */
     public function uri()
     {
-        return $this->env('REQUEST_URI');
+        return $this->env['REQUEST_URI'];
     }
 
     /**
@@ -79,8 +79,8 @@ class Input extends Registry
     public function scriptName()
     {
         if (!isset($this->env['script_name'])) {
-            $_script_name = $this->env('SCRIPT_NAME');
-            if (strpos($this->env('REQUEST_URI'), $_script_name) !== 0) {
+            $_script_name = $this->env['SCRIPT_NAME'];
+            if (strpos($this->env['REQUEST_URI'], $_script_name) !== 0) {
                 $_script_name = str_replace('\\', '/', dirname($_script_name));
             }
             $this->env['script_name'] = rtrim($_script_name, '/');
@@ -106,7 +106,7 @@ class Input extends Registry
     public function pathInfo()
     {
         if (!isset($this->env['path_info'])) {
-            $_path_info = substr_replace($this->uri(), '', 0, strlen($this->scriptName()));
+            $_path_info = substr_replace($this->env['REQUEST_URI'], '', 0, strlen($this->scriptName()));
             if (strpos($_path_info, '?') !== false) {
                 // Query string is not removed automatically
                 $_path_info = substr_replace($_path_info, '', strpos($_path_info, '?'));

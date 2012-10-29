@@ -123,7 +123,7 @@ class App
         $this->emitter = new Emitter();
 
         // Init Route
-        $this->route = new Route($app, $this->input->path());
+        $this->route = new Route($app, $this->input->pathInfo());
 
         // Force use UTF-8 encoding
         iconv_set_encoding("internal_encoding", "UTF-8");
@@ -142,7 +142,7 @@ class App
         $this->config = $config instanceof Config ? $config : new Config($config);
 
         // Set default locals
-        $this->locals['config'] = &$this->config;
+        $this->locals['config'] = & $this->config;
 
         // Fire init
         $this->emitter->emit('init');
@@ -601,7 +601,10 @@ class App
             if ($this->config->debug) {
                 throw $e;
             } else {
-                $this->error($e);
+                try {
+                    $this->error($e);
+                } catch (Exception\Stop $e) {
+                }
             }
             $this->emitter->emit('error');
         }
@@ -687,14 +690,12 @@ class App
      *
      * @param int    $status
      * @param string $body
+     * @throws Exception\Stop
      */
     public function output($status, $body)
     {
         $this->output->status($status)->body($body);
-        if (!$this->_cli) {
-            $this->output->sendHeader();
-        }
-        echo $this->output->body();
+        throw new Exception\Stop;
     }
 
     /**
@@ -840,7 +841,17 @@ class App
         if (!$this->config->debug && ($error = error_get_last())
             && in_array($error['type'], array(E_PARSE, E_ERROR, E_USER_ERROR, E_COMPILE_ERROR))
         ) {
-            $this->crash();
+            try {
+                $this->crash();
+            } catch (Exception\Stop $e) {
+                // Send headers
+                if (!$this->_cli) {
+                    $this->output->sendHeader();
+                }
+
+                // Send
+                echo $this->output->body();
+            }
         }
     }
 }

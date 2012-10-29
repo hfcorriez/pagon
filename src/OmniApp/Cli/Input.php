@@ -39,7 +39,7 @@ class Input
      *
      * @return mixed
      */
-    public function path()
+    public function pathInfo()
     {
         if (!isset($this->env['path'])) {
             $this->env['path'] = '/' . join('/', array_slice($this->env('argv'), 1));
