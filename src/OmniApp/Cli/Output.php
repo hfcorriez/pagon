@@ -56,10 +56,6 @@ class Output
     public function body($content = null)
     {
         if ($content !== null) {
-            if (ob_get_level() !== 0) {
-                ob_end_clean();
-                ob_start();
-            }
             $this->env['body'] = $content;
             return $this;
         }
@@ -77,11 +73,6 @@ class Output
     {
         if (!$data) return $this->env['body'];
 
-        if (ob_get_level() !== 0) {
-            $data = ob_get_clean() . $data;
-            ob_start();
-        }
-
         $this->env['body'] .= $data;
 
         return $this;
@@ -98,16 +89,6 @@ class Output
     {
         $this->write($data);
         throw new Stop();
-    }
-
-    /**
-     * Send
-     */
-    public function send()
-    {
-        $_body = $this->env['body'];
-        $this->env['body'] = '';
-        return $_body;
     }
 
     /**

@@ -102,10 +102,6 @@ class Output extends Registry
     public function body($content = null)
     {
         if ($content !== null) {
-            if (ob_get_level() !== 0) {
-                ob_end_clean();
-                ob_start();
-            }
             $this->env['body'] = $content;
             $this->env['length'] = strlen($this->env['body']);
             return $this;
@@ -124,7 +120,6 @@ class Output extends Registry
     {
         if ($charset) {
             $this->env['charset'] = $charset;
-            $this->header('content-type', $this->env['content_type'] . '; charset=' . $this->env['charset']);
             return $this;
         }
         return $this->env['charset'];
@@ -139,11 +134,6 @@ class Output extends Registry
     public function write($data)
     {
         if (!$data) return $this->env['body'];
-
-        if (ob_get_level() !== 0) {
-            $data = ob_get_clean() . $data;
-            ob_start();
-        }
 
         $this->env['body'] .= $data;
         $this->env['length'] = strlen($this->env['body']);
@@ -185,8 +175,6 @@ class Output extends Registry
     /**
      * Set or get header
      *
-     * @todo Array Support
-     *
      * @param string $name
      * @param string $value
      * @param bool   $replace
@@ -196,6 +184,11 @@ class Output extends Registry
     {
         if ($name === null) {
             return $this->env['headers'];
+        } elseif (is_array($name)) {
+            foreach ($name as $k => $v) {
+                // Force replace
+                $this->header($k, $v, true);
+            }
         } else {
             $name = strtoupper(str_replace('_', '-', $name));
             if ($value === null) {
@@ -222,7 +215,6 @@ class Output extends Registry
             }
             $this->env['content_type'] = $mime_type;
 
-            $this->header('Content-Type', $this->env['content_type'] . '; charset=' . $this->env['charset']);
             return $this;
         }
 
@@ -271,6 +263,11 @@ class Output extends Registry
             // Send header
             header(sprintf('HTTP/%s %s %s', $this->app->input->protocol(), $this->env['status'], $this->message()));
 
+            // Set content type if not exists
+            if (!isset($this->env['headers']['CONTENT-TYPE'])) {
+                $this->env['headers']['content-type'] = $this->env['content_type'] . '; charset=' . $this->env['charset'];
+            }
+
             // Loop headers to send
             if ($this->env['headers']) {
                 foreach ($this->env['headers'] as $name => $value) {
@@ -314,17 +311,6 @@ class Output extends Registry
             }
         }
         return $this;
-    }
-
-    /**
-     * Send
-     */
-    public function send()
-    {
-        $this->sendHeader();
-        $_body = $this->env['body'];
-        $this->env['body'] = '';
-        return $_body;
     }
 
     /**

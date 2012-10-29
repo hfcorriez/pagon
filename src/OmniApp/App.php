@@ -514,7 +514,7 @@ class App
             'engine' => $engine,
             'dir'    => $this->config->views
         ));
-        $this->output->write($view);
+        echo $view;
     }
 
     /**
@@ -602,8 +602,13 @@ class App
         // Send start
         $this->emitter->emit('start');
 
+        // Send headers
+        if (!$this->_cli) {
+            $this->output->sendHeader();
+        }
+
         // Send
-        echo $this->output->send();
+        echo $this->output->body();
 
         // Send end
         $this->emitter->emit('end');
@@ -626,7 +631,7 @@ class App
             if (!$this->route->run('error', array($runner))) {
                 echo 'Error occurred';
             }
-            $this->output->status(500)->body(ob_get_clean());
+            $this->output(500, ob_get_clean());
         }
     }
 
@@ -645,7 +650,7 @@ class App
             if (!$this->route->run('404', array($runner))) {
                 echo 'Path not found';
             }
-            $this->output->status(404)->body(ob_get_clean());
+            $this->output(404, ob_get_clean());
         }
     }
 
@@ -664,8 +669,23 @@ class App
             if (!$this->route->run('crash', array($runner))) {
                 echo 'App is down';
             }
-            $this->output->status(500)->body(ob_get_clean());
+            $this->output(500, ob_get_clean());
         }
+    }
+
+    /**
+     * Output the response
+     *
+     * @param int    $status
+     * @param string $body
+     */
+    public function output($status, $body)
+    {
+        $this->output->status($status)->body($body);
+        if (!$this->_cli) {
+            $this->output->sendHeader();
+        }
+        echo $this->output->body();
     }
 
     /**
@@ -812,7 +832,6 @@ class App
             && in_array($error['type'], array(E_PARSE, E_ERROR, E_USER_ERROR, E_COMPILE_ERROR))
         ) {
             $this->crash();
-            echo $this->output->send();
         }
     }
 }
