@@ -50,20 +50,24 @@ class View
      */
     public function __construct($path, $data = array(), $opt = array())
     {
-        // Set file path
-        if ($path{0} == '/') {
-            $this->path = $path;
-        } else {
-            $this->path = $this->dir . '/' . strtolower(ltrim($path, '/'));
-        }
-
-        if (isset($opt['engine'])) $this->engine = $opt['engine'];
+        // Set dir for the view
         if (isset($opt['dir'])) $this->dir = $opt['dir'];
+
+        // Set path
+        $this->path = $this->dir . ($path{0} == '/' ? '' : '/') . $path;
 
         // If file exists?
         if (!is_file($this->path)) {
-            throw new \Exception('Template file is not exist: ' . $this->path);
+            // Set file path
+            if ($path{0} == '/' && is_file($path)) {
+                $this->path = $path;
+            } else {
+                throw new \Exception('Template file is not exist: ' . $this->path);
+            }
         }
+
+        // Set engine for the view
+        if (isset($opt['engine'])) $this->engine = $opt['engine'];
 
         // Set data
         $this->data = $data;
