@@ -45,7 +45,7 @@ class Input extends Registry
      */
     public function protocol()
     {
-        return $this->env('SERVER_PROTOCOL');
+        return $this->env['SERVER_PROTOCOL'];
     }
 
     /**
@@ -56,7 +56,9 @@ class Input extends Registry
      */
     public function path()
     {
-        if (!isset($this->env['path'])) $this->env['path'] = parse_url($this->env('REQUEST_URI'), PHP_URL_PATH);
+        if (!isset($this->env['path'])) {
+            $this->env['path'] = parse_url($this->env['REQUEST_URI'], PHP_URL_PATH);
+        }
 
         return $this->env['path'];
     }
@@ -153,7 +155,7 @@ class Input extends Registry
      */
     public function method()
     {
-        return $this->env('REQUEST_METHOD');
+        return $this->env['REQUEST_METHOD'];
     }
 
     /**
@@ -380,7 +382,7 @@ class Input extends Registry
             return $ip;
         }
 
-        return $this->env('REMOTE_ADDR');
+        return $this->env['REMOTE_ADDR'];
     }
 
     /**
@@ -410,7 +412,7 @@ class Input extends Registry
 
             return $host;
         }
-        return $this->env('SERVER_NAME');
+        return $this->env['SERVER_NAME'];
     }
 
     /**
@@ -660,7 +662,7 @@ class Input extends Registry
      */
     public function pass()
     {
-        $this->app->cleanBuffer();
+        ob_get_level() && ob_clean();
         throw new Pass();
     }
 
