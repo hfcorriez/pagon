@@ -9,6 +9,11 @@ use OmniApp\Exception\Stop;
 class Output
 {
     /**
+     * @var array Local variables
+     */
+    public $locals = array();
+
+    /**
      * @var App App
      */
     public $app;
@@ -26,9 +31,11 @@ class Output
         $this->app = $app;
 
         $this->env = new Config(array(
-            'status'       => 0,
-            'body'         => '',
+            'status' => 0,
+            'body'   => '',
         ));
+
+        $this->locals = &$this->app->locals;
     }
 
     /**

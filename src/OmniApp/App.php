@@ -36,6 +36,11 @@ class App
     public $config;
 
     /**
+     * @var array Local variables
+     */
+    public $locals = array();
+
+    /**
      * @var Emitter
      */
     public $emitter;
@@ -135,6 +140,9 @@ class App
 
         // Config
         $this->config = $config instanceof Config ? $config : new Config($config);
+
+        // Set default locals
+        $this->locals['config'] = &$this->config;
 
         // Fire init
         $this->emitter->emit('init');
@@ -239,13 +247,14 @@ class App
      * # Manuel call must before App::init
      *
      * @param string|\Closure $mode
+     * @return callable|null|string
      */
     public function mode($mode = null)
     {
         if ($mode) {
             $this->mode = $mode;
         }
-        return $this->mode;
+        return $this->mode && is_string($this->mode) ? $this->mode : null;
     }
 
     /**
@@ -510,7 +519,7 @@ class App
                 $engine = $this->engines[$ext];
             }
         }
-        $view = new View($path, $data, array(
+        $view = new View($path, $data + $this->locals, array(
             'engine' => $engine,
             'dir'    => $this->config->views
         ));

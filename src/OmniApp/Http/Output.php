@@ -65,6 +65,11 @@ class Output extends Registry
     );
 
     /**
+     * @var array Local variables
+     */
+    public $locals = array();
+
+    /**
      * @var App
      */
     public $app;
@@ -90,6 +95,8 @@ class Output extends Registry
             'headers'      => array('CONTENT-TYPE' => 'text/html; charset=utf-8'),
             'cookies'      => array(),
         ));
+
+        $this->locals = &$this->app->locals;
     }
 
     /**
