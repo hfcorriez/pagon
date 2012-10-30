@@ -36,14 +36,14 @@ class App
     public $config;
 
     /**
-     * @var array Local variables
-     */
-    public $locals = array();
-
-    /**
      * @var Emitter
      */
     public $emitter;
+
+    /**
+     * @var array Local variables
+     */
+    public $locals = array();
 
     /**
      * @var Route
@@ -469,6 +469,7 @@ class App
     public function engine($name, $engine = null)
     {
         if ($engine) {
+            // Set engine
             $this->engines[$name] = $engine;
         }
         return isset($this->engines[$name]) ? $this->engines[$name] : null;
@@ -817,8 +818,9 @@ class App
         $this->emitter->emit('shutdown');
         if (!$this->_run) return;
 
-        if (!$this->config->debug && ($error = error_get_last())
-            && in_array($error['type'], array(E_PARSE, E_ERROR, E_USER_ERROR, E_COMPILE_ERROR))
+        if (!$this->config->debug
+            && ($error = error_get_last())
+            && in_array($error['type'], array(E_PARSE, E_ERROR, E_USER_ERROR, E_COMPILE_ERROR, E_CORE_ERROR))
         ) {
             try {
                 $this->crash();
