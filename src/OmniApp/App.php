@@ -46,11 +46,6 @@ class App
     public $emitter;
 
     /**
-     * @var string View engine
-     */
-    protected $engines;
-
-    /**
      * @var Route
      */
     protected $route;
@@ -61,14 +56,14 @@ class App
     protected $mode;
 
     /**
+     * @var string View engine
+     */
+    protected $engines = array();
+
+    /**
      * @var Middleware[]
      */
     protected $middleware = array();
-
-    /**
-     * @var float App start time
-     */
-    private $start_time = null;
 
     /**
      * @var bool Is cli?
@@ -94,9 +89,6 @@ class App
     public function __construct($config = array())
     {
         $app = & $this;
-
-        // Record start time
-        $this->start_time = microtime(true);
 
         // Is cli
         $this->_cli = PHP_SAPI == 'cli';
@@ -166,26 +158,6 @@ class App
     public function isWin()
     {
         return $this->_win;
-    }
-
-    /**
-     * Get app start time
-     *
-     * @return int
-     */
-    public function startTime()
-    {
-        return $this->start_time;
-    }
-
-    /**
-     * Get run time
-     *
-     * @return string
-     */
-    public function runTime()
-    {
-        return number_format(microtime(true) - $this->startTime(), 6);
     }
 
     /**
