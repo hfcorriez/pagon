@@ -482,15 +482,22 @@ class App
      */
     public function render($path, $data = array())
     {
+        // Get ext
         $ext = pathinfo($path, PATHINFO_EXTENSION);
         $engine = false;
+
+        // If ext then check engine with ext
         if ($ext && isset($this->engines[$ext])) {
+            // If engine exists
             if (is_string($this->engines[$ext]) && class_exists($this->engines[$ext])) {
+                // Create new engine
                 $this->engines[$ext] = $engine = new $this->engines[$ext]();
             } else {
+                // Get engine from exists engines
                 $engine = $this->engines[$ext];
             }
         }
+        // Create view
         $view = new View($path, $data + $this->locals, array(
             'engine' => $engine,
             'dir'    => $this->config->views
