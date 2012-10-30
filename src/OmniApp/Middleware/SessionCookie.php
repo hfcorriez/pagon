@@ -12,15 +12,15 @@ class SessionCookie extends Middleware
             'name' => 'sessions',
         );
 
-        $req = $this->request->env();
-        if ($_sessions = $this->request->cookie($option['name'])) {
+        $req = $this->input->env();
+        if ($_sessions = $this->input->cookie($option['name'])) {
             $_sessions = $req['sessions'] = (array)$_sessions;
         }
 
         $this->next();
 
         if ($req['sessions'] != $_sessions) {
-            $this->response->cookie($option['name'], $req['sessions'], array('sign' => true));
+            $this->output->cookie($option['name'], $req['sessions'], array('sign' => true));
             $req['sessions'] = array();
         }
     }

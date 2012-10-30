@@ -14,12 +14,12 @@ class Middleware
     /**
      * @var Http\Input|Cli\Input
      */
-    protected $request;
+    protected $input;
 
     /**
      * @var Http\Output|Cli\Output
      */
-    protected $response;
+    protected $output;
 
     /**
      * @var \Closure middleware
@@ -43,7 +43,7 @@ class Middleware
     {
         if ($this->_origin) {
             $self = $this;
-            call_user_func_array($this->_origin, array($this->request, $this->response, function () use ($self) {
+            call_user_func_array($this->_origin, array($this->input, $this->output, function () use ($self) {
                 $self->getNext()->call();
             }));
             return true;
@@ -68,8 +68,8 @@ class Middleware
      */
     final public function setApp(App $app)
     {
-        $this->request = $app->input;
-        $this->response = $app->output;
+        $this->input = $app->input;
+        $this->output = $app->output;
     }
 
 

@@ -818,21 +818,23 @@ class App
         $this->emitter->emit('shutdown');
         if (!$this->_run) return;
 
-        if (!$this->config->debug
-            && ($error = error_get_last())
+        if (($error = error_get_last())
             && in_array($error['type'], array(E_PARSE, E_ERROR, E_USER_ERROR, E_COMPILE_ERROR, E_CORE_ERROR))
         ) {
-            try {
-                $this->crash();
-            } catch (Exception\Stop $e) {
-                // Send headers
-                if (!$this->_cli) {
-                    $this->output->sendHeader();
-                }
+            if (!$this->config->debug) {
+                try {
+                    $this->crash();
+                } catch (Exception\Stop $e) {
+                    // Send headers
+                    if (!$this->_cli) {
+                        $this->output->sendHeader();
+                    }
 
-                // Send
-                echo $this->output->body();
+                    // Send
+                    echo $this->output->body();
+                }
             }
+            $this->emitter->emit('crash', $error);
         }
     }
 }
