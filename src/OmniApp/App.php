@@ -11,6 +11,9 @@ namespace OmniApp;
 
 const VERSION = '0.3';
 
+// Depend Emitter
+require __DIR__ . '/ProEmitter.php';
+
 /*********************
  * core app
  ********************/
@@ -18,7 +21,7 @@ const VERSION = '0.3';
 /**
  * App Class
  */
-class App
+class App extends ProEmitter
 {
     /**
      * @var Http\Input|Cli\Input
@@ -34,11 +37,6 @@ class App
      * @var Config
      */
     public $config;
-
-    /**
-     * @var ProEmitter
-     */
-    public $emitter;
 
     /**
      * @var array Local variables
@@ -111,9 +109,6 @@ class App
             $this->output = new Cli\Output($app);
         }
 
-        // Init emitter
-        $this->emitter = new ProEmitter();
-
         // Init Route
         $this->route = new Route($app, $this->input->pathInfo());
 
@@ -122,7 +117,7 @@ class App
         mb_internal_encoding('UTF-8');
 
         // Default things to do before run
-        $this->emitter->on('run', function () use ($app) {
+        $this->on('run', function () use ($app) {
             // configure timezone
             if ($_timezone = $app->config->get('timezone')) date_default_timezone_set($_timezone);
 
@@ -137,7 +132,7 @@ class App
         $this->locals['config'] = & $this->config;
 
         // Fire init
-        $this->emitter->emit('init');
+        $this->emit('init');
     }
 
     /**
@@ -240,11 +235,11 @@ class App
         if ($closure === null) {
             // Allow set mode get method when mode is closure
             if ($mode instanceof \Closure) {
-                $this->emitter->on('mode', $mode);
+                $this->on('mode', $mode);
             }
         } else {
             // Set trigger for the mode
-            $this->emitter->on('mode:' . $mode, $closure);
+            $this->on('mode:' . $mode, $closure);
             // Don not change the current mode
         }
     }
@@ -532,13 +527,13 @@ class App
         }
 
         // Trigger default mode
-        $this->emitter->emit('mode', $this->mode);
+        $this->emit('mode', $this->mode);
 
         // If trigger exists, trigger closure
-        $this->emitter->emit('mode:' . $this->mode);
+        $this->emit('mode:' . $this->mode);
 
         // run
-        $this->emitter->emit('run');
+        $this->emit('run');
 
         $this->_run = true;
 
@@ -586,13 +581,13 @@ class App
                 } catch (Exception\Stop $e) {
                 }
             }
-            $this->emitter->emit('error');
+            $this->emit('error');
         }
 
         $this->_run = false;
 
         // Send start
-        $this->emitter->emit('start');
+        $this->emit('start');
 
         // Send headers
         if (!$this->_cli) {
@@ -603,7 +598,7 @@ class App
         echo $this->output->body();
 
         // Send end
-        $this->emitter->emit('end');
+        $this->emit('end');
 
         if ($_error) $this->restoreErrorHandler();
     }
@@ -815,7 +810,7 @@ class App
      */
     public function __shutdown()
     {
-        $this->emitter->emit('shutdown');
+        $this->emit('shutdown');
         if (!$this->_run) return;
 
         if (($error = error_get_last())
@@ -834,7 +829,7 @@ class App
                     echo $this->output->body();
                 }
             }
-            $this->emitter->emit('crash', $error);
+            $this->emit('crash', $error);
         }
     }
 }
