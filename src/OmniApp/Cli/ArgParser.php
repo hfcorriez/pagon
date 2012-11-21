@@ -17,10 +17,13 @@ class ArgParser
     protected $argv;
 
     // Executed runner
-    protected $prog;
+    protected $program;
 
     // Error message
     protected $error;
+
+    // Usage
+    protected $usage;
 
     /**
      *
@@ -32,11 +35,11 @@ class ArgParser
      * @var array Default options
      */
     protected static $default_options = array(
-        'type'     => false,
-        'args'     => array(),
-        'enum'     => array(),
-        'help'     => null,
-        'default'  => null,
+        'type'    => false,
+        'args'    => array(),
+        'enum'    => array(),
+        'help'    => null,
+        'default' => null,
     );
 
     const ERROR_FEW_ARGS = 1;
@@ -55,14 +58,16 @@ class ArgParser
     );
 
     /**
-     * @param array $argv
+     * @param array  $argv
+     * @param string $usage
      */
-    public function __construct($argv = array())
+    public function __construct($argv = array(), $usage = null)
     {
         if (!$argv) $argv = $_SERVER['argv'];
 
-        $this->prog = array_shift($argv);
+        $this->program = array_shift($argv);
         $this->argv = array_values($argv);
+        $this->usage = $usage;
     }
 
     /**
@@ -250,11 +255,16 @@ class ArgParser
     /**
      * Get usage
      *
+     * @param string $usage
      * @return string
      */
-    public function usage()
+    public function usage($usage = null)
     {
-        $chunks = array('usage: ' . $this->prog);
+        if ($usage) $this->usage = $usage;
+
+        if ($this->usage) return $this->usage;
+
+        $chunks = array('usage: ' . $this->program);
 
         foreach ($this->options as $param => $opt) {
             if (!in_array($param, $this->positions)) {
@@ -266,9 +276,9 @@ class ArgParser
             $chunks[] = '<' . $param . '>';
         }
 
-        $usage = join(' ', $chunks) . PHP_EOL;
+        $this->usage = join(' ', $chunks) . PHP_EOL;
 
-        return $usage;
+        return $this->usage;
     }
 
     /**
@@ -293,16 +303,16 @@ class ArgParser
             $positional[$param] = $this->options[$param]['help'];
 
             if ($enums = $this->options[$param]['enum']) {
-                $blocks[] = self::buildBlock("argument <$param> enum:", $enums);
+                $blocks[] = self::buildHelpBlock("argument <$param> enum:", $enums);
             }
         }
 
         if ($positional) {
-            array_unshift($blocks, self::buildBlock('positional arguments:', $positional));
+            array_unshift($blocks, self::buildHelpBlock('positional arguments:', $positional));
         }
 
         if ($optionals) {
-            $blocks[] = self::buildBlock('positional arguments:', $optionals);
+            $blocks[] = self::buildHelpBlock('positional arguments:', $optionals);
         }
 
         return $this->usage() . PHP_EOL . join(PHP_EOL . PHP_EOL, $blocks) . PHP_EOL;
@@ -362,7 +372,7 @@ class ArgParser
      * @param $args
      * @return string
      */
-    protected static function buildBlock($title, $args)
+    protected static function buildHelpBlock($title, $args)
     {
         $block = $title;
         foreach ($args as $arg => $help) {
