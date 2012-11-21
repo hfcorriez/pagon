@@ -6,7 +6,7 @@ use OmniApp\App;
 use OmniApp\Config;
 use OmniApp\Exception\Stop;
 
-class Output
+class Output extends \OmniApp\ProEmitter
 {
     /**
      * @var array Local variables
@@ -35,7 +35,7 @@ class Output
             'body'   => '',
         ));
 
-        $this->locals = &$this->app->locals;
+        $this->locals = & $this->app->locals;
     }
 
     /**

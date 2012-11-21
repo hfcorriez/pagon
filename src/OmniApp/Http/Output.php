@@ -3,12 +3,11 @@
 namespace OmniApp\Http;
 
 use OmniApp\Data\MimeType;
-use OmniApp\Registry;
 use OmniApp\Exception\Stop;
 use OmniApp\Config;
 use OmniApp\App;
 
-class Output extends Registry
+class Output extends \OmniApp\ProEmitter
 {
     public static $messages = array(
         // Informational 1xx

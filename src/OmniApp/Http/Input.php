@@ -3,12 +3,11 @@
 namespace OmniApp\Http;
 
 use OmniApp\Data\MimeType;
-use OmniApp\Registry;
 use OmniApp\Exception\Pass;
 use OmniApp\App;
 use OmniApp\Config;
 
-class Input extends Registry
+class Input extends \OmniApp\ProEmitter
 {
     /**
      * @var array Route params
@@ -633,13 +632,14 @@ class Input extends Registry
      * Get session
      *
      * @param string $key
-     * @param mixed  $default
+     * @param mixed  $value
      * @return mixed
      */
-    public function session($key = null, $default = null)
+    public function session($key = null, $value = null)
     {
         if ($key === null) return $this->env['sessions'];
-        return isset($this->env['sessions'][$key]) ? $this->env['sessions'][$key] : $default;
+
+        return isset($this->env['sessions'][$key]) ? $this->env['sessions'][$key] : ($this->env['sessions'][$key] = $value);
     }
 
     /**

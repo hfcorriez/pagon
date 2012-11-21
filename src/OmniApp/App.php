@@ -36,7 +36,7 @@ class App
     public $config;
 
     /**
-     * @var Emitter
+     * @var ProEmitter
      */
     public $emitter;
 
@@ -112,7 +112,7 @@ class App
         }
 
         // Init emitter
-        $this->emitter = new Emitter();
+        $this->emitter = new ProEmitter();
 
         // Init Route
         $this->route = new Route($app, $this->input->pathInfo());
