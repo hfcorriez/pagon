@@ -36,7 +36,9 @@ class App extends ProEmitter
     /**
      * @var Config
      */
-    public $config;
+    public $config = array(
+        'route' => array()
+    );
 
     /**
      * @var array Local variables
@@ -126,7 +128,7 @@ class App extends ProEmitter
         });
 
         // Config
-        $this->config = $config instanceof Config ? $config : new Config($config);
+        $this->config = $config instanceof Config ? $config : new Config($config + $this->config);
 
         // Set default locals
         $this->locals['config'] = & $this->config;
