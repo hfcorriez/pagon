@@ -23,12 +23,13 @@ OmniApp is expressjs-like framework of PHP
 	It's faster than better design frameworks, such as slim, lavarel, kohana, and a  little slower than colaphp and micromvc
 
 
-## Usage
+## Examples
 
 ### Hello world
 
-```
+```php
 $app = new App();
+
 $app->get('/', function($req, $res){
    $res->end('Hello world');
 });
@@ -36,23 +37,43 @@ $app->get('/', function($req, $res){
 
 ### Config
 
-```
-$config = include('default_config.php');
-$app = new App($config);
+```php
+$default = include('config.php');
 
-$app->config('cookie.secret', 'abc');
+$app = new App($default);
+
+$app->set('cookie.secret', 'abc');
 ```
 
-### Configure mode
+### Configure
 
-```
+```php
 $app = new App();
-$app->mode('development', function(){
+$app->configure('development', function(){
     $app->config('debug', true);
 });
 ```
 
-### Api
+### Middleware
+
+```php
+$app->add(new Middleware\SessionCookie());
+$app->add(new Middleware\MethodOverride());
+```
+
+### Event
+
+```php
+$app->on('run', function(){
+	session_start();
+});
+
+$app->on('shutdown', function(){
+	session_destroy();
+});
+```
+
+### Usage
 
 	wait for release...
 
