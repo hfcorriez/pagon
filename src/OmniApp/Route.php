@@ -146,7 +146,7 @@ class Route extends Middleware
      *
      * @param string $route
      * @param array  $args
-     * @return void
+     * @return bool
      */
     public function run($route, $args = array())
     {
