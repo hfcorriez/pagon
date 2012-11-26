@@ -63,7 +63,12 @@ class App extends ProEmitter
     /**
      * @var Middleware[]
      */
-    protected $middleware = array();
+    protected $middlewares = array();
+
+    /**
+     * @var Module[]
+     */
+    protected $modules = array();
 
     /**
      * @var bool Is cli?
@@ -251,23 +256,63 @@ class App extends ProEmitter
      *
      * @param Middleware|\Closure|string $middleware
      * @throws \Exception
+     * @return void
      */
     public function add($middleware)
     {
-        // Check and construct Middleware
-        if (is_string($middleware) && is_subclass_of($middleware, Middleware::_CLASS_)) {
-            // Class string support
-            $middleware = new $middleware();
-        } elseif ($middleware instanceof \Closure) {
-            // Closure support
-            $middleware = new Middleware($middleware);
-        } elseif (!$middleware instanceof Middleware) {
+        if (is_string($middleware)) {
+            if ($middleware{0} !== '\\') {
+                $middleware = __NAMESPACE__ . '\Middleware\\' . $middleware;
+            }
+
+            if (is_subclass_of($middleware, Middleware::_CLASS_)) {
+                $middleware = new $middleware();
+            }
+        }
+
+        // Check middleware
+        if (!$middleware instanceof Middleware) {
             // Not base middleware
             throw new \Exception("Bad middleware can not be added");
         }
 
         // Add to the end
-        $this->middleware[] = $middleware;
+        $this->middlewares[] = $middleware;
+    }
+
+    /**
+     * Add modules
+     *
+     * @param string|\StdClass $module
+     * @throws \Exception
+     * @return void
+     */
+    public function load($module)
+    {
+        if (is_string($module)) {
+            if ($module{0} !== '\\') {
+                $module = __NAMESPACE__ . '\Module\\' . $module;
+            }
+
+            if (is_subclass_of($module, Module::_CLASS_)) {
+                $module = new $module();
+            } elseif (is_subclass_of($module . '\\Loader', Module::_CLASS_)) {
+                $module = $module . '\\Loader';
+                $module = new $module();
+            }
+        }
+
+        // Check module
+        if (!$module instanceof Module) {
+            // Not base module
+            throw new \Exception("Bad module can not be added");
+        }
+
+        // Load module
+        $module->load($this);
+
+        // Add to the end
+        $this->modules[] = $module;
     }
 
     /**
@@ -547,22 +592,22 @@ class App extends ProEmitter
         }
 
         // Check middleware list
-        if ($this->middleware) {
-            if (!in_array($this->route, $this->middleware)) {
-                $this->middleware[] = $this->route;
+        if ($this->middlewares) {
+            if (!in_array($this->route, $this->middlewares)) {
+                $this->middlewares[] = $this->route;
             }
             // Loop middleware
-            foreach ($this->middleware as $_i => $_m) {
+            foreach ($this->middlewares as $_i => $_m) {
                 // Set next middleware
-                if (isset($this->middleware[$_i + 1])) {
-                    $_m->setNext($this->middleware[$_i + 1]);
+                if (isset($this->middlewares[$_i + 1])) {
+                    $_m->setNext($this->middlewares[$_i + 1]);
                 }
                 // Set app
                 $_m->setApp($this);
             }
         } else {
             // Set middleware
-            $this->middleware[] = $this->route;
+            $this->middlewares[] = $this->route;
         }
 
         try {
@@ -570,7 +615,7 @@ class App extends ProEmitter
             if (!$_buffer_disabled = $this->config->disable_buffer) ob_start();
 
             // Request app call
-            $this->middleware[0]->call();
+            $this->middlewares[0]->call();
 
             // Write direct output to the head of buffer
             if (!$_buffer_disabled) $this->output->write(ob_get_clean());
@@ -748,8 +793,10 @@ class App extends ProEmitter
 
         // If with OmniApp path, force require
         if (substr($class, 0, strlen(__NAMESPACE__) + 1) == __NAMESPACE__ . '\\') {
-            require __DIR__ . '/' . str_replace('\\', '/', substr($class, 8)) . '.php';
-            return true;
+            if ($file = stream_resolve_include_path(__DIR__ . '/' . str_replace('\\', '/', substr($class, 8)) . '.php')) {
+                require $file;
+                return true;
+            }
         } else {
             // Set the 99 high order for default autoload
             $available_path = array(99 => $this->config->autoload);
