@@ -634,7 +634,7 @@ class App extends ProEmitter
         $this->_run = false;
 
         // Send start
-        $this->emit('start');
+        $this->emit('flush');
 
         // Send headers
         if (!$this->_cli) {

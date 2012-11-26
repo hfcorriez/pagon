@@ -34,17 +34,24 @@ class SessionCookie extends Middleware
 
         $req = $this->input->env();
         $req['sessions'] = $_SESSION;
+        // Check session through cookies header
         if ($_sessions = (array)$this->input->cookie($this->options['name'])) {
             $_SESSION = $_sessions;
         }
 
-        $this->next();
+        $_output = & $this->output;
+        $_options = & $this->options;
+        // Use event emitter to send cookies as session
+        $this->output->on('header', function () use ($_output, $_options, $_sessions) {
+            // Check if session if same with old sessions
+            if ($_SESSION != $_sessions) {
+                // Write cookie
+                $_output->cookie($_options['name'], $_SESSION, array('sign' => true));
+                session_destroy();
+            }
+        });
 
-        if ($_SESSION != $_sessions) {
-            $this->output->cookie($this->options['name'], $_SESSION, array('sign' => true));
-            $req['sessions'] = array();
-        }
-        session_destroy();
+        $this->next();
     }
 
     /*--------------------

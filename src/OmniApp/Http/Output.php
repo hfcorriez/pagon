@@ -95,7 +95,7 @@ class Output extends \OmniApp\ProEmitter
             'cookies'      => array(),
         ));
 
-        $this->locals = &$this->app->locals;
+        $this->locals = & $this->app->locals;
     }
 
     /**
@@ -266,6 +266,8 @@ class Output extends \OmniApp\ProEmitter
     {
         // Check headers
         if (headers_sent() === false) {
+            $this->emit('header');
+
             // Send header
             header(sprintf('HTTP/%s %s %s', $this->app->input->protocol(), $this->env['status'], $this->message()));
 

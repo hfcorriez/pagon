@@ -11,7 +11,7 @@ class PrettyException extends Middleware
         try {
             $self = & $this;
             // Register crash event
-            $this->input->app->emitter->on('crash', function ($error) use ($self) {
+            $this->input->app->on('crash', function ($error) use ($self) {
                 $self->render(new \ErrorException($error['message'], $error['type'], 0, $error['file'], $error['line']));
             });
             // Next middleware
