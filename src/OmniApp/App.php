@@ -268,6 +268,8 @@ class App extends ProEmitter
             if (is_subclass_of($middleware, Middleware::_CLASS_)) {
                 $middleware = new $middleware();
             }
+        } else if ($middleware instanceof \Closure) {
+            $middleware = Middleware::createWithClosure($middleware);
         }
 
         // Check middleware

@@ -8,11 +8,6 @@ class MethodOverride extends \OmniApp\Middleware
         'method' => '_METHOD'
     );
 
-    public function __construct($options = array())
-    {
-        $this->options = $options + $this->options;
-    }
-
     public function call()
     {
         $env = $this->input->env();

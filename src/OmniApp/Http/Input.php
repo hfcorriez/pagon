@@ -637,9 +637,13 @@ class Input extends \OmniApp\ProEmitter
      */
     public function session($key = null, $value = null)
     {
-        if ($key === null) return $this->env['sessions'];
+        if ($value !== null) {
+            return $this->env['sessions'][$key] = $value;
+        } elseif ($key !== null) {
+            return isset($this->env['sessions'][$key]) ? $this->env['sessions'][$key] : null;
+        }
 
-        return isset($this->env['sessions'][$key]) ? $this->env['sessions'][$key] : ($this->env['sessions'][$key] = $value);
+        return $this->env['sessions'];
     }
 
     /**

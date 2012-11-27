@@ -7,11 +7,6 @@ class Middleware
     const _CLASS_ = __CLASS__;
 
     /**
-     * @var Middleware
-     */
-    protected $next;
-
-    /**
      * @var Http\Input|Cli\Input
      */
     protected $input;
@@ -22,16 +17,26 @@ class Middleware
     protected $output;
 
     /**
-     * @var \Closure middleware
+     * @var array Default options
      */
-    private $_origin;
+    protected $options = array();
 
     /**
-     * @param callable $middleware
+     * @var Middleware
      */
-    public function __construct(\Closure $middleware = null)
+    private $_next;
+
+    /**
+     * @var \Closure middleware
+     */
+    private $_closure;
+
+    /**
+     * @param array $options
+     */
+    public function __construct(array $options = array())
     {
-        if ($middleware) $this->_origin = $middleware;
+        $this->options = $options + $this->options;
     }
 
     /**
@@ -41,14 +46,27 @@ class Middleware
      */
     public function call()
     {
-        if ($this->_origin) {
+        if ($this->_closure) {
             $self = $this;
-            call_user_func_array($this->_origin, array($this->input, $this->output, function () use ($self) {
+            call_user_func_array($this->_closure, array($this->input, $this->output, function () use ($self) {
                 $self->getNext()->call();
             }));
             return true;
         }
         return false;
+    }
+
+    /**
+     * Create with closure
+     *
+     * @param callable $closure
+     * @return Middleware
+     */
+    final static public function createWithClosure(\Closure $closure)
+    {
+        $middleware = new self();
+        $middleware->setClosure($closure);
+        return $middleware;
     }
 
     /**
@@ -58,7 +76,21 @@ class Middleware
      */
     final public function setNext(Middleware $middleware)
     {
-        $this->next = $middleware;
+        $this->_next = $middleware;
+    }
+
+    /**
+     * Only used to create closure middleware
+     *
+     * @param callable $closure
+     * @throws \BadMethodCallException
+     */
+    final public function setClosure(\Closure $closure)
+    {
+        if (get_called_class() !== __CLASS__) {
+            throw new \BadMethodCallException(__CLASS__ . '::' . __FUNCTION__ . ' only called when caller is the base Middleware');
+        }
+        $this->_closure = $closure;
     }
 
     /**
@@ -80,7 +112,7 @@ class Middleware
      */
     final public function getNext()
     {
-        return $this->next;
+        return $this->_next;
     }
 
     /**
@@ -88,6 +120,6 @@ class Middleware
      */
     final protected function next()
     {
-        $this->next->call();
+        $this->_next->call();
     }
 }

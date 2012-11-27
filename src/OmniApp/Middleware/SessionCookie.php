@@ -6,13 +6,13 @@ use OmniApp\Middleware;
 
 class SessionCookie extends Middleware
 {
-    protected $options = array();
+    protected $options = array(
+        'name' => 'sessions'
+    );
 
-    public function __construct($options = array())
+    public function __construct(array $options = array())
     {
-        $this->options = $options + array(
-            'name' => 'sessions',
-        );
+        parent::__construct($options);
 
         ini_set('session.use_cookies', 0);
         session_cache_limiter(false);
