@@ -375,13 +375,35 @@ class Input extends \OmniApp\ProEmitter
      */
     public function ip()
     {
-        if ($ip = $this->env('X_FORWARDED_FOR')) {
-            return $ip;
-        } elseif ($ip = $this->env('CLIENT_IP')) {
-            return $ip;
+        if ($ips = $this->proxy()) {
+            return $ips[0];
+        }
+        return $this->env['REMOTE_ADDR'];
+    }
+
+    /**
+     * Get forward ips
+     *
+     * @return array
+     */
+    public function proxy()
+    {
+        if ($ips = $this->env('HTTP_X_FORWARDED_FOR')) {
+            return strpos($ips, ', ') ? explode(', ', $ips) : array($ips);
         }
 
-        return $this->env['REMOTE_ADDR'];
+        return array();
+    }
+
+    /**
+     * Get sub domains array
+     *
+     * @return array
+     */
+    public function subDomain()
+    {
+        $parts = explode('.', $this->host());
+        return array_reverse(array_slice($parts, 0, -2));
     }
 
     /**
