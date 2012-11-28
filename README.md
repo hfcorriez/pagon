@@ -18,7 +18,7 @@ OmniApp is expressjs-like framework of PHP
 	
 	According to [PSR](https://github.com/php-fig/fig-standards) - PSR-0, PSR-1, PSR-2
 
-- Performence 
+- Performence
 
 	It's faster than better design frameworks, such as slim, lavarel, kohana, and a  little slower than colaphp and micromvc
 
@@ -50,15 +50,20 @@ $app->set('cookie.secret', 'abc');
 ```php
 $app = new App();
 $app->configure('development', function(){
-    $app->config('debug', true);
+    $app->set('debug', true);
 });
 ```
 
 ### Middleware
 
 ```php
-$app->add(new Middleware\SessionCookie());
-$app->add(new Middleware\MethodOverride());
+$app->add(new \OmniApp\Middleware\SessionCookie(array('name' => 'sessions')));
+$app->add(new \OmniApp\Middleware\MethodOverride());
+
+# Or
+
+$app->add('SessionCookie', array('name' => 'sessions'))
+$app->add('MethodOverride')
 ```
 
 ### Event

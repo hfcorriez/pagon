@@ -259,7 +259,7 @@ class App extends BaseEmitter
      * @throws \Exception
      * @return void
      */
-    public function add($middleware)
+    public function add($middleware, $options = array())
     {
         if (is_string($middleware)) {
             if ($middleware{0} !== '\\') {
@@ -267,7 +267,7 @@ class App extends BaseEmitter
             }
 
             if (is_subclass_of($middleware, Middleware::_CLASS_)) {
-                $middleware = new $middleware();
+                $middleware = new $middleware($options);
             }
         } else if ($middleware instanceof \Closure) {
             $middleware = Middleware::createWithClosure($middleware);
