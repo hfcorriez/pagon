@@ -633,8 +633,7 @@ class Input extends \OmniApp\ProEmitter
                 if ($value && strpos($value, 's:') === 0 && $_option['secret']) {
                     $_pos = strrpos($value, '.');
                     $_data = substr($value, 2, $_pos - 2);
-                    $_hash = substr($value, $_pos + 1);
-                    if ($_hash === hash_hmac('sha1', $_data, $_option['secret'])) {
+                    if (substr($value, $_pos + 1) === hash_hmac('sha1', $_data, $_option['secret'])) {
                         $value = $_data;
                     } else {
                         $value = false;
