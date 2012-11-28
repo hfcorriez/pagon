@@ -7,7 +7,7 @@ use OmniApp\Exception\Stop;
 use OmniApp\Config;
 use OmniApp\App;
 
-class Output extends \OmniApp\ProEmitter
+class Output extends \OmniApp\BaseEmitter
 {
     public static $messages = array(
         // Informational 1xx

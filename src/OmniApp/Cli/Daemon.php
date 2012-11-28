@@ -4,7 +4,7 @@ namespace OmniApp\Cli;
 
 use OmniApp\Exception\Stop;
 
-class Daemon extends \OmniApp\Controller
+class Daemon extends \OmniApp\Route
 {
     protected $sleep_time = 0;
 

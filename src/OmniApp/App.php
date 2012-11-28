@@ -12,7 +12,7 @@ namespace OmniApp;
 const VERSION = '0.3';
 
 // Depend Emitter
-require __DIR__ . '/ProEmitter.php';
+require __DIR__ . '/BaseEmitter.php';
 
 /*********************
  * core app
@@ -21,7 +21,7 @@ require __DIR__ . '/ProEmitter.php';
 /**
  * App Class
  */
-class App extends ProEmitter
+class App extends BaseEmitter
 {
     /**
      * @var Http\Input|Cli\Input
@@ -46,9 +46,9 @@ class App extends ProEmitter
     public $locals = array();
 
     /**
-     * @var Route
+     * @var Router
      */
-    protected $route;
+    protected $router;
 
     /**
      * @var string Mode
@@ -117,7 +117,8 @@ class App extends ProEmitter
         }
 
         // Init Route
-        $this->route = new Route($app, $this->input->pathInfo());
+        $this->router = new Router(array('path' => $this->input->pathInfo()));
+        $this->router->setApp($this);
 
         // Force use UTF-8 encoding
         iconv_set_encoding("internal_encoding", "UTF-8");
@@ -335,9 +336,9 @@ class App extends ProEmitter
         if ($this->_cli || !$this->input->isGet()) return;
 
         if ($more !== null) {
-            call_user_func_array(array($this->route, 'on'), func_get_args());
+            call_user_func_array(array($this->router, 'on'), func_get_args());
         } else {
-            $this->route->on($path, $runner);
+            $this->router->on($path, $runner);
         }
     }
 
@@ -353,9 +354,9 @@ class App extends ProEmitter
         if ($this->_cli || !$this->input->isPost()) return;
 
         if ($more !== null) {
-            call_user_func_array(array($this->route, 'on'), func_get_args());
+            call_user_func_array(array($this->router, 'on'), func_get_args());
         } else {
-            $this->route->on($path, $runner);
+            $this->router->on($path, $runner);
         }
     }
 
@@ -371,9 +372,9 @@ class App extends ProEmitter
         if ($this->_cli || !$this->input->isPut()) return;
 
         if ($more !== null) {
-            call_user_func_array(array($this->route, 'on'), func_get_args());
+            call_user_func_array(array($this->router, 'on'), func_get_args());
         } else {
-            $this->route->on($path, $runner);
+            $this->router->on($path, $runner);
         }
     }
 
@@ -389,9 +390,9 @@ class App extends ProEmitter
         if ($this->_cli || !$this->input->isDelete()) return;
 
         if ($more !== null) {
-            call_user_func_array(array($this->route, 'on'), func_get_args());
+            call_user_func_array(array($this->router, 'on'), func_get_args());
         } else {
-            $this->route->on($path, $runner);
+            $this->router->on($path, $runner);
         }
     }
 
@@ -407,9 +408,9 @@ class App extends ProEmitter
         if ($this->_cli || !$this->input->isOptions()) return;
 
         if ($more !== null) {
-            call_user_func_array(array($this->route, 'on'), func_get_args());
+            call_user_func_array(array($this->router, 'on'), func_get_args());
         } else {
-            $this->route->on($path, $runner);
+            $this->router->on($path, $runner);
         }
     }
 
@@ -425,9 +426,9 @@ class App extends ProEmitter
         if ($this->_cli || !$this->input->isHead()) return;
 
         if ($more !== null) {
-            call_user_func_array(array($this->route, 'on'), func_get_args());
+            call_user_func_array(array($this->router, 'on'), func_get_args());
         } else {
-            $this->route->on($path, $runner);
+            $this->router->on($path, $runner);
         }
     }
 
@@ -450,12 +451,12 @@ class App extends ProEmitter
                     $_arg .= '::' . strtolower($this->input->method());
                 }
             }
-            call_user_func_array(array($this->route, 'on'), $_args);
+            call_user_func_array(array($this->router, 'on'), $_args);
         } else {
             if (is_string($runner) && !strpos($runner, '::')) {
                 $runner .= '::' . strtolower($this->input->method());
             }
-            $this->route->on($path, $runner);
+            $this->router->on($path, $runner);
         }
     }
 
@@ -477,30 +478,10 @@ class App extends ProEmitter
     public function map($path, $runner, $more = null)
     {
         if ($more !== null) {
-            call_user_func_array(array($this->route, 'on'), func_get_args());
+            call_user_func_array(array($this->router, 'on'), func_get_args());
         } else {
-            $this->route->on($path, $runner);
+            $this->router->on($path, $runner);
         }
-    }
-
-    /**
-     * Get or set route
-     *
-     * @param null $path
-     * @param null $runner
-     * @param null $more
-     * @return Route
-     */
-    public function route($path = null, $runner = null, $more = null)
-    {
-        if ($path === null) return $this->route;
-        if ($runner === null) return $this->route->get($path);
-        if ($more !== null) {
-            call_user_func_array(array($this->route, 'on'), func_get_args());
-        } else {
-            $this->route->on($path, $runner);
-        }
-        return;
     }
 
     /**
@@ -595,8 +576,8 @@ class App extends ProEmitter
 
         // Check middleware list
         if ($this->middlewares) {
-            if (!in_array($this->route, $this->middlewares)) {
-                $this->middlewares[] = $this->route;
+            if (!in_array($this->router, $this->middlewares)) {
+                $this->middlewares[] = $this->router;
             }
             // Loop middleware
             foreach ($this->middlewares as $_i => $_m) {
@@ -609,7 +590,7 @@ class App extends ProEmitter
             }
         } else {
             // Set middleware
-            $this->middlewares[] = $this->route;
+            $this->middlewares[] = $this->router;
         }
 
         try {
@@ -660,11 +641,11 @@ class App extends ProEmitter
     public function error($runner = null)
     {
         if (is_callable($runner) && !$runner instanceof \Exception) {
-            $this->route->set('error', $runner);
+            $this->router->set('error', $runner);
         } else {
             ob_get_level() && ob_clean();
             ob_start();
-            if (!$this->route->run('error', array($runner))) {
+            if (!$this->router->run('error', array($runner))) {
                 echo 'Error occurred';
             }
             $this->output(500, ob_get_clean());
@@ -679,11 +660,11 @@ class App extends ProEmitter
     public function notFound($runner = null)
     {
         if (is_callable($runner) && !$runner instanceof \Exception) {
-            $this->route->set('404', $runner);
+            $this->router->set('404', $runner);
         } else {
             ob_get_level() && ob_clean();
             ob_start();
-            if (!$this->route->run('404', array($runner))) {
+            if (!$this->router->run('404', array($runner))) {
                 echo 'Path not found';
             }
             $this->output(404, ob_get_clean());
@@ -698,11 +679,11 @@ class App extends ProEmitter
     public function crash($runner = null)
     {
         if (is_callable($runner) && !$runner instanceof \Exception) {
-            $this->route->set('crash', $runner);
+            $this->router->set('crash', $runner);
         } else {
             ob_get_level() && ob_clean();
             ob_start();
-            if (!$this->route->run('crash', array($runner))) {
+            if (!$this->router->run('crash', array($runner))) {
                 echo 'App is down';
             }
             $this->output(500, ob_get_clean());

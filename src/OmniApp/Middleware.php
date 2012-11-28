@@ -17,19 +17,24 @@ class Middleware
     protected $output;
 
     /**
+     * @var App
+     */
+    protected $app;
+
+    /**
      * @var array Default options
      */
     protected $options = array();
 
     /**
+     * @var \Closure middleware
+     */
+    protected $_closure;
+
+    /**
      * @var Middleware
      */
     private $_next;
-
-    /**
-     * @var \Closure middleware
-     */
-    private $_closure;
 
     /**
      * @param array $options
@@ -42,6 +47,7 @@ class Middleware
     /**
      *  Default call
      *
+     * @throws \Exception
      * @return bool
      */
     public function call()
@@ -53,7 +59,7 @@ class Middleware
             }));
             return true;
         }
-        return false;
+        throw new \Exception(get_called_class() . ' middleware must implements "call" method');
     }
 
     /**
@@ -100,6 +106,7 @@ class Middleware
      */
     final public function setApp(App $app)
     {
+        $this->app = $app;
         $this->input = $app->input;
         $this->output = $app->output;
     }
