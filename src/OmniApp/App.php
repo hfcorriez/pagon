@@ -322,14 +322,14 @@ class App extends BaseEmitter
      * Route get method
      *
      * @param string          $path
-     * @param \Closure|string $runner
+     * @param \Closure|string $route
      * @param \Closure|string $more
      * @return mixed
      */
-    public function get($path, $runner = null, $more = null)
+    public function get($path, $route = null, $more = null)
     {
         // Get config for use
-        if ($runner === null) {
+        if ($route === null) {
             return $this->config->get($path);
         }
 
@@ -338,7 +338,7 @@ class App extends BaseEmitter
         if ($more !== null) {
             call_user_func_array(array($this->router, 'on'), func_get_args());
         } else {
-            $this->router->on($path, $runner);
+            $this->router->on($path, $route);
         }
     }
 
@@ -346,17 +346,17 @@ class App extends BaseEmitter
      * Route post method
      *
      * @param string          $path
-     * @param \Closure|string $runner
+     * @param \Closure|string $route
      * @param \Closure|string $more
      */
-    public function post($path, $runner, $more = null)
+    public function post($path, $route, $more = null)
     {
         if ($this->_cli || !$this->input->isPost()) return;
 
         if ($more !== null) {
             call_user_func_array(array($this->router, 'on'), func_get_args());
         } else {
-            $this->router->on($path, $runner);
+            $this->router->on($path, $route);
         }
     }
 
@@ -364,17 +364,17 @@ class App extends BaseEmitter
      * Route put method
      *
      * @param string          $path
-     * @param \Closure|string $runner
+     * @param \Closure|string $route
      * @param \Closure|string $more
      */
-    public function put($path, $runner, $more = null)
+    public function put($path, $route, $more = null)
     {
         if ($this->_cli || !$this->input->isPut()) return;
 
         if ($more !== null) {
             call_user_func_array(array($this->router, 'on'), func_get_args());
         } else {
-            $this->router->on($path, $runner);
+            $this->router->on($path, $route);
         }
     }
 
@@ -382,17 +382,17 @@ class App extends BaseEmitter
      * Route delete method
      *
      * @param string          $path
-     * @param \Closure|string $runner
+     * @param \Closure|string $route
      * @param \Closure|string $more
      */
-    public function delete($path, $runner, $more = null)
+    public function delete($path, $route, $more = null)
     {
         if ($this->_cli || !$this->input->isDelete()) return;
 
         if ($more !== null) {
             call_user_func_array(array($this->router, 'on'), func_get_args());
         } else {
-            $this->router->on($path, $runner);
+            $this->router->on($path, $route);
         }
     }
 
@@ -400,17 +400,17 @@ class App extends BaseEmitter
      * Route options method
      *
      * @param string          $path
-     * @param \Closure|string $runner
+     * @param \Closure|string $route
      * @param \Closure|string $more
      */
-    public function options($path, $runner, $more = null)
+    public function options($path, $route, $more = null)
     {
         if ($this->_cli || !$this->input->isOptions()) return;
 
         if ($more !== null) {
             call_user_func_array(array($this->router, 'on'), func_get_args());
         } else {
-            $this->router->on($path, $runner);
+            $this->router->on($path, $route);
         }
     }
 
@@ -418,17 +418,17 @@ class App extends BaseEmitter
      * Route head method
      *
      * @param string          $path
-     * @param \Closure|string $runner
+     * @param \Closure|string $route
      * @param \Closure|string $more
      */
-    public function head($path, $runner, $more = null)
+    public function head($path, $route, $more = null)
     {
         if ($this->_cli || !$this->input->isHead()) return;
 
         if ($more !== null) {
             call_user_func_array(array($this->router, 'on'), func_get_args());
         } else {
-            $this->router->on($path, $runner);
+            $this->router->on($path, $route);
         }
     }
 
@@ -436,10 +436,10 @@ class App extends BaseEmitter
      * Restful route
      *
      * @param string $path
-     * @param mixed  $runner
+     * @param mixed  $route
      * @param mixed  $more
      */
-    public function rest($path, $runner, $more = null)
+    public function rest($path, $route, $more = null)
     {
         if ($this->_cli) return;
 
@@ -447,40 +447,50 @@ class App extends BaseEmitter
             $_args = func_get_args();
             foreach ($_args as $i => &$_arg) {
                 if ($i === 0) continue;
-                if (is_string($_arg) && !strpos($_arg, '::')) {
-                    $_arg .= '::' . strtolower($this->input->method());
+                if (is_string($_arg) && !strpos($_arg, '->')) {
+                    $_arg .= '->' . strtolower($this->input->method());
                 }
             }
             call_user_func_array(array($this->router, 'on'), $_args);
         } else {
-            if (is_string($runner) && !strpos($runner, '::')) {
-                $runner .= '::' . strtolower($this->input->method());
+            if (is_string($route) && !strpos($route, '->')) {
+                $route .= '->' . strtolower($this->input->method());
             }
-            $this->router->on($path, $runner);
+            $this->router->on($path, $route);
         }
     }
 
     /**
-     * Add controllers to match route
+     * Match all method
+     *
+     * @param string          $path
+     * @param \Closure|string $route
+     * @param \Closure|string $more
      */
-    public function all()
+    public function all($path, $route = null, $more = null)
     {
-        throw new \BadMethodCallException('Method App::all is not implements');
+        if ($this->_cli) return;
+
+        if ($more !== null) {
+            call_user_func_array(array($this->router, 'on'), func_get_args());
+        } else {
+            $this->router->on($path, $route);
+        }
     }
 
     /**
      * Map route
      *
      * @param string          $path
-     * @param \Closure|string $runner
+     * @param \Closure|string $route
      * @param \Closure|string $more
      */
-    public function map($path, $runner, $more = null)
+    public function map($path, $route, $more = null)
     {
         if ($more !== null) {
             call_user_func_array(array($this->router, 'on'), func_get_args());
         } else {
-            $this->router->on($path, $runner);
+            $this->router->on($path, $route);
         }
     }
 
@@ -636,16 +646,16 @@ class App extends BaseEmitter
     /**
      * Register or run error
      *
-     * @param callable $runner
+     * @param callable $route
      */
-    public function error($runner = null)
+    public function error($route = null)
     {
-        if (is_callable($runner) && !$runner instanceof \Exception) {
-            $this->router->set('error', $runner);
+        if (is_callable($route) && !$route instanceof \Exception) {
+            $this->router->set('error', $route);
         } else {
             ob_get_level() && ob_clean();
             ob_start();
-            if (!$this->router->run('error', array($runner))) {
+            if (!$this->router->run('error', array($route))) {
                 echo 'Error occurred';
             }
             $this->output(500, ob_get_clean());
@@ -655,16 +665,16 @@ class App extends BaseEmitter
     /**
      * Register or run not found
      *
-     * @param callable $runner
+     * @param callable $route
      */
-    public function notFound($runner = null)
+    public function notFound($route = null)
     {
-        if (is_callable($runner) && !$runner instanceof \Exception) {
-            $this->router->set('404', $runner);
+        if (is_callable($route) && !$route instanceof \Exception) {
+            $this->router->set('404', $route);
         } else {
             ob_get_level() && ob_clean();
             ob_start();
-            if (!$this->router->run('404', array($runner))) {
+            if (!$this->router->run('404', array($route))) {
                 echo 'Path not found';
             }
             $this->output(404, ob_get_clean());
@@ -674,16 +684,16 @@ class App extends BaseEmitter
     /**
      * Register or run not found
      *
-     * @param callable $runner
+     * @param callable $route
      */
-    public function crash($runner = null)
+    public function crash($route = null)
     {
-        if (is_callable($runner) && !$runner instanceof \Exception) {
-            $this->router->set('crash', $runner);
+        if (is_callable($route) && !$route instanceof \Exception) {
+            $this->router->set('crash', $route);
         } else {
             ob_get_level() && ob_clean();
             ob_start();
-            if (!$this->router->run('crash', array($runner))) {
+            if (!$this->router->run('crash', array($route))) {
                 echo 'App is down';
             }
             $this->output(500, ob_get_clean());
