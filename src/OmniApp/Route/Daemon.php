@@ -1,6 +1,6 @@
 <?php
 
-namespace OmniApp\Cli;
+namespace OmniApp\Route;
 
 use OmniApp\Exception\Stop;
 
