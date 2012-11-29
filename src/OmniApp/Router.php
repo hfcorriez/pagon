@@ -75,11 +75,11 @@ class Router extends Middleware
             if (!$p) continue;
 
             // Try to parse the params
-            if (($params = self::parseRoute($this->options['path'], $p)) !== false) {
+            if (($params = self::match($this->options['path'], $p)) !== false) {
                 try {
                     $params && $this->app->param($params);
 
-                    return self::work($route);
+                    return self::run($route);
                     // If multiple controller
                 } catch (Pass $e) {
                     // When catch Next, continue next route
@@ -97,7 +97,7 @@ class Router extends Middleware
      * @param array|string $route
      * @return array|string
      */
-    public function work($route)
+    public function run($route)
     {
         if (!$route) return false;
 
@@ -128,11 +128,11 @@ class Router extends Middleware
      * @param array  $args
      * @return bool
      */
-    public function run($route, $args = array())
+    public function handle($route, $args = array())
     {
         if (isset($this->app->config['route'][$route])) {
             $args && $this->app->param($args);
-            return $this->work($this->app->config['route'][$route]);
+            return $this->run($this->app->config['route'][$route]);
         }
         return false;
     }
@@ -158,7 +158,7 @@ class Router extends Middleware
      * @param $route
      * @return array|bool
      */
-    protected static function parseRoute($path, $route)
+    protected static function match($path, $route)
     {
         $params = false;
 
@@ -191,11 +191,19 @@ class Router extends Middleware
         if ($regex[1] !== '^') {
             $regex = str_replace(array('/'), array('\\/'), $regex);
             if ($regex{0} == '^') {
+                // As regex
                 $regex = '/' . $regex . '/';
             } elseif (strpos($regex, ':')) {
+                // Need replace
                 $regex = '/^' . preg_replace('/:([a-zA-Z0-9]+)/', '(?<$1>[^\/]+?)', $regex) . '\/?$/';
             } else {
+                // Full match
                 $regex = '/^' . $regex . '$/';
+            }
+
+            // * support
+            if (strpos($regex, '*')) {
+                $regex = str_replace('*', '([^\/]+?)', $regex);
             }
         }
         return $regex;

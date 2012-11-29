@@ -127,6 +127,9 @@ class Middleware
      */
     final protected function next()
     {
+        if (!$this->_next) {
+            return;
+        }
         $this->_next->call();
     }
 }

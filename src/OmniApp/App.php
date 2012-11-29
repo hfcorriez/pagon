@@ -63,7 +63,7 @@ class App extends BaseEmitter
     /**
      * @var Middleware[]
      */
-    protected $middlewares = array();
+    protected $stacks = array('/' => array());
 
     /**
      * @var Module[]
@@ -267,22 +267,34 @@ class App extends BaseEmitter
     /**
      * Add middleware
      *
+     * @param Middleware|\Closure|string $path
      * @param Middleware|\Closure|string $middleware
      * @param array                      $options
      * @throws \Exception
      * @return void
      */
-    public function add($middleware, $options = array())
+    public function add($path, $middleware = null, $options = array())
     {
+        if ($path instanceof Middleware || is_string($path) && $path{0} != '/') {
+            // If not path
+            $options = (array)$middleware;
+            $middleware = $path;
+            $path = '/';
+        }
+
         if (is_string($middleware)) {
+            // If middleware is class name
             if ($middleware{0} !== '\\') {
+                // Support short class name
                 $middleware = __NAMESPACE__ . '\Middleware\\' . $middleware;
             }
 
+            // Check if base on Middleware class
             if (is_subclass_of($middleware, Middleware::_CLASS_)) {
                 $middleware = new $middleware($options);
             }
         } else if ($middleware instanceof \Closure) {
+            // Closure support
             $middleware = Middleware::createWithClosure($middleware);
         }
 
@@ -292,8 +304,12 @@ class App extends BaseEmitter
             throw new \Exception("Bad middleware can not be added");
         }
 
+        // Set default array
+        if (!isset($this->stacks[$path])) {
+            $this->stacks[$path] = array();
+        }
         // Add to the end
-        $this->middlewares[] = $middleware;
+        $this->stacks[$path][] = $middleware;
     }
 
     /**
@@ -553,31 +569,29 @@ class App extends BaseEmitter
             $this->registerErrorHandler();
         }
 
-        // Check middleware list
-        if ($this->middlewares) {
-            if (!in_array($this->router, $this->middlewares)) {
-                $this->middlewares[] = $this->router;
-            }
-            // Loop middleware
-            foreach ($this->middlewares as $_i => $_m) {
-                // Set next middleware
-                if (isset($this->middlewares[$_i + 1])) {
-                    $_m->setNext($this->middlewares[$_i + 1]);
-                }
-                // Set app
-                $_m->setApp($this);
-            }
-        } else {
-            // Set middleware
-            $this->middlewares[] = $this->router;
+        // Add router to the middlewares if not added
+        if (!in_array($this->router, $this->stacks['/'])) {
+            $this->stacks['/'][] = $this->router;
         }
 
         try {
             // Start buffer
             if (!$_buffer_disabled = $this->config->disable_buffer) ob_start();
 
-            // Request app call
-            $this->middlewares[0]->call();
+            // Loop stacks to match
+            foreach ($this->stacks as $path => $middleware) {
+                // Try to match the path
+                if (strpos($this->input->path(), $path) !== 0) continue;
+
+                // Loop the middlewares
+                foreach ($middleware as $k => &$m) {
+                    $m->setApp($this);
+                    // Set next controller and io
+                    if ($k > 0) $middleware[$k - 1]->setNext($m);
+                }
+                // Call the first
+                $middleware[0]->call();
+            }
 
             // Write direct output to the head of buffer
             if (!$_buffer_disabled) $this->output->write(ob_get_clean());
@@ -624,7 +638,7 @@ class App extends BaseEmitter
         } else {
             ob_get_level() && ob_clean();
             ob_start();
-            if (!$this->router->run('error', array($route))) {
+            if (!$this->router->handle('error', array($route))) {
                 echo 'Error occurred';
             }
             $this->output(500, ob_get_clean());
@@ -643,7 +657,7 @@ class App extends BaseEmitter
         } else {
             ob_get_level() && ob_clean();
             ob_start();
-            if (!$this->router->run('404', array($route))) {
+            if (!$this->router->handle('404', array($route))) {
                 echo 'Path not found';
             }
             $this->output(404, ob_get_clean());
@@ -662,7 +676,7 @@ class App extends BaseEmitter
         } else {
             ob_get_level() && ob_clean();
             ob_start();
-            if (!$this->router->run('crash', array($route))) {
+            if (!$this->router->handle('crash', array($route))) {
                 echo 'App is down';
             }
             $this->output(500, ob_get_clean());
