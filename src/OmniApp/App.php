@@ -227,13 +227,13 @@ class App extends BaseEmitter
     public function mode($mode = null)
     {
         if ($mode) {
-            $this->mode = $mode;
+            $this->mode = $mode instanceof \Closure ? $mode() : $mode;
         }
-        return $this->mode && is_string($this->mode) ? $this->mode : null;
+        return $this->mode;
     }
 
     /**
-     * Configure app
+     * Configure mode
      *
      * @param string|\Closure $mode
      * @param \Closure        $closure
@@ -241,14 +241,23 @@ class App extends BaseEmitter
     public function configure($mode, \Closure $closure = null)
     {
         if ($closure === null) {
-            // Allow set mode get method when mode is closure
-            if ($mode instanceof \Closure) {
-                $this->on('mode', $mode);
-            }
+            $closure = $mode instanceof \Closure ? $mode : null;
+            $mode = null;
+        } elseif ($mode == 'all') {
+            // All mode
+            $mode = null;
+        }
+
+        // Not exists closure?
+        if (!$closure) return;
+
+        // Allow set mode get method when mode is closure
+        if (!$mode) {
+            // Set trigger for all mode
+            $this->on('mode', $closure);
         } else {
             // Set trigger for the mode
             $this->on('mode:' . $mode, $closure);
-            // Don not change the current mode
         }
     }
 
@@ -256,6 +265,7 @@ class App extends BaseEmitter
      * Add middleware
      *
      * @param Middleware|\Closure|string $middleware
+     * @param array                      $options
      * @throws \Exception
      * @return void
      */
@@ -524,10 +534,6 @@ class App extends BaseEmitter
         if (!$this->mode) {
             // Set mode
             $this->mode = ($_mode = getenv('OMNI_ENV')) ? $_mode : 'development';
-        } elseif ($this->mode instanceof \Closure) {
-            // Make mode
-            $_mode = $this->mode;
-            $this->mode = $_mode();
         }
 
         // Trigger default mode
@@ -536,9 +542,10 @@ class App extends BaseEmitter
         // If trigger exists, trigger closure
         $this->emit('mode:' . $this->mode);
 
-        // run
+        // Emit run
         $this->emit('run');
 
+        // Set run
         $this->_run = true;
 
         $_error = false;
