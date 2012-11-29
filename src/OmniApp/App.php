@@ -34,6 +34,11 @@ class App extends BaseEmitter
     public $output;
 
     /**
+     * @var Router
+     */
+    public $router;
+
+    /**
      * @var Config
      */
     public $config = array(
@@ -44,11 +49,6 @@ class App extends BaseEmitter
      * @var array Local variables
      */
     public $locals = array();
-
-    /**
-     * @var Router
-     */
-    protected $router;
 
     /**
      * @var string Mode
@@ -388,42 +388,6 @@ class App extends BaseEmitter
     public function delete($path, $route, $more = null)
     {
         if ($this->_cli || !$this->input->isDelete()) return;
-
-        if ($more !== null) {
-            call_user_func_array(array($this->router, 'on'), func_get_args());
-        } else {
-            $this->router->on($path, $route);
-        }
-    }
-
-    /**
-     * Route options method
-     *
-     * @param string          $path
-     * @param \Closure|string $route
-     * @param \Closure|string $more
-     */
-    public function options($path, $route, $more = null)
-    {
-        if ($this->_cli || !$this->input->isOptions()) return;
-
-        if ($more !== null) {
-            call_user_func_array(array($this->router, 'on'), func_get_args());
-        } else {
-            $this->router->on($path, $route);
-        }
-    }
-
-    /**
-     * Route head method
-     *
-     * @param string          $path
-     * @param \Closure|string $route
-     * @param \Closure|string $more
-     */
-    public function head($path, $route, $more = null)
-    {
-        if ($this->_cli || !$this->input->isHead()) return;
 
         if ($more !== null) {
             call_user_func_array(array($this->router, 'on'), func_get_args());

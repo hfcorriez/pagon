@@ -209,26 +209,6 @@ class Input extends \OmniApp\BaseEmitter
     }
 
     /**
-     * Is head method?
-     *
-     * @return bool
-     */
-    public function isHead()
-    {
-        return $this->method() === 'HEAD';
-    }
-
-    /**
-     * Is options method?
-     *
-     * @return bool
-     */
-    public function isOptions()
-    {
-        return $this->method() === 'OPTIONS';
-    }
-
-    /**
      * Is ajax
      *
      *
