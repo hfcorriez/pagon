@@ -459,7 +459,7 @@ class App extends BaseEmitter
      * @param \Closure|string $route
      * @param \Closure|string $more
      */
-    public function map($path, $route, $more = null)
+    public function route($path, $route, $more = null)
     {
         if ($more !== null) {
             call_user_func_array(array($this->router, 'on'), func_get_args());
