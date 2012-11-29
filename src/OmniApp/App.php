@@ -227,7 +227,7 @@ class App extends BaseEmitter
     public function mode($mode = null)
     {
         if ($mode) {
-            $this->mode = $mode instanceof \Closure ? $mode() : $mode;
+            $this->mode = $mode instanceof \Closure ? $mode() : (string)$mode;
         }
         return $this->mode;
     }
