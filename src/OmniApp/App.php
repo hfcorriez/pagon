@@ -139,6 +139,9 @@ class App extends BaseEmitter
         // Set default locals
         $this->locals['config'] = & $this->config;
 
+        // Set mode
+        $this->mode = ($_mode = getenv('OMNI_ENV')) ? $_mode : 'development';
+
         // Fire init
         $this->emit('init');
     }
@@ -531,11 +534,6 @@ class App extends BaseEmitter
      */
     public function run()
     {
-        if (!$this->mode) {
-            // Set mode
-            $this->mode = ($_mode = getenv('OMNI_ENV')) ? $_mode : 'development';
-        }
-
         // Trigger default mode
         $this->emit('mode', $this->mode);
 
