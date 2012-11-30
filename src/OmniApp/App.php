@@ -589,8 +589,12 @@ class App extends BaseEmitter
                     // Set next controller and io
                     if ($k > 0) $middleware[$k - 1]->setNext($m);
                 }
-                // Call the first
-                $middleware[0]->call();
+                try {
+                    // Call the first
+                    $middleware[0]->call();
+                    break;
+                } catch (Exception\Pass $e) {
+                }
             }
 
             // Write direct output to the head of buffer
