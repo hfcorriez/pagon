@@ -76,16 +76,6 @@ class Middleware
     }
 
     /**
-     * Set next middleware
-     *
-     * @param Middleware $middleware
-     */
-    final public function setNext(Middleware $middleware)
-    {
-        $this->_next = $middleware;
-    }
-
-    /**
      * Only used to create closure middleware
      *
      * @param callable $closure
@@ -121,6 +111,17 @@ class Middleware
     {
         return $this->_next;
     }
+
+    /**
+     * Set next middleware
+     *
+     * @param Middleware $middleware
+     */
+    final public function setNext(Middleware $middleware)
+    {
+        $this->_next = $middleware;
+    }
+
 
     /**
      * Call next
