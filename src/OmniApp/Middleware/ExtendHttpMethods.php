@@ -2,7 +2,7 @@
 
 namespace OmniApp\Middleware;
 
-class HttpMethods extends \OmniApp\Middleware
+class ExtendHttpMethods extends \OmniApp\Middleware
 {
     protected $options = array(
         'methods' => array(
