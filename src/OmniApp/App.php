@@ -581,7 +581,7 @@ class App extends BaseEmitter
             // Loop stacks to match
             foreach ($this->stacks as $path => $middleware) {
                 // Try to match the path
-                if (strpos($this->input->path(), $path) !== 0) continue;
+                if (strpos($this->input->pathInfo(), $path) !== 0) continue;
 
                 // Loop the middlewares
                 foreach ($middleware as $k => &$m) {
