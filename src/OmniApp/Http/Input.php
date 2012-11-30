@@ -112,7 +112,7 @@ class Input extends \OmniApp\BaseEmitter
                 // Query string is not removed automatically
                 $_path_info = substr_replace($_path_info, '', strpos($_path_info, '?'));
             }
-            $this->env['path_info'] = $_path_info;
+            $this->env['path_info'] = (!$_path_info || $_path_info{0} != '/' ? '/' : '') . $_path_info;
         }
         return $this->env['path_info'];
     }
