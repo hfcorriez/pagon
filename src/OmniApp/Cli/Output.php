@@ -125,4 +125,12 @@ class Output extends \OmniApp\BaseEmitter
 
         return isset($this->env[$key]) ? $this->env[$key] : null;
     }
+
+    /**
+     * @return string
+     */
+    public function __toString()
+    {
+        return $this->env['body'];
+    }
 }
