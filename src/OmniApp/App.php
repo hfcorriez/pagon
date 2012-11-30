@@ -42,7 +42,11 @@ class App extends BaseEmitter
      * @var Config
      */
     public $config = array(
-        'route' => array()
+        'debug'  => false,
+        'views'  => false,
+        'error'  => false,
+        'route'  => array(),
+        'buffer' => true,
     );
 
     /**
@@ -130,7 +134,7 @@ class App extends BaseEmitter
             if ($_timezone = $app->config->get('timezone')) date_default_timezone_set($_timezone);
 
             // configure debug
-            if ($app->config->debug) $app->add(new Middleware\PrettyException());
+            if ($app->config['debug']) $app->add(new Middleware\PrettyException());
         });
 
         // Config
@@ -529,7 +533,7 @@ class App extends BaseEmitter
         // Create view
         $view = new View($path, $data + $this->locals, array(
             'engine' => $engine,
-            'dir'    => $this->config->views
+            'dir'    => $this->config['views']
         ));
         echo $view;
     }
@@ -563,7 +567,7 @@ class App extends BaseEmitter
         $this->_run = true;
 
         $_error = false;
-        if ($this->config->error) {
+        if ($this->config['error']) {
             // If config error, register error handle and set flag
             $_error = true;
             $this->registerErrorHandler();
@@ -576,7 +580,7 @@ class App extends BaseEmitter
 
         try {
             // Start buffer
-            if (!$_buffer_disabled = $this->config->disable_buffer) ob_start();
+            if ($_buffer_enabled = $this->config['buffer']) ob_start();
 
             // Loop stacks to match
             foreach ($this->stacks as $path => $middleware) {
@@ -598,9 +602,9 @@ class App extends BaseEmitter
             }
 
             // Write direct output to the head of buffer
-            if (!$_buffer_disabled) $this->output->write(ob_get_clean());
+            if ($_buffer_enabled) $this->output->write(ob_get_clean());
         } catch (\Exception $e) {
-            if ($this->config->debug) {
+            if ($this->config['debug']) {
                 throw $e;
             } else {
                 try {
@@ -779,7 +783,7 @@ class App extends BaseEmitter
             }
         } else {
             // Set the 99 high order for default autoload
-            $available_path = array(99 => $this->config->autoload);
+            $available_path = array(99 => $this->config['autoload']);
             // Check other namespaces
             if (isset($this->config['autoload_namespaces'])) {
                 // Loop namespaces as autoload
@@ -845,7 +849,7 @@ class App extends BaseEmitter
         if (($error = error_get_last())
             && in_array($error['type'], array(E_PARSE, E_ERROR, E_USER_ERROR, E_COMPILE_ERROR, E_CORE_ERROR))
         ) {
-            if (!$this->config->debug) {
+            if (!$this->config['debug']) {
                 try {
                     $this->crash();
                 } catch (Exception\Stop $e) {
