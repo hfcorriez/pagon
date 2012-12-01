@@ -42,11 +42,12 @@ class App extends BaseEmitter
      * @var Config
      */
     public $config = array(
-        'debug'  => false,
-        'views'  => false,
-        'error'  => false,
-        'route'  => array(),
-        'buffer' => true,
+        'debug'    => false,
+        'views'    => false,
+        'error'    => false,
+        'route'    => array(),
+        'buffer'   => true,
+        'timezone' => 'UTC'
     );
 
     /**
@@ -131,7 +132,7 @@ class App extends BaseEmitter
         // Default things to do before run
         $this->on('run', function () use ($app) {
             // configure timezone
-            if ($_timezone = $app->config->get('timezone')) date_default_timezone_set($_timezone);
+            if ($app->config['timezone']) date_default_timezone_set($app->config['timezone']);
 
             // configure debug
             if ($app->config['debug']) $app->add(new Middleware\PrettyException());
