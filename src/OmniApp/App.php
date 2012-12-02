@@ -540,16 +540,6 @@ class App extends BaseEmitter
     }
 
     /**
-     * Get root of application
-     *
-     * @return string
-     */
-    public function root()
-    {
-        return rtrim($this->input->env('DOCUMENT_ROOT'), '/') . rtrim($this->input->rootUri(), '/') . '/';
-    }
-
-    /**
      * App will run
      *
      */

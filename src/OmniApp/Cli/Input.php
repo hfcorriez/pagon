@@ -41,11 +41,21 @@ class Input extends \OmniApp\BaseEmitter
      */
     public function pathInfo()
     {
-        if (!isset($this->env['path'])) {
-            $this->env['path'] = '/' . join('/', array_slice($this->env('argv'), 1));
+        if (!isset($this->env['path_info'])) {
+            $this->env['path_info'] = '/' . join('/', array_slice($this->env('argv'), 1));
         }
 
-        return $this->env['path'];
+        return $this->env['path_info'];
+    }
+
+    /**
+     * Get root of application
+     *
+     * @return string
+     */
+    public function root()
+    {
+        return getcwd();
     }
 
     /**

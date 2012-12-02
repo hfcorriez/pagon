@@ -48,21 +48,6 @@ class Input extends \OmniApp\BaseEmitter
     }
 
     /**
-     * Get path
-     *
-     *
-     * @return mixed
-     */
-    public function path()
-    {
-        if (!isset($this->env['path'])) {
-            $this->env['path'] = parse_url($this->env['REQUEST_URI'], PHP_URL_PATH);
-        }
-
-        return $this->env['path'];
-    }
-
-    /**
      * Get request uri
      *
      * @return string
@@ -70,6 +55,16 @@ class Input extends \OmniApp\BaseEmitter
     public function uri()
     {
         return $this->env['REQUEST_URI'];
+    }
+
+    /**
+     * Get root of application
+     *
+     * @return string
+     */
+    public function root()
+    {
+        return rtrim($this->env['DOCUMENT_ROOT'], '/') . rtrim($this->scriptName(), '/');
     }
 
     /**
@@ -90,16 +85,6 @@ class Input extends \OmniApp\BaseEmitter
     }
 
     /**
-     * Get root uri
-     *
-     * @return string
-     */
-    public function rootUri()
-    {
-        return $this->scriptName();
-    }
-
-    /**
      * Get path info
      *
      * @return string
@@ -115,16 +100,6 @@ class Input extends \OmniApp\BaseEmitter
             $this->env['path_info'] = (!$_path_info || $_path_info{0} != '/' ? '/' : '') . $_path_info;
         }
         return $this->env['path_info'];
-    }
-
-    /**
-     * LEGACY: Get Resource URI (alias for pathInfo)
-     *
-     * @return string
-     */
-    public function resourceUri()
-    {
-        return $this->pathInfo();
     }
 
     /**
