@@ -41,12 +41,12 @@ class Route extends Middleware
                     $route->setCall($_method);
                     return $route;
                 }
+            } elseif (is_subclass_of($route, __CLASS__, true)) {
+                // Only Class name
+                $route = new $route();
+                $route->setCall('run');
+                return $route;
             }
-        } elseif (is_string($route) && is_subclass_of($route, __CLASS__)) {
-            // Only Class name
-            $route = new $route();
-            $route->setCall('run');
-            return $route;
         }
         return false;
     }
