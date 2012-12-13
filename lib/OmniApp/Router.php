@@ -105,16 +105,16 @@ class Router extends Middleware
         $route = (array)$route;
 
         // Loop the link
-        foreach ($route as $k => &$c) {
+        foreach ($route as $k => &$r) {
             // Try to factory a controller
-            $c = Route::createWith($c);
+            $r = Route::createWith($r);
             // If on controller on the link is unavailable the link will broken
-            if (!$c) {
+            if (!$r) {
                 throw new \Exception('Cannot use the route with index "' . $k . '"');
             }
-            $c->setApp($this->app);
+            $r->setApp($this->app);
             // Set next controller and io
-            if ($k > 0) $route[$k - 1]->setNext($c);
+            if ($k > 0) $route[$k - 1]->setNext($r);
         }
         // Call the first
         $route[0]->call();
