@@ -2,7 +2,7 @@
 
 namespace OmniApp;
 
-class Middleware
+abstract class Middleware
 {
     const _CLASS_ = __CLASS__;
 
@@ -27,14 +27,9 @@ class Middleware
     protected $options = array();
 
     /**
-     * @var \Closure middleware
-     */
-    protected $_closure;
-
-    /**
      * @var Middleware
      */
-    private $_next;
+    protected $next;
 
     /**
      * @param array $options
@@ -45,92 +40,46 @@ class Middleware
     }
 
     /**
-     *  Default call
+     * Create new controller
      *
-     * @throws \Exception
-     * @return bool
+     * @param string|\Closure $route
+     * @return bool|Route
      */
-    public function call()
+    public static function build($route, $options = array())
     {
-        if ($this->_closure) {
-            $self = $this;
-            call_user_func_array($this->_closure, array($this->input, $this->output, function () use ($self) {
-                $self->getNext()->call();
-            }));
-            return true;
+        if (is_string($route) && is_subclass_of($route, __CLASS__, true)) {
+            // Only Class name
+            return new $route($options);
+        } elseif (is_object($route)) {
+            return $route;
         }
-        throw new \Exception(get_called_class() . ' middleware must implements "call" method');
+        return false;
     }
 
     /**
-     * Create with closure
+     * @return mixed
+     */
+    abstract function call();
+
+    /**
+     * @param $input
+     * @param $output
+     * @param $next
+     */
+    public function __invoke($input, $output, $next)
+    {
+        $this->input = $input;
+        $this->output = $output;
+        $this->app = $input->app;
+        $this->next = $next;
+        $this->call();
+    }
+
+    /**
      *
-     * @param callable $closure
-     * @return Middleware
      */
-    final static public function createWithClosure(\Closure $closure)
+    public function next()
     {
-        $middleware = new self();
-        $middleware->setClosure($closure);
-        return $middleware;
-    }
-
-    /**
-     * Only used to create closure middleware
-     *
-     * @param callable $closure
-     * @throws \BadMethodCallException
-     */
-    final public function setClosure(\Closure $closure)
-    {
-        if (get_called_class() !== __CLASS__) {
-            throw new \BadMethodCallException(__CLASS__ . '::' . __FUNCTION__ . ' only called when caller is the base Middleware');
-        }
-        $this->_closure = $closure;
-    }
-
-    /**
-     * Set App
-     *
-     * @param App $app
-     */
-    final public function setApp(App $app)
-    {
-        $this->app = $app;
-        $this->input = $app->input;
-        $this->output = $app->output;
-    }
-
-
-    /**
-     * Get next middleware
-     *
-     * @return Middleware
-     */
-    final public function getNext()
-    {
-        return $this->_next;
-    }
-
-    /**
-     * Set next middleware
-     *
-     * @param Middleware $middleware
-     */
-    final public function setNext(Middleware $middleware)
-    {
-        $this->_next = $middleware;
-    }
-
-
-    /**
-     * Call next
-     */
-    final protected function next()
-    {
-        if (!$this->_next) {
-            throw new Exception\Pass();
-        }
-        $this->_next->call();
+        call_user_func($this->next);
     }
 }
