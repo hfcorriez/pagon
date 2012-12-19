@@ -543,7 +543,7 @@ class App extends BaseEmitter
 
                 try {
                     $this->router->pass($middleware, function ($m) {
-                        return Middleware::build($m);
+                        return Middleware::build($m[0], $m[1]);
                     });
 
                     break;

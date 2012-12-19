@@ -112,39 +112,36 @@ class Router extends Middleware
     /**
      * Run the route
      *
-     * @param array|string $route
+     * @param array|string $routes
      * @param  \Closure    $build
      * @throws Exception\Pass
      * @return array|string
      */
-    public function pass($route, \Closure $build)
+    public function pass($routes, \Closure $build)
     {
-        if (!$route) return false;
+        if (!$routes) return false;
 
-        $route = (array)$route;
+        $routes = (array)$routes;
+        $param = null;
 
-        $pass = function ($route, $p = null) {
-            static $param = null;
-            if ($p !== null && is_array($p)) {
-                $param = $p;
-            }
-            call_user_func_array($route, $param);
+        $pass = function ($route) use ($build, &$param) {
+            call_user_func_array($route instanceof \Closure ? $route : $build($route), $param);
             return true;
         };
 
-        return $pass($route[0], array(
+        $param = array(
             $this->app->input,
             $this->app->output,
-            function () use ($route, $pass, $build) {
-                if (!$r = next($route)) {
+            function () use (&$routes, $pass) {
+                if (!$route = next($routes)) {
                     throw new Pass;
                 }
 
-                if ($r = $build($r)) {
-                    $pass($r);
-                }
+                $pass($route);
             }
-        ));
+        );
+
+        return $pass(current($routes));
     }
 
     /**
