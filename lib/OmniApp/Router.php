@@ -14,6 +14,11 @@ class Router extends Middleware
     const _CLASS_ = __CLASS__;
 
     /**
+     * @var App
+     */
+    public $app;
+
+    /**
      * Register a route for path
      *
      * @param string               $path
@@ -80,6 +85,7 @@ class Router extends Middleware
                     $params && $this->app->param($params);
 
                     return self::run($route);
+
                     // If multiple controller
                 } catch (Pass $e) {
                     // When catch Next, continue next route
@@ -91,34 +97,51 @@ class Router extends Middleware
     }
 
     /**
-     * Run the route
+     * Run the routes
      *
-     * @throws \Exception
-     * @param array|string $route
+     * @param $route
      * @return array|string
      */
     public function run($route)
     {
-        if (!$route) return false;
+        return $this->pass($route, function ($r) {
+            return Route::build($r);
+        });
+    }
 
-        // Force as array
-        $route = (array)$route;
+    /**
+     * Run the route
+     *
+     * @param array|string $routes
+     * @param  \Closure    $build
+     * @throws Exception\Pass
+     * @return array|string
+     */
+    public function pass($routes, \Closure $build)
+    {
+        if (!$routes) return false;
 
-        // Loop the link
-        foreach ($route as $k => &$r) {
-            // Try to factory a controller
-            $r = Route::createWith($r);
-            // If on controller on the link is unavailable the link will broken
-            if (!$r) {
-                throw new \Exception('Cannot use the route with index "' . $k . '"');
+        $routes = (array)$routes;
+        $param = null;
+
+        $pass = function ($route) use ($build, &$param) {
+            call_user_func_array($route instanceof \Closure ? $route : $build($route), $param);
+            return true;
+        };
+
+        $param = array(
+            $this->app->input,
+            $this->app->output,
+            function () use (&$routes, $pass) {
+                if (!$route = next($routes)) {
+                    throw new Pass;
+                }
+
+                $pass($route);
             }
-            $r->setApp($this->app);
-            // Set next controller and io
-            if ($k > 0) $route[$k - 1]->setNext($r);
-        }
-        // Call the first
-        $route[0]->call();
-        return true;
+        );
+
+        return $pass(current($routes));
     }
 
     /**

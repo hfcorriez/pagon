@@ -123,7 +123,7 @@ class App extends BaseEmitter
 
         // Init Route
         $this->router = new Router(array('path' => $this->input->pathInfo()));
-        $this->router->setApp($this);
+        $this->router->app = $this;
 
         // Force use UTF-8 encoding
         iconv_set_encoding("internal_encoding", "UTF-8");
@@ -295,18 +295,9 @@ class App extends BaseEmitter
             }
 
             // Check if base on Middleware class
-            if (is_subclass_of($middleware, Middleware::_CLASS_)) {
-                $middleware = new $middleware($options);
+            if (!is_subclass_of($middleware, Middleware::_CLASS_)) {
+                throw new \Exception("Bad middleware can not be added");
             }
-        } else if ($middleware instanceof \Closure) {
-            // Closure support
-            $middleware = Middleware::createWithClosure($middleware);
-        }
-
-        // Check middleware
-        if (!$middleware instanceof Middleware) {
-            // Not base middleware
-            throw new \Exception("Bad middleware can not be added");
         }
 
         // Set default array
@@ -314,7 +305,7 @@ class App extends BaseEmitter
             $this->stacks[$path] = array();
         }
         // Add to the end
-        $this->stacks[$path][] = $middleware;
+        $this->stacks[$path][] = array($middleware, $options);
     }
 
     /**
@@ -431,34 +422,6 @@ class App extends BaseEmitter
     }
 
     /**
-     * Restful route
-     *
-     * @param string $path
-     * @param mixed  $route
-     * @param mixed  $more
-     */
-    public function rest($path, $route, $more = null)
-    {
-        if ($this->_cli) return;
-
-        if ($more !== null) {
-            $_args = func_get_args();
-            foreach ($_args as $i => &$_arg) {
-                if ($i === 0) continue;
-                if (is_string($_arg) && !strpos($_arg, '->')) {
-                    $_arg .= '->' . strtolower($this->input->method());
-                }
-            }
-            call_user_func_array(array($this->router, 'on'), $_args);
-        } else {
-            if (is_string($route) && !strpos($route, '->')) {
-                $route .= '->' . strtolower($this->input->method());
-            }
-            $this->router->on($path, $route);
-        }
-    }
-
-    /**
      * Match all method
      *
      * @param string          $path
@@ -564,32 +527,32 @@ class App extends BaseEmitter
             $this->registerErrorHandler();
         }
 
-        // Add router to the middlewares if not added
-        if (!in_array($this->router, $this->stacks['/'])) {
-            $this->stacks['/'][] = $this->router;
-        }
-
         try {
             // Start buffer
             if ($_buffer_enabled = $this->config['buffer']) ob_start();
+
+            $_used_router = false;
 
             // Loop stacks to match
             foreach ($this->stacks as $path => $middleware) {
                 // Try to match the path
                 if (strpos($this->input->pathInfo(), $path) !== 0) continue;
 
-                // Loop the middlewares
-                foreach ($middleware as $k => &$m) {
-                    $m->setApp($this);
-                    // Set next controller and io
-                    if ($k > 0) $middleware[$k - 1]->setNext($m);
-                }
+                $middleware = (array)$middleware;
+                if (empty($middleware)) continue;
+
                 try {
-                    // Call the first
-                    $middleware[0]->call();
+                    $this->router->pass($middleware, function ($m) {
+                        return Middleware::build($m[0], $m[1]);
+                    });
+
                     break;
                 } catch (Exception\Pass $e) {
                 }
+            }
+
+            if (!$_used_router) {
+                $this->router->call();
             }
 
             // Write direct output to the head of buffer
