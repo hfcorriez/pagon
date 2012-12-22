@@ -6,7 +6,7 @@ use OmniApp\App;
 use OmniApp\Exception\Pass;
 use OmniApp\Config;
 
-class Input extends \OmniApp\BaseEmitter
+class Input extends \OmniApp\EventEmitter
 {
     /**
      * @var array Route params

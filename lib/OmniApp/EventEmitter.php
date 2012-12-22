@@ -2,7 +2,7 @@
 
 namespace OmniApp;
 
-class BaseEmitter
+class EventEmitter
 {
     /**
      * @var array Events listeners

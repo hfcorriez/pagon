@@ -6,7 +6,7 @@ use OmniApp\App;
 use OmniApp\Config;
 use OmniApp\Exception\Stop;
 
-class Output extends \OmniApp\BaseEmitter
+class Output extends \OmniApp\EventEmitter
 {
     /**
      * @var array Local variables

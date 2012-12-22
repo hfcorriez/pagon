@@ -21,7 +21,7 @@ require __DIR__ . '/BaseEmitter.php';
 /**
  * App Class
  */
-class App extends BaseEmitter
+class App extends EventEmitter
 {
     /**
      * @var Http\Input|Cli\Input
