@@ -1,6 +1,6 @@
-## What's OmniApp?
+## What's Pagon?
 
-OmniApp is expressjs-like framework of PHP
+Pagon is expressjs-like framework of PHP
 
 - Simple
 	
@@ -18,17 +18,18 @@ OmniApp is expressjs-like framework of PHP
 	
 	According to [PSR](https://github.com/php-fig/fig-standards) - PSR-0, PSR-1, PSR-2
 
-- Performence 
+- Performence
 
 	It's faster than better design frameworks, such as slim, lavarel, kohana, and a  little slower than colaphp and micromvc
 
 
-## Usage
+## Examples
 
 ### Hello world
 
-```
+```php
 $app = new App();
+
 $app->get('/', function($req, $res){
    $res->end('Hello world');
 });
@@ -36,23 +37,48 @@ $app->get('/', function($req, $res){
 
 ### Config
 
-```
-$config = include('default_config.php');
-$app = new App($config);
+```php
+$default = include('config.php');
 
-$app->config('cookie.secret', 'abc');
+$app = new App($default);
+
+$app->set('cookie.secret', 'abc');
 ```
 
-### Configure mode
+### Configure
 
-```
+```php
 $app = new App();
-$app->mode('development', function(){
-    $app->config('debug', true);
+$app->configure('development', function(){
+    $app->set('debug', true);
 });
 ```
 
-### Api
+### Middleware
+
+```php
+$app->add(new \Pagon\Middleware\SessionCookie(array('name' => 'sessions')));
+$app->add(new \Pagon\Middleware\MethodOverride());
+
+# Or
+
+$app->add('SessionCookie', array('name' => 'sessions'))
+$app->add('MethodOverride')
+```
+
+### Event
+
+```php
+$app->on('run', function(){
+	session_start();
+});
+
+$app->on('shutdown', function(){
+	session_destroy();
+});
+```
+
+### Usage
 
 	wait for release...
 
