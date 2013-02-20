@@ -1,7 +1,7 @@
 {
-    "name": "omniapp/omniapp",
-    "description": "OmniApp framework",
-    "keywords": ["framework"],
+    "name": "pagon/pagon",
+    "description": "Pagon Framework",
+    "keywords": ["framework", "pagon"],
     "license": "MIT",
     "authors": [
         {
@@ -14,7 +14,7 @@
     },
     "autoload": {
         "psr-0": {
-            "OmniApp": "lib/"
+            "Pagon": "lib/"
         }
     }
 }

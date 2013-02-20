@@ -1,6 +1,6 @@
-## What's OmniApp?
+## What's Pagon?
 
-OmniApp is expressjs-like framework of PHP
+Pagon is expressjs-like framework of PHP
 
 - Simple
 	
@@ -57,8 +57,8 @@ $app->configure('development', function(){
 ### Middleware
 
 ```php
-$app->add(new \OmniApp\Middleware\SessionCookie(array('name' => 'sessions')));
-$app->add(new \OmniApp\Middleware\MethodOverride());
+$app->add(new \Pagon\Middleware\SessionCookie(array('name' => 'sessions')));
+$app->add(new \Pagon\Middleware\MethodOverride());
 
 # Or
 
