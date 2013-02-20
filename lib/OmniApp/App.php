@@ -12,7 +12,7 @@ namespace OmniApp;
 const VERSION = '0.3';
 
 // Depend Emitter
-require __DIR__ . '/BaseEmitter.php';
+require __DIR__ . '/EventEmitter.php';
 
 /*********************
  * core app
