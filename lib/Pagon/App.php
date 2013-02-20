@@ -4,7 +4,7 @@
  *
  * @package   Pagon
  * @author    Corrie Zhao <hfcorriez@gmail.com>
- * @copyright (c) 2011 - 2012 Pagon Framework
+ * @copyright (c) 2011 - 2013 Pagon Framework
  */
 
 namespace Pagon;
