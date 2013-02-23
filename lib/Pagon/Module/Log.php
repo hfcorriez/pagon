@@ -2,7 +2,6 @@
 
 namespace Pagon\Module;
 
-use Pagon\Event;
 use Pagon\App;
 use Pagon\Http\Input;
 
@@ -18,19 +17,21 @@ class Log
 {
     const LEVEL_DEBUG = 0;
     const LEVEL_INFO = 1;
-    const LEVEL_WARN = 2;
-    const LEVEL_ERROR = 3;
-    const LEVEL_EMERG = 4;
+    const LEVEL_NOTICE = 2;
+    const LEVEL_WARN = 3;
+    const LEVEL_ERROR = 4;
+    const LEVEL_CRITICAL = 5;
 
     protected static $config;
     protected static $messages = array();
     protected static $filename = ':level.log';
+
     private static $levels = array(
-        'debug' => self::LEVEL_DEBUG,
-        'info'  => self::LEVEL_INFO,
-        'warn'  => self::LEVEL_WARN,
-        'error' => self::LEVEL_ERROR,
-        'emerg' => self::LEVEL_EMERG
+        'debug'    => self::LEVEL_DEBUG,
+        'info'     => self::LEVEL_INFO,
+        'warn'     => self::LEVEL_WARN,
+        'error'    => self::LEVEL_ERROR,
+        'critical' => self::LEVEL_CRITICAL
     );
 
     /**
@@ -41,8 +42,8 @@ class Log
      */
     public static function init(array $config = array())
     {
-        if ($config) self::$config = &$config;
-        elseif (!empty(App::$config['log'])) self::$config = &App::$config['log'];
+        if ($config) self::$config = & $config;
+        elseif (!empty(App::$config['log'])) self::$config = & App::$config['log'];
 
         if (!isset(self::$config['dir'])) self::$config['dir'] = '.';
         if (!isset(self::$config['level'])) self::$config['level'] = self::LEVEL_DEBUG;
