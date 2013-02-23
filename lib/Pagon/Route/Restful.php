@@ -11,7 +11,7 @@ class Restful extends \Pagon\Route
         // Check method
         if (method_exists($this, $method)) {
             $this->$method();
-        } elseif ($this->getNext()) {
+        } elseif ($this->next) {
             $this->next();
         } else {
             $this->app->notFound();

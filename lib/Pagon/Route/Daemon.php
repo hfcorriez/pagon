@@ -36,6 +36,14 @@ class Daemon extends \Pagon\Route
     {
         throw new DaemonStop();
     }
+
+    /**
+     *
+     */
+    public function run()
+    {
+        throw new \RuntimeException('Method ' . get_called_class() . '->run() mast be implements');
+    }
 }
 
 class DaemonStop extends Stop
