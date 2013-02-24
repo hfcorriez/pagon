@@ -9,7 +9,7 @@
 
 namespace Pagon;
 
-const VERSION = '0.3';
+const VERSION = '0.4';
 
 // Depend Emitter
 require __DIR__ . '/EventEmitter.php';
