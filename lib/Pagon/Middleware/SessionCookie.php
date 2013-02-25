@@ -28,12 +28,8 @@ class SessionCookie extends Middleware
 
     public function call($option = array())
     {
-        if (session_id() === '') {
-            session_start();
-        }
+        $this->input->session();
 
-        $req = $this->input->env();
-        $req['sessions'] = $_SESSION;
         // Check session through cookies header
         if ($_sessions = (array)$this->input->cookie($this->options['name'])) {
             $_SESSION = $_sessions;
