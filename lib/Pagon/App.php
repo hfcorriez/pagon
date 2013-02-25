@@ -557,6 +557,7 @@ class App extends EventEmitter
 
             // Write direct output to the head of buffer
             if ($_buffer_enabled) $this->output->write(ob_get_clean());
+        } catch (Exception\Stop $e) {
         } catch (\Exception $e) {
             if ($this->config['debug']) {
                 throw $e;
