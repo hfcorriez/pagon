@@ -6,7 +6,7 @@ use Pagon\Exception\Stop;
 
 class Daemon extends \Pagon\Route
 {
-    protected $sleep_time = 0;
+    protected $sleep_time = 1000000;
 
     /**
      * Re construct the call
