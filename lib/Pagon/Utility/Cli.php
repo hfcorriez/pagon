@@ -1,8 +1,8 @@
 <?php
 
-namespace Pagon\Cli;
+namespace Pagon\Utility;
 
-class Util
+class Cli
 {
     /**
      * Color output text for the CLI
