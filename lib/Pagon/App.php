@@ -447,6 +447,24 @@ class App extends EventEmitter
     }
 
     /**
+     * Map cli route
+     *
+     * @param string          $path
+     * @param \Closure|string $route
+     * @param \Closure|string $more
+     */
+    public function cli($path, $route = null, $more = null)
+    {
+        if (!$this->_cli) return;
+
+        if ($more !== null) {
+            call_user_func_array(array($this->router, 'on'), func_get_args());
+        } else {
+            $this->router->on($path, $route);
+        }
+    }
+
+    /**
      * Map route
      *
      * @param string          $path
