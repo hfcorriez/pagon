@@ -46,8 +46,8 @@ class ExtendHttpMethods extends \Pagon\Middleware
 
             // Register method check
             $input = $this->input;
-            $_method = 'is' . ucfirst($method);
-            $this->input->protect($_method, function () use ($input, $method) {
+
+            $this->input->protect('is' . ucfirst($method), function () use ($input, $method) {
                 return $input->is($method);
             });
         }

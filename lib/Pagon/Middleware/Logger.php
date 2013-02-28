@@ -2,6 +2,8 @@
 
 namespace Pagon\Middleware;
 
+use Closure;
+
 /**
  * @method debug(string $text)
  * @method info(string $text)
@@ -23,7 +25,6 @@ class Logger extends \Pagon\Middleware
     const ERROR = 3;
     const CRITICAL = 4;
 
-    protected static $params;
     protected static $levels = array('debug', 'info', 'warning', 'error', 'critical');
     protected static $messages = array();
 
@@ -32,17 +33,15 @@ class Logger extends \Pagon\Middleware
      */
     public function call()
     {
-        self::$params = array(
-            'time'  => function () {
-                return date('Y-m-d H:i:s');
-            },
-            'token' => function () {
-                return substr(sha1(uniqid()), 0, 6);
-            },
-            'level' => function ($level) {
-                return str_pad($level, 8, ' ', STR_PAD_BOTH);
-            }
-        );
+        $this->time = function () {
+            return date('Y-m-d H:i:s');
+        };
+        $this->token = $this->share(function () {
+            return substr(sha1(uniqid()), 0, 6);
+        });
+        $this->level = $this->protect(function ($level) {
+            return str_pad($level, 8, ' ', STR_PAD_BOTH);
+        });
 
         $this->app->logger = $this;
         $that = $this;
@@ -67,11 +66,12 @@ class Logger extends \Pagon\Middleware
         if (preg_match_all('/\$(\w+)/', $this->options['format'], $matches)) {
             $matches = $matches[1];
             foreach ($matches as $match) {
-                if (!isset(self::$params[$match])) continue;
-                if (is_callable(self::$params[$match])) {
-                    $message[$match] = call_user_func(self::$params[$match], isset($message[$match]) ? $message[$match] : null);
+                if (!isset($this->$match)) continue;
+
+                if ($this->$match instanceof Closure) {
+                    $message[$match] = call_user_func($this->$match, $message[$match]);
                 } else {
-                    $message[$match] = self::$params[$match];
+                    $message[$match] = $this->$match;
                 }
             }
         }
@@ -100,6 +100,7 @@ class Logger extends \Pagon\Middleware
      *
      * @param $method
      * @param $arguments
+     * @return mixed|void
      */
     public function __call($method, $arguments)
     {
