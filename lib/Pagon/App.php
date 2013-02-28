@@ -11,8 +11,15 @@ namespace Pagon;
 
 const VERSION = '0.4';
 
+// Depend Fiber
+if (!class_exists('Fiber')) {
+    require __DIR__ . '/Fiber.php';
+}
+
 // Depend Emitter
-require __DIR__ . '/EventEmitter.php';
+if (!class_exists('EventEmitter')) {
+    require __DIR__ . '/EventEmitter.php';
+}
 
 /*********************
  * core app

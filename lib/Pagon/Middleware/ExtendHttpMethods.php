@@ -34,7 +34,7 @@ class ExtendHttpMethods extends \Pagon\Middleware
             $app = $this->app;
 
             // Register route
-            $this->app->{$method} = function ($path, $route, $more = null) use ($app, $method) {
+            $this->app->protect($method, function ($path, $route, $more = null) use ($app, $method) {
                 if ($app->isCli() || !$app->input->is($method)) return;
 
                 if ($more !== null) {
@@ -42,14 +42,14 @@ class ExtendHttpMethods extends \Pagon\Middleware
                 } else {
                     $app->router->on($path, $route);
                 }
-            };
+            });
 
             // Register method check
             $input = $this->input;
             $_method = 'is' . ucfirst($method);
-            $this->input->{$_method} = function () use ($input, $method) {
+            $this->input->protect($_method, function () use ($input, $method) {
                 return $input->is($method);
-            };
+            });
         }
 
         $this->next();
