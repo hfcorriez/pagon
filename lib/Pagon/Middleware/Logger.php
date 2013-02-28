@@ -14,6 +14,7 @@ class Logger extends \Pagon\Middleware
     protected $options = array(
         'file'         => 'pagon.log',
         'write_on_log' => false,
+        'format'       => '[$time] $token - $level - $text'
     );
 
     const DEBUG = 0;
@@ -24,7 +25,6 @@ class Logger extends \Pagon\Middleware
 
     protected static $params;
     protected static $levels = array('debug', 'info', 'warning', 'error', 'critical');
-    protected static $format = '[$time] $token - $level - $text';
     protected static $messages = array();
 
     /**
@@ -64,7 +64,7 @@ class Logger extends \Pagon\Middleware
     {
         $message = array('text' => $text, 'level' => self::$levels[$level]);
 
-        if (preg_match_all('/\$(\w+)/', self::$format, $matches)) {
+        if (preg_match_all('/\$(\w+)/', $this->options['format'], $matches)) {
             $matches = $matches[1];
             foreach ($matches as $match) {
                 if (!isset(self::$params[$match])) continue;
@@ -81,7 +81,7 @@ class Logger extends \Pagon\Middleware
             $message['$' . $k] = $v;
         }
 
-        self::$messages[] = strtr(self::$format, $message);
+        self::$messages[] = strtr($this->options['format'], $message);
 
         if ($this->options['write_on_log']) {
             $this->write();
