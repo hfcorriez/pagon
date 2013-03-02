@@ -31,9 +31,7 @@ class Input extends \Pagon\EventEmitter
     {
         $this->app = $app;
 
-        $this->env = new Config(array(
-            'sessions' => &$_SESSION
-        ) + $_SERVER);
+        $this->env = new Config($_SERVER);
     }
 
     /**
@@ -613,11 +611,6 @@ class Input extends \Pagon\EventEmitter
      */
     public function session($key = null, $value = null)
     {
-        if (session_id() === '') {
-            session_start();
-            $this->env['sessions'] = $_SESSION;
-        }
-
         if ($value !== null) {
             return $this->env['sessions'][$key] = $value;
         } elseif ($key !== null) {
