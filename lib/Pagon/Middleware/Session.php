@@ -7,17 +7,15 @@ use Pagon\Middleware;
 class Session extends Middleware
 {
     protected $cookie = true;
+    protected $lifetime;
 
     public function call()
     {
         $env = $this->input->env();
 
-        if (get_called_class() == __CLASS__) {
-            if (!session_id()) {
-                session_start();
-                $env['session'] = $_SESSION;
-            }
-        } else {
+        $this->lifetime = ini_get('session.gc_maxlifetime');
+
+        if (get_called_class() !== __CLASS__) {
             if (!$this->cookie) {
                 ini_set('session.use_cookies', 0);
                 session_cache_limiter(false);
@@ -29,12 +27,13 @@ class Session extends Middleware
                 array($this, 'write'),
                 array($this, 'destroy'),
                 array($this, 'gc'));
-
-            session_start();
-            session_regenerate_id(true);
-
-            $env['sessions'] = $_SESSION;
         }
+
+        if (!session_id()) {
+            session_start();
+        }
+
+        $env['sessions'] = $_SESSION;
 
         $this->next();
     }
