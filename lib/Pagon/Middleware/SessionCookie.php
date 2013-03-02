@@ -26,7 +26,7 @@ class SessionCookie extends Middleware
         );
     }
 
-    public function call($option = array())
+    public function call()
     {
         $this->input->session();
 
