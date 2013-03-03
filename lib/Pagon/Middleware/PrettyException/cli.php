@@ -10,30 +10,27 @@ function console_output($text, $color, $bg_color, $length = 80)
         }
         return join(PHP_EOL, $text);
     }
-    return Cli::text(str_pad(substr($text, 0, $length), $length, ' '), $color, $bg_color);
+    return Cli::text('  ' . str_pad(substr($text, 0, $length), $length, ' '), $color, $bg_color);
 }
 
 ?>
 <?php echo
-console_output(
-    array(
-        '  ' . str_repeat('-', 78),
-        str_pad("  $type [$code] " . str_replace(getcwd(), '', $file) . ":$line", 80, ' ', STR_PAD_RIGHT),
-        '  ' . str_repeat('-', 78)
-    )
-    , 'white', 'red');
+    console_output(
+        array('', "$type [$code]: $message", '')
+        , 'white', 'red'
+    ) . PHP_EOL;
 
+echo  console_output(str_replace(getcwd(), '', $file) . " [$line]", 'purple', 'white'). PHP_EOL;
 $source = PHP_EOL . Debug::source($file, $line);
 $source = str_replace(array('<span class="line">', '</span>', '</code></pre>', '<pre class="source"><code>', '<span class="number">'), '', $source);
 $source = htmlspecialchars_decode($source);
-$source = preg_replace('/<span class="line highlight">(.*)/', Cli::text('$1', 'white', 'blue'), $source);
-$source = str_replace("\n", "\n" . Cli::text('  ', 'white', 'red'), $source);
-echo $source .PHP_EOL;
-echo console_output(array(
-    '  ' . str_repeat('-', 78),
-    '  Stack trace:',
-    '  ' . str_repeat('-', 78)
-), 'white', 'red') . PHP_EOL;
-echo Cli::text('  ', 'white', 'red') . str_replace("\n", "\n" . Cli::text('  ', 'white', 'red'), str_replace(getcwd(), '', $info)) . PHP_EOL;
-echo console_output('', 'white', 'red', 80) . PHP_EOL;
+foreach (explode("\n", $source) as $line) {
+    if (!$line) continue;
+    if (strpos($line, '<span class="line highlight">') === false) {
+        echo console_output($line, 'gray', 'white') . PHP_EOL;
+    } else {
+        echo console_output(str_replace('<span class="line highlight">', '', $line), 'gray', 'yellow') . PHP_EOL;
+    }
+}
+echo str_replace(getcwd(), '', $info) . PHP_EOL;
 ?>
