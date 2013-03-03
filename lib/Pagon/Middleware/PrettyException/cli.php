@@ -2,35 +2,35 @@
 use Pagon\Helper\Cli;
 use Pagon\Helper\Debug;
 
-function console_output($text, $color, $bg_color, $length = 80)
+function console_output($text, $option, $length = 80)
 {
     if (is_array($text)) {
         foreach ($text as $i => $t) {
-            $text[$i] = console_output($t, $color, $bg_color);
+            $text[$i] = console_output($t, $option, $length);
         }
         return join(PHP_EOL, $text);
     }
-    return Cli::text('  ' . str_pad(substr($text, 0, $length), $length, ' '), $color, $bg_color);
+    return Cli::text('  ' . str_pad(substr($text, 0, $length), $length, ' '), $option);
 }
 
 ?>
 <?php echo
     console_output(
-        array('', "$type [$code]: $message", '')
-        , 'white', 'red'
+        array('', "$type [$code]: $message", ''),
+        array('color' => 'white', 'background' => 'red')
     ) . PHP_EOL;
 
-echo  console_output(str_replace(getcwd(), '', $file) . " [$line]", 'purple', 'white'). PHP_EOL;
+echo  console_output("$file [$line]", array('color' => 'purple', 'background' => 'white')) . PHP_EOL;
 $source = PHP_EOL . Debug::source($file, $line);
 $source = str_replace(array('<span class="line">', '</span>', '</code></pre>', '<pre class="source"><code>', '<span class="number">'), '', $source);
 $source = htmlspecialchars_decode($source);
 foreach (explode("\n", $source) as $line) {
     if (!$line) continue;
     if (strpos($line, '<span class="line highlight">') === false) {
-        echo console_output($line, 'black', 'white') . PHP_EOL;
+        echo console_output($line, array('color' => 'black', 'background' => 'white')) . PHP_EOL;
     } else {
-        echo console_output(str_replace('<span class="line highlight">', '', $line), 'black', 'yellow') . PHP_EOL;
+        echo console_output(str_replace('<span class="line highlight">', '', $line), array('color' => 'black', 'background' => 'yellow')) . PHP_EOL;
     }
 }
-echo str_replace(getcwd(), '', $info) . PHP_EOL;
+echo Cli::text($info, array('underline')) . PHP_EOL;
 ?>
