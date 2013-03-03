@@ -11,8 +11,15 @@ namespace Pagon;
 
 const VERSION = '0.4';
 
+// Depend Fiber
+if (!class_exists('Fiber')) {
+    require __DIR__ . '/Fiber.php';
+}
+
 // Depend Emitter
-require __DIR__ . '/EventEmitter.php';
+if (!class_exists('EventEmitter')) {
+    require __DIR__ . '/EventEmitter.php';
+}
 
 /*********************
  * core app
@@ -68,7 +75,7 @@ class App extends EventEmitter
     /**
      * @var Middleware[]
      */
-    protected $stacks = array('/' => array());
+    protected $stacks = array('' => array());
 
     /**
      * @var Module[]
@@ -284,7 +291,7 @@ class App extends EventEmitter
             // If not path
             $options = (array)$middleware;
             $middleware = $path;
-            $path = '/';
+            $path = '';
         }
 
         if (is_string($middleware)) {
@@ -440,6 +447,24 @@ class App extends EventEmitter
     }
 
     /**
+     * Map cli route
+     *
+     * @param string          $path
+     * @param \Closure|string $route
+     * @param \Closure|string $more
+     */
+    public function cli($path, $route = null, $more = null)
+    {
+        if (!$this->_cli) return;
+
+        if ($more !== null) {
+            call_user_func_array(array($this->router, 'on'), func_get_args());
+        } else {
+            $this->router->on($path, $route);
+        }
+    }
+
+    /**
      * Map route
      *
      * @param string          $path
@@ -529,21 +554,24 @@ class App extends EventEmitter
 
         try {
             // Start buffer
-            if ($_buffer_enabled = $this->config['buffer']) ob_start();
+            if ($this->config['buffer']) ob_start();
+            ob_start();
 
             $_used_router = false;
 
             // Loop stacks to match
             foreach ($this->stacks as $path => $middleware) {
                 // Try to match the path
-                if (strpos($this->input->pathInfo(), $path) !== 0) continue;
+                if ($path && strpos($this->input->pathInfo(), $path) !== 0) continue;
 
                 $middleware = (array)$middleware;
                 if (empty($middleware)) continue;
 
                 try {
-                    $this->router->pass($middleware, function ($m) {
-                        return Middleware::build($m[0], $m[1]);
+                    $this->router->pass($middleware, function ($m) use ($_used_router) {
+                        $_m = Middleware::build($m[0], $m[1]);
+                        if ($_m instanceof Router) $_used_router = true;
+                        return $_m;
                     });
 
                     break;
@@ -551,12 +579,15 @@ class App extends EventEmitter
                 }
             }
 
-            if (!$_used_router) {
-                $this->router->call();
+            try {
+                if (!$_used_router) {
+                    $this->router->call();
+                }
+            } catch (Exception\Pass $e) {
             }
 
             // Write direct output to the head of buffer
-            if ($_buffer_enabled) $this->output->write(ob_get_clean());
+            if ($this->config['buffer']) $this->output->write(ob_get_clean());
         } catch (Exception\Stop $e) {
         } catch (\Exception $e) {
             if ($this->config['debug']) {

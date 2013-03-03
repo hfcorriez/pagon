@@ -67,7 +67,7 @@ class Router extends Middleware
     public function dispatch()
     {
         // Check path
-        if (!$this->options['path']) return false;
+        if ($this->options['path'] === null) return false;
 
         // Get routes
         $routes = (array)$this->app->config['route'];
@@ -77,14 +77,12 @@ class Router extends Middleware
 
         // Loop routes for parse and dispatch
         foreach ($routes as $p => $route) {
-            if (!$p) continue;
-
             // Try to parse the params
             if (($params = self::match($this->options['path'], $p)) !== false) {
                 try {
                     $params && $this->app->param($params);
 
-                    return self::run($route);
+                    return $this->run($route);
 
                     // If multiple controller
                 } catch (Pass $e) {
@@ -218,7 +216,7 @@ class Router extends Middleware
                 $regex = '/' . $regex . '/';
             } elseif (strpos($regex, ':')) {
                 // Need replace
-                $regex = '/^' . preg_replace('/:([a-zA-Z0-9]+)/', '(?<$1>[^\/]+?)', $regex) . '\/?$/';
+                $regex = '/^' . preg_replace('/\(:([a-zA-Z0-9]+)\)/', '(?<$1>[^\/]+?)', $regex) . '\/?$/';
             } else {
                 // Full match
                 $regex = '/^' . $regex . '$/';

@@ -61,13 +61,43 @@ class ArgParser
      * @param array  $argv
      * @param string $usage
      */
-    public function __construct($argv = array(), $usage = null)
+    public function __construct(array $argv = null, $usage = null)
     {
-        if (!$argv) $argv = $_SERVER['argv'];
+        if ($argv === null) $argv = $_SERVER['argv'];
 
         $this->program = array_shift($argv);
         $this->argv = array_values($argv);
         $this->usage = $usage;
+    }
+
+    /**
+     * Get or set program
+     *
+     * @param string $program
+     * @return string
+     */
+    public function program($program = null)
+    {
+        if ($program) {
+            $this->program = $program;
+        }
+
+        return $this->program;
+    }
+
+    /**
+     * Get or set argv
+     *
+     * @param array $argv
+     * @return array
+     */
+    public function argv(array $argv = null)
+    {
+        if ($argv) {
+            $this->argv = $argv;
+        }
+
+        return $this->argv;
     }
 
     /**
@@ -95,7 +125,7 @@ class ArgParser
      *  `help`      string      help text
      *  `default`   string      default value
      */
-    public function add($param, $opt = array())
+    public function add($param, array $opt = array())
     {
         // Array support
         if (is_array($param)) {

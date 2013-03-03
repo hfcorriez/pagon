@@ -2,7 +2,7 @@
 
 namespace Pagon;
 
-class EventEmitter
+class EventEmitter extends Fiber
 {
     /**
      * @var array Events listeners
@@ -29,9 +29,23 @@ class EventEmitter
             }
 
             // Loop listeners for callback
-            foreach ($this->listeners[$event] as $listener) {
-                // Closure Listener
-                call_user_func_array($listener, $args);
+            foreach ($this->listeners[$event] as $i => $listener) {
+                if ($listener instanceof \Closure) {
+                    // Closure Listener
+                    call_user_func_array($listener, $args);
+                } elseif (is_array($listener) && $listener[0] instanceof \Closure) {
+                    // Closure Listener
+                    call_user_func_array($listener[0], $args);
+
+                    // Process option
+                    $_option = (array)$listener[1];
+
+                    // If emit once
+                    if ($_option['once']) {
+                        // Remove from listeners
+                        unset($this->listeners[$event][$i]);
+                    }
+                }
             }
         }
     }
@@ -45,7 +59,80 @@ class EventEmitter
      */
     public function on($event, \Closure $listener)
     {
-        $this->listeners[strtolower($event)][] = $listener;
+        if (is_array($event)) {
+            foreach ($event as $e) {
+                $this->listeners[strtolower($e)][] = $listener;
+            }
+        } else {
+            $this->listeners[strtolower($event)][] = $listener;
+        }
+    }
+
+    /**
+     * Attach a listener to emit once
+     *
+     * @param array|string $event
+     * @param callable     $listener
+     */
+    public function once($event, \Closure $listener)
+    {
+        if (is_array($event)) {
+            foreach ($event as $e) {
+                $this->listeners[strtolower($e)][] = array($listener, array('once' => true));
+            }
+        } else {
+            $this->listeners[strtolower($event)][] = array($listener, array('once' => true));
+        }
+    }
+
+    /**
+     * Alias for removeListener
+     *
+     * @param array|string $event
+     * @param callable     $listener
+     */
+    public function off($event, \Closure $listener)
+    {
+        if (is_array($event)) {
+            foreach ($event as $e) {
+                $this->off($e, $listener);
+            }
+        } else {
+            $event = strtolower($event);
+            if (!empty($this->listeners[$event])) {
+                // Find Listener index
+                if (($key = array_search($listener, $event)) !== false) {
+                    // Remove it
+                    unset($this->listeners[$event][$key]);
+                }
+            }
+        }
+    }
+
+    /**
+     * Get listeners of given event
+     *
+     * @param string $event
+     * @return array
+     */
+    public function listeners($event)
+    {
+        if (!empty($this->listeners[$event])) {
+            return $this->listeners[$event];
+        }
+        return array();
+    }
+
+    /**
+     * Attach a event listener
+     *
+     * @static
+     * @param array|string $event
+     * @param \Closure     $listener
+     */
+    public function addListener($event, \Closure $listener)
+    {
+        $this->on($event, $listener);
     }
 
     /**
@@ -55,74 +142,26 @@ class EventEmitter
      * @param string   $event
      * @param \Closure $listener
      */
-    public function off($event, \Closure $listener)
+    public function removeListener($event, \Closure $listener)
     {
-        $event = strtolower($event);
-        if (!empty($this->listeners[$event])) {
-            // Find Listener index
-            if (($key = array_search($listener, $event)) !== false) {
-                // Remove it
-                unset($this->listeners[$event][$key]);
-            }
-        }
+        $this->off($event, $listener);
     }
 
     /**
-     * Add registry
+     * Remove all listeners of given event
      *
-     * @param string         $key
-     * @param mixed|\Closure $value
+     * @param string $event
      */
-    public function __set($key, $value)
+    public function removeAllListeners($event)
     {
-        $this->{$key} = $value;
+        $this->listeners[$event] = array();
     }
 
     /**
-     * Get registry
-     *
-     * @param string $key
-     * @return null
+     * Remove all of all listeners
      */
-    public function __get($key)
+    public function removeAllOfAllListeners()
     {
-        return isset($this->{$key}) ? $this->{$key} : null;
-    }
-
-    /**
-     * Exists registry?
-     *
-     * @param string $key
-     * @return bool
-     */
-    public function __isset($key)
-    {
-        return isset($this->{$key});
-    }
-
-    /**
-     * Delete registry?
-     *
-     * @param string $key
-     */
-    public function __unset($key)
-    {
-        unset($this->{$key});
-    }
-
-    /**
-     * Call closure registry
-     *
-     * @param string $method
-     * @param array  $args
-     * @return mixed
-     * @throws \BadMethodCallException
-     */
-    public function __call($method, $args)
-    {
-        if (isset($this->{$method}) && $this->{$method} instanceof \Closure) {
-            return call_user_func_array($this->{$method}, $args);
-        }
-        throw new \BadMethodCallException('Call to undefined method ' . __CLASS__ . '::' . $method . '()');
+        $this->listeners = array();
     }
 }

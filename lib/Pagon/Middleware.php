@@ -2,7 +2,7 @@
 
 namespace Pagon;
 
-abstract class Middleware
+abstract class Middleware extends EventEmitter
 {
     const _CLASS_ = __CLASS__;
 
