@@ -10,6 +10,7 @@ class PrettyException extends Middleware
     {
         try {
             $self = & $this;
+
             // Register crash event
             $this->input->app->on('crash', function ($error) use ($self) {
                 $self->render(new \ErrorException($error['message'], $error['type'], 0, $error['file'], $error['line']));
@@ -33,7 +34,7 @@ class PrettyException extends Middleware
     public function render(\Exception $e)
     {
         ob_clean();
-        $this->input->app->render(__DIR__ . '/views/error.php', array(
+        $this->input->app->render(__DIR__ . '/PrettyException/' . ($this->app->isCli() ? 'cli' : 'web') . '.php', array(
             'file'    => $e->getFile(),
             'line'    => $e->getLine(),
             'code'    => $e->getCode(),

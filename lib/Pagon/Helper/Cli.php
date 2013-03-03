@@ -1,6 +1,6 @@
 <?php
 
-namespace Pagon\Utility;
+namespace Pagon\Helper;
 
 class Cli
 {
@@ -9,17 +9,20 @@ class Cli
      *
      * @param string      $text       to color
      * @param string      $color      of text
-     * @param bool|string $bold       color
      * @param string      $bg_color   background color
+     * @param bool        $bold
+     * @param bool        $extra
      * @return string
      */
-    public static function colorize($text, $color, $bold = false, $bg_color = 'default')
+    public static function text($text, $color, $bg_color = 'default', $bold = false, $extra = false)
     {
         $colors = array_flip(array(30 => 'gray', 'red', 'green', 'yellow', 'blue', 'purple', 'cyan', 'white'));
 
         $bg_colors = array_flip(array(40 => 'gray', 'red', 'green', 'yellow', 'blue', 'purple', 'cyan', 'white', 49 => 'default'));
 
-        return "\033[" . ($bold ? '1' : '0') . ';' . $colors[$color] . ';' . $bg_colors[$bg_color] . "m$text\033[0m";
+        $extras = array_flip(array(4 => 'underscore', 'blink'));
+
+        return "\033[" . ($bold ? '1' : '0') . ';' . $colors[$color] . ';' . $bg_colors[$bg_color] . "m$text\033[0" . ($extra ? $extras[$extra] : '') . "m";
     }
 
 }

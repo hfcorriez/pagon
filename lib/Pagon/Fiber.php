@@ -43,7 +43,7 @@ class Fiber
     /**
      * Add injector
      *
-     * @param string   $key
+     * @param string    $key
      * @param \Closure  $value
      */
     public function __set($key, $value)
@@ -55,12 +55,11 @@ class Fiber
      * Get injector
      *
      * @param string $key
-     * @throws \BadMethodCallException
      * @return mixed|\Closure
      */
     public function __get($key)
     {
-        if (!isset($this->injectors[$key])) throw new \BadMethodCallException('Call to undefined injector ' . __CLASS__ . '::' . $key . '()');
+        if (!isset($this->injectors[$key])) return null;
 
         if ($this->injectors[$key] instanceof \Closure) {
             return $this->injectors[$key]();
@@ -143,7 +142,7 @@ class Fiber
     /**
      * Extend the injector
      *
-     * @param string  $key
+     * @param string   $key
      * @param \Closure $closure
      * @return \Closure
      * @throws \InvalidArgumentException
