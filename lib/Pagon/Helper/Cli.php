@@ -16,9 +16,9 @@ class Cli
      */
     public static function text($text, $color, $bg_color = 'default', $bold = false, $extra = false)
     {
-        $colors = array_flip(array(30 => 'gray', 'red', 'green', 'yellow', 'blue', 'purple', 'cyan', 'white'));
+        $colors = array_flip(array(30 => 'black', 'red', 'green', 'yellow', 'blue', 'purple', 'cyan', 'white'));
 
-        $bg_colors = array_flip(array(40 => 'gray', 'red', 'green', 'yellow', 'blue', 'purple', 'cyan', 'white', 49 => 'default'));
+        $bg_colors = array_flip(array(40 => 'black', 'red', 'green', 'yellow', 'blue', 'purple', 'cyan', 'white', 49 => 'default'));
 
         $extras = array_flip(array(4 => 'underscore', 'blink'));
 

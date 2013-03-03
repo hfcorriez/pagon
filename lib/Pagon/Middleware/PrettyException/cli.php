@@ -27,9 +27,9 @@ $source = htmlspecialchars_decode($source);
 foreach (explode("\n", $source) as $line) {
     if (!$line) continue;
     if (strpos($line, '<span class="line highlight">') === false) {
-        echo console_output($line, 'gray', 'white') . PHP_EOL;
+        echo console_output($line, 'black', 'white') . PHP_EOL;
     } else {
-        echo console_output(str_replace('<span class="line highlight">', '', $line), 'gray', 'yellow') . PHP_EOL;
+        echo console_output(str_replace('<span class="line highlight">', '', $line), 'black', 'yellow') . PHP_EOL;
     }
 }
 echo str_replace(getcwd(), '', $info) . PHP_EOL;
