@@ -556,8 +556,7 @@ class App extends EventEmitter
             // Start buffer
             if ($this->config['buffer']) ob_start();
             ob_start();
-
-            $_used_router = false;
+            $this->stacks[''][] = array($this->router);
 
             // Loop stacks to match
             foreach ($this->stacks as $path => $middleware) {
@@ -568,22 +567,14 @@ class App extends EventEmitter
                 if (empty($middleware)) continue;
 
                 try {
-                    $this->router->pass($middleware, function ($m) use ($_used_router) {
+                    $this->router->pass($middleware, function ($m) {
                         $_m = Middleware::build($m[0], $m[1]);
-                        if ($_m instanceof Router) $_used_router = true;
                         return $_m;
                     });
 
                     break;
                 } catch (Exception\Pass $e) {
                 }
-            }
-
-            try {
-                if (!$_used_router) {
-                    $this->router->call();
-                }
-            } catch (Exception\Pass $e) {
             }
 
             // Write direct output to the head of buffer

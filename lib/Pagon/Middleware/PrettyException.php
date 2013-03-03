@@ -40,7 +40,8 @@ class PrettyException extends Middleware
             'code'    => $e->getCode(),
             'trace'   => $e->getTrace(),
             'message' => $e->getMessage(),
-            'type'    => get_class($e)
+            'type'    => get_class($e),
+            'info'    => $e->getTraceAsString()
         ));
     }
 }
