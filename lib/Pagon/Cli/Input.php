@@ -42,7 +42,7 @@ class Input extends \Pagon\EventEmitter
     public function pathInfo()
     {
         if (!isset($this->env['path_info'])) {
-            $this->env['path_info'] = isset($GLOBALS['argv'][1]) ? $GLOBALS['argv'][1] : '';
+            $this->env['path_info'] = isset($GLOBALS['argv'][1]) && $GLOBALS['argv'][1]{0} != '-' ? $GLOBALS['argv'][1] : '';
         }
 
         return $this->env['path_info'];

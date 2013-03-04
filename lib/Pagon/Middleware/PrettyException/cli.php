@@ -32,5 +32,8 @@ foreach (explode("\n", $source) as $line) {
         echo console_output(str_replace('<span class="line highlight">', '', $line), array('color' => 'black', 'background' => 'yellow')) . PHP_EOL;
     }
 }
-echo Cli::text($info, array('underline')) . PHP_EOL;
+echo console_output('Use "--debug-trace" for more info.', array('background' => 'blue', 'color' => 'white')) . PHP_EOL;
+if (array_search('--debug-trace', $GLOBALS['argv'])) {
+    echo PHP_EOL . Cli::text($info, array('underline', 'color' => 'yellow')) . PHP_EOL;
+}
 ?>
