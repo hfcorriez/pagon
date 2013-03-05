@@ -117,21 +117,6 @@ class Output extends \Pagon\EventEmitter
     }
 
     /**
-     * Get or set charset
-     *
-     * @param $charset
-     * @return string|Output
-     */
-    public function charset($charset = null)
-    {
-        if ($charset) {
-            $this->env['charset'] = $charset;
-            return $this;
-        }
-        return $this->env['charset'];
-    }
-
-    /**
      * Write body
      *
      * @param string $data
@@ -175,7 +160,9 @@ class Output extends \Pagon\EventEmitter
         } elseif (isset(self::$messages[$status])) {
             $this->env['status'] = (int)$status;
             return $this;
-        } else throw new \Exception('Unknown status :value', array(':value' => $status));
+        } else {
+            throw new \Exception('Unknown status :value', array(':value' => $status));
+        }
     }
 
     /**
@@ -204,6 +191,92 @@ class Output extends \Pagon\EventEmitter
                 return $this;
             }
         }
+    }
+
+    /**
+     * Get or set charset
+     *
+     * @param $charset
+     * @return string|Output
+     */
+    public function charset($charset = null)
+    {
+        if ($charset) {
+            $this->env['charset'] = $charset;
+            return $this;
+        }
+        return $this->env['charset'];
+    }
+
+    /**
+     * Set LAST-MODIFIED Header
+     *
+     * @param int|null $time
+     * @return string|Output
+     */
+    public function lastModified($time = null)
+    {
+        if ($time !== null) {
+            if (is_integer($time)) {
+                $this->header('LAST-MODIFIED', date(DATE_RFC1123, $time));
+                if ($time === strtotime($this->app->input->header('IF-MODIFIED-SINCE'))) {
+                    $this->app->halt(304);
+                }
+            }
+
+            return $this;
+        }
+
+        return $this->header('LAST-MODIFIED');
+    }
+
+    /**
+     * Set ETAG Header
+     *
+     * @param  string|null $value
+     * @return string|Output
+     */
+    public function etag($value = null)
+    {
+        if ($value !== null) {
+            //Set etag value
+            $value = 'W/"' . $value . '"';
+            $this->header('ETAG', $value);
+
+            //Check conditional GET
+            if ($etag = $this->app->input->header('IF-NONE-MATCH')) {
+                $etags = preg_split('@\s*,\s*@', $etag);
+                if (in_array($value, $etags) || in_array('*', $etags)) {
+                    $this->app->halt(304);
+                }
+            }
+
+            return $this;
+        }
+
+        return $this->header('ETAG');
+    }
+
+    /**
+     * Set expires for header
+     *
+     * @param int|string|null $time
+     * @return string|Output
+     */
+    public function expires($time = null)
+    {
+        if ($time !== null) {
+            if (!is_numeric($time) && is_string($time)) {
+                $time = strtotime($time);
+            } elseif (is_numeric($time) && strlen($time) != 10) {
+                $time = time() + (int)$time;
+            }
+
+            $this->header('EXPIRES', gmdate(DATE_RFC1123, $time));
+            return $this;
+        }
+
+        return $this->header('EXPIRES');
     }
 
     /**
@@ -319,24 +392,6 @@ class Output extends \Pagon\EventEmitter
             }
         }
         return $this;
-    }
-
-    /**
-     * Set expires time
-     *
-     * @param string|int $time
-     * @return array|null
-     */
-    public function expires($time = null)
-    {
-        if ($time) {
-            if (is_string($time)) {
-                $time = strtotime($time);
-            }
-            $this->header('Expires', gmdate(DATE_RFC1123, $time));
-            return $this;
-        }
-        return $this->header('Expires');
     }
 
     /**

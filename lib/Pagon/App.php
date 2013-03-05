@@ -626,7 +626,7 @@ class App extends EventEmitter
             if (!$this->router->handle('error', array($route))) {
                 echo 'Error occurred';
             }
-            $this->output(500, ob_get_clean());
+            $this->halt(500, ob_get_clean());
         }
     }
 
@@ -645,7 +645,7 @@ class App extends EventEmitter
             if (!$this->router->handle('404', array($route))) {
                 echo 'Path not found';
             }
-            $this->output(404, ob_get_clean());
+            $this->halt(404, ob_get_clean());
         }
     }
 
@@ -664,7 +664,7 @@ class App extends EventEmitter
             if (!$this->router->handle('crash', array($route))) {
                 echo 'App is down';
             }
-            $this->output(500, ob_get_clean());
+            $this->halt(500, ob_get_clean());
         }
     }
 
@@ -675,7 +675,7 @@ class App extends EventEmitter
      * @param string $body
      * @throws Exception\Stop
      */
-    public function output($status, $body)
+    public function halt($status, $body = '')
     {
         $this->output->status($status)->body($body);
         throw new Exception\Stop;
