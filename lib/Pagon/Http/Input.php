@@ -103,7 +103,6 @@ class Input extends \Pagon\EventEmitter
     /**
      * Get url
      *
-     *
      * @return mixed
      */
     public function url()
@@ -113,7 +112,7 @@ class Input extends \Pagon\EventEmitter
             if (($this->scheme() === 'https' && $this->port() !== 443) || ($this->scheme() === 'http' && $this->port() !== 80)) {
                 $_url .= sprintf(':%s', $this->port());
             }
-            $this->env['url'] = $_url;
+            $this->env['url'] = $_url . $this->uri();
         }
 
         return $this->env['url'];

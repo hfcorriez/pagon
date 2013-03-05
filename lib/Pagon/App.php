@@ -524,7 +524,7 @@ class App extends EventEmitter
             'engine' => $engine,
             'dir'    => $this->config['views']
         ));
-        echo $view;
+        $this->output->write($view);
     }
 
     /**
@@ -568,7 +568,7 @@ class App extends EventEmitter
 
                 try {
                     $this->router->pass($middleware, function ($m) {
-                        $_m = Middleware::build($m[0], $m[1]);
+                        $_m = Middleware::build($m[0], isset($m[1]) ? $m[1] : array());
                         return $_m;
                     });
 
