@@ -78,11 +78,6 @@ class App extends EventEmitter
     protected $stacks = array('' => array());
 
     /**
-     * @var Module[]
-     */
-    protected $modules = array();
-
-    /**
      * @var bool Is cli?
      */
     private $_cli = false;
@@ -313,41 +308,6 @@ class App extends EventEmitter
         }
         // Add to the end
         $this->stacks[$path][] = array($middleware, $options);
-    }
-
-    /**
-     * Add modules
-     *
-     * @param string|\StdClass $module
-     * @throws \Exception
-     * @return void
-     */
-    public function load($module)
-    {
-        if (is_string($module)) {
-            if ($module{0} !== '\\') {
-                $module = __NAMESPACE__ . '\Module\\' . $module;
-            }
-
-            if (is_subclass_of($module, Module::_CLASS_)) {
-                $module = new $module();
-            } elseif (is_subclass_of($module . '\\Loader', Module::_CLASS_)) {
-                $module = $module . '\\Loader';
-                $module = new $module();
-            }
-        }
-
-        // Check module
-        if (!$module instanceof Module) {
-            // Not base module
-            throw new \Exception("Bad module can not be added");
-        }
-
-        // Load module
-        $module->load($this);
-
-        // Add to the end
-        $this->modules[] = $module;
     }
 
     /**
