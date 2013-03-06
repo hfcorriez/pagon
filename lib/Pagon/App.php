@@ -501,29 +501,35 @@ class App extends EventEmitter
      *
      * @param string $path
      * @param array  $data
+     * @param array  $options
+     * @return void
      */
-    public function render($path, $data = array())
+    public function render($path, $data = array(), array $options = array())
     {
-        // Get ext
-        $ext = pathinfo($path, PATHINFO_EXTENSION);
-        $engine = false;
+        if (!isset($options['engine'])) {
+            // Get ext
+            $ext = pathinfo($path, PATHINFO_EXTENSION);
+            $options['engine'] = false;
 
-        // If ext then check engine with ext
-        if ($ext && isset($this->engines[$ext])) {
-            // If engine exists
-            if (is_string($this->engines[$ext]) && class_exists($this->engines[$ext])) {
-                // Create new engine
-                $this->engines[$ext] = $engine = new $this->engines[$ext]();
-            } else {
-                // Get engine from exists engines
-                $engine = $this->engines[$ext];
+            // If ext then check engine with ext
+            if ($ext && isset($this->engines[$ext])) {
+                // If engine exists
+                if (is_string($this->engines[$ext]) && class_exists($this->engines[$ext])) {
+                    // Create new engine
+                    $this->engines[$ext] = $engine = new $this->engines[$ext]();
+                } else {
+                    // Get engine from exists engines
+                    $options['engine'] = $this->engines[$ext];
+                }
             }
         }
+
         // Create view
-        $view = new View($path, $data + $this->locals, array(
-            'engine' => $engine,
-            'dir'    => $this->config['views']
+        $view = new View($path, $data + $this->locals, $options + array(
+            'dir' => $this->config['views']
         ));
+
+        // Write to output
         $this->output->write($view);
     }
 
@@ -760,7 +766,13 @@ class App extends EventEmitter
             }
         } else {
             // Set the 99 high order for default autoload
-            $available_path = array(99 => $this->config['autoload']);
+            $available_path = array();
+
+            // Autoload
+            if (isset($this->config['autoload'])) {
+                $available_path[99] = $this->config['autoload'];
+            }
+
             // Check other namespaces
             if (isset($this->config['autoload_namespaces'])) {
                 // Loop namespaces as autoload
