@@ -2,7 +2,6 @@
 
 namespace Pagon\Http;
 
-use Pagon\Data\MimeType;
 use Pagon\Exception\Pass;
 use Pagon\App;
 use Pagon\Config;
@@ -243,7 +242,7 @@ class Input extends \Pagon\EventEmitter
 
         // If type is 'txt', 'xml' and so on, use smarty stracy
         if (is_string($type) && !strpos($type, '/')) {
-            $type = MimeType::load()->get($type);
+            $type = Config::load('mime_types')->{$type};
             if (!$type) return null;
         }
 

@@ -2,7 +2,6 @@
 
 namespace Pagon\Http;
 
-use Pagon\Data\MimeType;
 use Pagon\Exception\Stop;
 use Pagon\Config;
 use Pagon\App;
@@ -289,7 +288,7 @@ class Output extends \Pagon\EventEmitter
     {
         if ($mime_type) {
             if (!strpos($mime_type, '/')) {
-                $mime_type = MimeType::load()->{$mime_type}[0];
+                $mime_type = Config::load('mime_type')->{$mime_type}[0];
                 if (!$mime_type) return $this->env['content_type'];
             }
             $this->env['content_type'] = $mime_type;

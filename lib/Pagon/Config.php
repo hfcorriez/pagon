@@ -4,9 +4,62 @@ namespace Pagon;
 
 class Config extends \ArrayObject
 {
+    /**
+     * @var array Config registers
+     */
+    protected static $registers = array(
+        'mime_types' => array('mime_types.php', 'file'),
+    );
+
+    /**
+     * Init config
+     *
+     * @param array|object $input
+     */
     public function __construct($input)
     {
         parent::__construct($this->parse($input));
+    }
+
+    /**
+     * Register a config
+     *
+     * @param string $name
+     * @param string $path
+     * @param string $type
+     * @return void
+     */
+    public static function register($name, $path, $type = 'file')
+    {
+        static::$registers[$name] = array($path, $type);
+    }
+
+    /**
+     * Load config by name
+     */
+    public static function load($name)
+    {
+        if (!isset(static::$registers[$name])) {
+            throw new \InvalidArgumentException("Load config error with non-exists name \"$name\"");
+        }
+
+        // Check if config already exists?
+        if (static::$registers[$name] instanceof Config) {
+            return static::$registers[$name];
+        }
+
+        // Try to load
+        list($path, $type) = static::$registers[$name];
+
+        $class = __NAMESPACE__ . '\Config\\' . ucfirst(strtolower($type));
+        if (!class_exists($class)) {
+            throw new \InvalidArgumentException("Load config with error type \"$type\"");
+        }
+
+        // Use data dir
+        if ($path{0} != '/') $path = __DIR__ . '/Config/data/' . $path;
+
+        return static::$registers[$name] = new $class($path);
     }
 
     /**
