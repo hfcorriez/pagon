@@ -83,11 +83,6 @@ class App extends EventEmitter
     private $_cli = false;
 
     /**
-     * @var bool Is win?
-     */
-    private $_win = false;
-
-    /**
      * @var bool Is run?
      */
     private $_run = false;
@@ -104,9 +99,6 @@ class App extends EventEmitter
 
         // Is cli
         $this->_cli = PHP_SAPI == 'cli';
-
-        // Is win
-        $this->_win = substr(PHP_OS, 0, 3) == 'WIN';
 
         // Register shutdown
         register_shutdown_function(array($this, '__shutdown'));
@@ -147,7 +139,7 @@ class App extends EventEmitter
         $this->locals['config'] = & $this->config;
 
         // Set mode
-        $this->mode = ($_mode = getenv('OMNI_ENV')) ? $_mode : 'development';
+        $this->mode = ($_mode = getenv('PAGON_ENV')) ? $_mode : 'development';
 
         // Fire init
         $this->emit('init');
@@ -161,16 +153,6 @@ class App extends EventEmitter
     public function isCli()
     {
         return $this->_cli;
-    }
-
-    /**
-     * Check if windows, if not, it must be *unix
-     *
-     * @return bool
-     */
-    public function isWin()
-    {
-        return $this->_win;
     }
 
     /**
@@ -277,7 +259,7 @@ class App extends EventEmitter
      * @param Middleware|\Closure|string $path
      * @param Middleware|\Closure|string $middleware
      * @param array                      $options
-     * @throws \Exception
+     * @throws \RuntimeException
      * @return void
      */
     public function add($path, $middleware = null, $options = array())
@@ -298,7 +280,7 @@ class App extends EventEmitter
 
             // Check if base on Middleware class
             if (!is_subclass_of($middleware, Middleware::_CLASS_)) {
-                throw new \Exception("Bad middleware can not be added");
+                throw new \RuntimeException("Bad middleware can not be called");
             }
         }
 
@@ -306,6 +288,7 @@ class App extends EventEmitter
         if (!isset($this->stacks[$path])) {
             $this->stacks[$path] = array();
         }
+
         // Add to the end
         $this->stacks[$path][] = array($middleware, $options);
     }
@@ -425,22 +408,6 @@ class App extends EventEmitter
     }
 
     /**
-     * Map route
-     *
-     * @param string          $path
-     * @param \Closure|string $route
-     * @param \Closure|string $more
-     */
-    public function route($path, $route, $more = null)
-    {
-        if ($more !== null) {
-            call_user_func_array(array($this->router, 'on'), func_get_args());
-        } else {
-            $this->router->on($path, $route);
-        }
-    }
-
-    /**
      * Set or get view
      *
      * @param string $name
@@ -534,8 +501,7 @@ class App extends EventEmitter
 
                 try {
                     $this->router->pass($middleware, function ($m) {
-                        $_m = Middleware::build($m[0], isset($m[1]) ? $m[1] : array());
-                        return $_m;
+                        return Middleware::build($m[0], isset($m[1]) ? $m[1] : array());
                     });
 
                     break;
