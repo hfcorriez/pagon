@@ -718,6 +718,11 @@ class App extends EventEmitter
     {
         if ($class{0} == '\\') $class = ltrim($class, '\\');
 
+        // Alias check
+        if (isset($this->config['alias']) && isset($this->config['alias'][$class])) {
+            $class = $this->config['alias'][$class];
+        }
+
         // If with Pagon path, force require
         if (substr($class, 0, strlen(__NAMESPACE__) + 1) == __NAMESPACE__ . '\\') {
             if ($file = stream_resolve_include_path(__DIR__ . '/' . str_replace('\\', '/', substr($class, strlen(__NAMESPACE__) + 1)) . '.php')) {
@@ -734,9 +739,9 @@ class App extends EventEmitter
             }
 
             // Check other namespaces
-            if (isset($this->config['autoload_namespaces'])) {
+            if (isset($this->config['namespace'])) {
                 // Loop namespaces as autoload
-                foreach ($this->config['autoload_namespaces'] as $_prefix => $_path) {
+                foreach ($this->config['namespace'] as $_prefix => $_path) {
                     // Check if match prefix
                     if (($_pos = strpos($class, $_prefix)) === 0) {
                         // Set ordered path
