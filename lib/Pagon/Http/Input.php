@@ -242,7 +242,7 @@ class Input extends \Pagon\EventEmitter
 
         // If type is 'txt', 'xml' and so on, use smarty stracy
         if (is_string($type) && !strpos($type, '/')) {
-            $type = Config::load('mime_types')->{$type};
+            $type = Config::load('mimes')->{$type};
             if (!$type) return null;
         }
 

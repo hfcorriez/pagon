@@ -8,7 +8,7 @@ class Config extends \ArrayObject
      * @var array Config registers
      */
     protected static $registers = array(
-        'mime_types' => array('mime_types.php', 'file'),
+        'mimes' => array('mimes.php', 'file'),
     );
 
     /**
