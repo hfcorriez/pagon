@@ -488,7 +488,6 @@ class App extends EventEmitter
         try {
             // Start buffer
             if ($this->config['buffer']) ob_start();
-            ob_start();
             $this->stacks[''][] = array($this->router);
 
             // Loop stacks to match
