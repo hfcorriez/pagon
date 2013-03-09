@@ -54,7 +54,8 @@ class App extends EventEmitter
         'error'    => false,
         'route'    => array(),
         'buffer'   => true,
-        'timezone' => 'UTC'
+        'timezone' => 'UTC',
+        'charset'  => 'UTF-8'
     );
 
     /**
