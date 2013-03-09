@@ -385,6 +385,12 @@ class Output extends \Pagon\EventEmitter
                     if ($_option['sign'] && $_default['secret']) {
                         $value = 's:' . $value . '.' . hash_hmac('sha1', $value, $_default['secret']);
                     }
+
+                    // Encrypt
+                    if ($_option['encrypt'] && isset($this->app->cryptor)) {
+                        $value = 'c:' . $this->app->crptor->encrypt($value);
+                    }
+
                     // Set cookie
                     setcookie($key, $value, $_option['expires'], $_option['path'], $_option['domain'], $_option['secure'], $_option['httponly']);
                 }

@@ -131,6 +131,14 @@ class App extends EventEmitter
 
             // configure debug
             if ($app->config['debug']) $app->add(new Middleware\PrettyException());
+
+            // Check crypt
+            if (isset($app->config['crypt'])) {
+                // Share the cryptor for the app
+                $app->share('cryptor', function ($app) {
+                    return new \Pagon\Utility\Cryptor($app->config['crypt']);
+                });
+            }
         });
 
         // Config

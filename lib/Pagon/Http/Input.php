@@ -580,6 +580,13 @@ class Input extends \Pagon\EventEmitter
             $this->env['cookies'] = $_COOKIE;
             $_option = $this->app->config->cookie;
             foreach ($this->env['cookies'] as &$value) {
+                if ($value) continue;
+
+                // Check crypt
+                if (strpos($value, 'c:') === 0 && isset($this->app->cryptor)) {
+                    $value = $this->app->cryptor->decrypt(substr($value, 2));
+                }
+
                 // Parse signed cookie
                 if ($value && strpos($value, 's:') === 0 && $_option['secret']) {
                     $_pos = strrpos($value, '.');
@@ -590,6 +597,7 @@ class Input extends \Pagon\EventEmitter
                         $value = false;
                     }
                 }
+
                 // Parse json cookie
                 if ($value && strpos($value, 'j:') === 0) {
                     $value = json_decode(substr($value, 2), true);
