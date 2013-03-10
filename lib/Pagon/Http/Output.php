@@ -480,6 +480,16 @@ class Output extends \Pagon\EventEmitter
     }
 
     /**
+     * Is response cachable?
+     *
+     * @return bool
+     */
+    public function isCachable()
+    {
+        return $this->env['status'] >= 200 && $this->env['status'] < 300 || $this->env['status'] == 304;
+    }
+
+    /**
      * Is empty?
      *
      * @return bool
