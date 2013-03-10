@@ -89,8 +89,8 @@ class Output extends \Pagon\EventEmitter
             'body'         => '',
             'content_type' => 'text/html',
             'length'       => 0,
-            'charset'      => 'utf-8',
-            'headers'      => array('CONTENT-TYPE' => 'text/html; charset=utf-8'),
+            'charset'      => $this->app->config['charset'],
+            'headers'      => array('CONTENT-TYPE' => 'text/html; charset=' . $this->app->config['charset']),
             'cookies'      => array(),
         ));
 
@@ -381,6 +381,7 @@ class Output extends \Pagon\EventEmitter
                     if (is_array($value)) {
                         $value = 'j:' . json_encode($value);
                     }
+
                     // Sign cookie
                     if ($_option['sign'] && $_default['secret']) {
                         $value = 's:' . $value . '.' . hash_hmac('sha1', $value, $_default['secret']);
