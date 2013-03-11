@@ -7,11 +7,13 @@ class Ini extends \Pagon\Config
     /**
      * Parse ini string
      *
-     * @param array $ini
+     * @param string $ini
      * @return mixed|void
      */
-    public function parse(array $ini)
+    public function parse($ini)
     {
+        $ini = parse_ini_string($ini);
+
         foreach ($ini as $key => $value) {
             $config = & $this->config;
             $namespaces = explode('.', $key);
@@ -21,27 +23,5 @@ class Ini extends \Pagon\Config
             }
             $config = $value;
         }
-    }
-
-    /**
-     * Load from string
-     *
-     * @param $string
-     * @return Ini
-     */
-    public static function fromString($string)
-    {
-        return new self(parse_ini_string($string));
-    }
-
-    /**
-     * Load from file
-     *
-     * @param $file
-     * @return Ini
-     */
-    public static function fromFile($file)
-    {
-        return new self(parse_ini_file($file));
     }
 }

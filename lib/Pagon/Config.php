@@ -63,6 +63,26 @@ class Config extends \ArrayObject
     }
 
     /**
+     * Load from file
+     *
+     * @param string $file
+     * @return Config
+     * @throws \RuntimeException
+     */
+    protected function fromFile($file)
+    {
+        if (!is_file($file)) {
+            throw new \RuntimeException("Config load error with non-exists file");
+        }
+
+        if (get_called_class() == __CLASS__) {
+            return new self(include($file));
+        } else {
+            return new self(file_get_contents($file));
+        }
+    }
+
+    /**
      * Parse the input, Config must implements this method
      *
      * @param $input
