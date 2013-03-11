@@ -9,8 +9,8 @@ class Config extends \ArrayObject
     /**
      * @var array Config registers
      */
-    protected static $registers = array(
-        'mimes' => array('mimes.php', 'file'),
+    protected static $imports = array(
+        'mimes' => array('mimes.php', 0),
     );
 
     /**
@@ -27,14 +27,14 @@ class Config extends \ArrayObject
     /**
      * Register a config
      *
-     * @param string $name
-     * @param string $path
-     * @param string $type
+     * @param string     $name
+     * @param string     $file
+     * @param int|string $type
      * @return void
      */
-    public static function import($name, $path, $type = 'file')
+    public static function import($name, $file, $type = self::LOAD_AUTODETECT)
     {
-        static::$registers[$name] = array($path, $type);
+        static::$imports[$name] = array($file, $type);
     }
 
     /**
@@ -42,27 +42,22 @@ class Config extends \ArrayObject
      */
     public static function export($name)
     {
-        if (!isset(static::$registers[$name])) {
+        if (!isset(static::$imports[$name])) {
             throw new \InvalidArgumentException("Load config error with non-exists name \"$name\"");
         }
 
         // Check if config already exists?
-        if (static::$registers[$name] instanceof Config) {
-            return static::$registers[$name];
+        if (static::$imports[$name] instanceof Config) {
+            return static::$imports[$name];
         }
 
         // Try to load
-        list($path, $type) = static::$registers[$name];
-
-        $class = __NAMESPACE__ . '\Config\\' . ucfirst(strtolower($type));
-        if (!class_exists($class)) {
-            throw new \InvalidArgumentException("Load config with error type \"$type\"");
-        }
+        list($file, $type) = static::$imports[$name];
 
         // Use data dir
-        if ($path{0} != '/') $path = __DIR__ . '/Config/data/' . $path;
+        if ($file{0} != '/') $file = __DIR__ . '/Config/' . $file;
 
-        return static::$registers[$name] = new $class($path);
+        return static::$imports[$name] = static::load($file, $type);
     }
 
     /**
