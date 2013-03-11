@@ -12,9 +12,13 @@
     "require": {
         "php": ">=5.3.0"
     },
-    "suggest": {
+    "require-dev": {
         "pagon/jade": "dev-master",
         "symfony/yaml": "v2.2.0"
+    },
+    "suggest": {
+        "pagon/jade": "Support Jade template",
+        "symfony/yaml": "Support Yaml config"
     },
     "autoload": {
         "psr-0": {
