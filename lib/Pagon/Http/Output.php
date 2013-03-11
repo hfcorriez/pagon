@@ -288,7 +288,7 @@ class Output extends \Pagon\EventEmitter
     {
         if ($mime_type) {
             if (!strpos($mime_type, '/')) {
-                $mime_type = Config::load('mimes')->{$mime_type}[0];
+                $mime_type = Config::export('mimes')->{$mime_type}[0];
                 if (!$mime_type) return $this->env['content_type'];
             }
             $this->env['content_type'] = $mime_type;

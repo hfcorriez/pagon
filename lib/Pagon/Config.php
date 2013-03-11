@@ -29,7 +29,7 @@ class Config extends \ArrayObject
      * @param string $type
      * @return void
      */
-    public static function register($name, $path, $type = 'file')
+    public static function import($name, $path, $type = 'file')
     {
         static::$registers[$name] = array($path, $type);
     }
@@ -37,7 +37,7 @@ class Config extends \ArrayObject
     /**
      * Load config by name
      */
-    public static function load($name)
+    public static function export($name)
     {
         if (!isset(static::$registers[$name])) {
             throw new \InvalidArgumentException("Load config error with non-exists name \"$name\"");
@@ -69,7 +69,7 @@ class Config extends \ArrayObject
      * @return Config
      * @throws \RuntimeException
      */
-    protected function fromFile($file)
+    protected function load($file)
     {
         if (!is_file($file)) {
             throw new \RuntimeException("Config load error with non-exists file");
