@@ -4,6 +4,8 @@ namespace Pagon;
 
 class Config extends \ArrayObject
 {
+    const LOAD_AUTODETECT = 0;
+
     /**
      * @var array Config registers
      */
@@ -14,11 +16,12 @@ class Config extends \ArrayObject
     /**
      * Init config
      *
-     * @param array|object $input
+     * @param array $input
+     * @return Config
      */
-    public function __construct($input)
+    public function __construct(array $input)
     {
-        parent::__construct($this->parse($input));
+        parent::__construct($input);
     }
 
     /**
@@ -65,32 +68,38 @@ class Config extends \ArrayObject
     /**
      * Load from file
      *
-     * @param string $file
+     * @param string     $file
+     * @param int|string $type
+     * @throws \InvalidArgumentException
      * @return Config
-     * @throws \RuntimeException
      */
-    protected function load($file)
+    public static function load($file, $type = self::LOAD_AUTODETECT)
     {
         if (!is_file($file)) {
-            throw new \RuntimeException("Config load error with non-exists file");
+            throw new \InvalidArgumentException("Config load error with non-exists file");
         }
 
-        if (get_called_class() == __CLASS__) {
-            return new self(include($file));
+        if ($type === self::LOAD_AUTODETECT) {
+            $type = pathinfo($file, PATHINFO_EXTENSION);
+        }
+        $type = strtolower($type);
+
+        if ($type !== 'php') {
+            // Try to use custom parser
+            if (class_exists($type)) {
+                $class = $type;
+            } else {
+                $class = __NAMESPACE__ . "\\Parser\\" . ucfirst($type);
+            }
+
+            if (!class_exists($class)) {
+                throw new \InvalidArgumentException("There is no parser '$class' for '$type'");
+            }
+
+            return new self($class::parse(file_get_contents($file)));
         } else {
-            return new self(file_get_contents($file));
+            return new self(include($file));
         }
-    }
-
-    /**
-     * Parse the input, Config must implements this method
-     *
-     * @param $input
-     * @return mixed
-     */
-    protected function parse($input)
-    {
-        return (array)$input;
     }
 
     /**
@@ -144,6 +153,30 @@ class Config extends \ArrayObject
         } else {
             $this[$key] = $value;
         }
+    }
+
+    /**
+     * Set defaults for array
+     *
+     * @param array $config
+     * @return Config
+     */
+    public function defaults(array $config)
+    {
+        $this->exchangeArray($this->getArrayCopy() + $config);
+        return $this;
+    }
+
+    /**
+     * Add array for config
+     *
+     * @param array $config
+     * @return Config
+     */
+    public function add(array $config)
+    {
+        $this->exchangeArray($config + $this->getArrayCopy());
+        return $this;
     }
 
     /**

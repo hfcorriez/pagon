@@ -91,7 +91,7 @@ class App extends EventEmitter
     /**
      * App init
      *
-     * @param array $config
+     * @param array|string $config
      * @throws \Exception
      */
     public function __construct($config = array())
@@ -142,7 +142,7 @@ class App extends EventEmitter
         });
 
         // Config
-        $this->config = $config instanceof Config ? $config : new Config($config + $this->config);
+        $this->config = !is_array($config) ? Config::load((string)$config)->defaults($this->config) : new Config($config + $this->config);
 
         // Set default locals
         $this->locals['config'] = & $this->config;
