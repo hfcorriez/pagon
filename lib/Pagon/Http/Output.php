@@ -88,7 +88,7 @@ class Output extends \Pagon\EventEmitter
             'status'       => 200,
             'body'         => '',
             'content_type' => 'text/html',
-            'length'       => 0,
+            'length'       => null,
             'charset'      => $this->app->config['charset'],
             'headers'      => array('CONTENT-TYPE' => 'text/html; charset=' . $this->app->config['charset']),
             'cookies'      => array(),
@@ -348,8 +348,10 @@ class Output extends \Pagon\EventEmitter
                 $this->env['headers']['CONTENT-TYPE'] = $this->env['content_type'] . '; charset=' . $this->env['charset'];
             }
 
-            // Set content length
-            $this->env['headers']['CONTENT-LENGTH'] = $this->env['length'];
+            if (is_numeric($this->env['length'])) {
+                // Set content length
+                $this->env['headers']['CONTENT-LENGTH'] = $this->env['length'];
+            }
 
             // Loop headers to send
             if ($this->env['headers']) {
