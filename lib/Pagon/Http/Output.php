@@ -345,8 +345,11 @@ class Output extends \Pagon\EventEmitter
 
             // Set content type if not exists
             if (!isset($this->env['headers']['CONTENT-TYPE'])) {
-                $this->env['headers']['content-type'] = $this->env['content_type'] . '; charset=' . $this->env['charset'];
+                $this->env['headers']['CONTENT-TYPE'] = $this->env['content_type'] . '; charset=' . $this->env['charset'];
             }
+
+            // Set content length
+            $this->env['headers']['CONTENT-LENGTH'] = $this->env['length'];
 
             // Loop headers to send
             if ($this->env['headers']) {
@@ -474,7 +477,7 @@ class Output extends \Pagon\EventEmitter
      *
      * @throws Stop
      */
-    public static function stop()
+    public function stop()
     {
         throw new Stop();
     }
