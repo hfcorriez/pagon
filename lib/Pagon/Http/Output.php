@@ -367,7 +367,7 @@ class Output extends \Pagon\EventEmitter
                         'domain'   => null,
                         'secure'   => false,
                         'httponly' => false,
-                        'expires'  => 0,
+                        'timeout'  => 0,
                         'sign'     => false,
                         'secret'   => '',
                         'encrypt'  => false,
@@ -393,7 +393,7 @@ class Output extends \Pagon\EventEmitter
                     }
 
                     // Set cookie
-                    setcookie($key, $value, $_option['expires'], $_option['path'], $_option['domain'], $_option['secure'], $_option['httponly']);
+                    setcookie($key, $value, time() + $_option['timeout'], $_option['path'], $_option['domain'], $_option['secure'], $_option['httponly']);
                 }
             }
         }
