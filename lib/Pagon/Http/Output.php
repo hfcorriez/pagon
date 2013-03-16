@@ -82,7 +82,7 @@ class Output extends \Pagon\EventEmitter
             'status'       => 200,
             'body'         => '',
             'content_type' => 'text/html',
-            'length'       => null,
+            'length'       => false,
             'charset'      => $this->app->config['charset'],
             'header'       => array('content-type' => 'text/html; charset=' . $this->app->config['charset']),
             'cookie'       => array(),
