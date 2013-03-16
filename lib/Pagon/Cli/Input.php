@@ -9,19 +9,9 @@ use Pagon\Config;
 class Input extends \Pagon\EventEmitter
 {
     /**
-     * @var array Route params
-     */
-    public $params = array();
-
-    /**
      * @var \Pagon\App App
      */
     public $app;
-
-    /**
-     * @var \Pagon\Config Env
-     */
-    protected $env;
 
     /**
      * @param \Pagon\App $app
@@ -30,7 +20,7 @@ class Input extends \Pagon\EventEmitter
     {
         $this->app = $app;
 
-        $this->env = new Config($_SERVER);
+        $this->env = parent::__construct(array('param' => array()) + $_SERVER);
     }
 
     /**
@@ -80,7 +70,7 @@ class Input extends \Pagon\EventEmitter
      */
     public function param($key, $default = null)
     {
-        return isset($this->params[$key]) ? $this->params[$key] : $default;
+        return isset($this->injectors['param'][$key]) ? $this->injectors['param'][$key] : $default;
     }
 
     /**

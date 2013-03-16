@@ -78,9 +78,9 @@ class Router extends Middleware
         // Loop routes for parse and dispatch
         foreach ($routes as $p => $route) {
             // Try to parse the params
-            if (($params = self::match($this->options['path'], $p)) !== false) {
+            if (($param = self::match($this->options['path'], $p)) !== false) {
                 try {
-                    $params && $this->app->param($params);
+                    $param && $this->app->param($param);
 
                     return $this->run($route);
 
@@ -181,23 +181,23 @@ class Router extends Middleware
      */
     protected static function match($path, $route)
     {
-        $params = false;
+        $param = false;
 
         // Regex or Param check
         if (!strpos($route, ':') && strpos($route, '^') === false) {
             if ($path === $route) {
-                $params = array();
+                $param = array();
             }
         } else {
             // Try match
             if (preg_match(self::toRegex($route), $path, $matches)) {
                 array_shift($matches);
-                $params = $matches;
+                $param = $matches;
             }
         }
 
         // When complete the return
-        return $params;
+        return $param;
     }
 
     /**

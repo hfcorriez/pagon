@@ -651,13 +651,13 @@ class App extends EventEmitter
     public function param($param = null)
     {
         if ($param === null) {
-            return $this->input->params;
+            return $this->input->param;
         } else {
             if (is_array($param)) {
-                $this->input->params = $param;
+                $this->input->param = $param;
                 return true;
             } else {
-                return isset($this->input->params[$param]) ? $this->input->params[$param] : null;
+                return isset($this->input->param[$param]) ? $this->input->param[$param] : null;
             }
         }
     }
