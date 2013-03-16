@@ -10,15 +10,14 @@ class MethodOverride extends \Pagon\Middleware
 
     public function call()
     {
-        $env = $this->input->env();
-
-        if (isset($env['X_HTTP_METHOD_OVERRIDE'])) {
-            $env['REQUEST_METHOD'] = strtoupper($env['X_HTTP_METHOD_OVERRIDE']);
-        } elseif (isset($env['REQUEST_METHOD']) && $env['REQUEST_METHOD'] === 'POST') {
-            if ($method = $_POST[$this->options['method']]) {
-                $env['original_request_method'] = $env['REQUEST_METHOD'];
-                $env['REQUEST_METHOD'] = strtoupper($method);
-            }
+        if ($override = $this->input->raw('X_HTTP_METHOD_OVERRIDE')) {
+            $this->input->raw('REQUEST_METHOD', strtoupper($override));
+        } elseif ($this->input->raw('REQUEST_METHOD') === 'POST'
+            && isset($_POST[$this->options['method']])
+            && ($method = $_POST[$this->options['method']])
+        ) {
+            $this->input->raw('ORIGIN_REQUEST_METHOD', 'POST');
+            $this->input->raw('REQUEST_METHOD', strtoupper($method));
         }
 
         $this->next();

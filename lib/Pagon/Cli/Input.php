@@ -83,22 +83,4 @@ class Input extends \Pagon\EventEmitter
         ob_get_level() && ob_clean();
         throw new Pass();
     }
-
-    /**
-     * Env
-     *
-     * @param $key
-     * @return mixed
-     */
-    public function env($key = null)
-    {
-        if (is_array($key)) {
-            $this->env = new Config($key);
-            return $this->env;
-        }
-
-        if ($key === null) return $this->env;
-
-        return isset($this->env[$key]) ? $this->env[$key] : null;
-    }
 }

@@ -15,7 +15,7 @@ class Cli extends \Pagon\Route
      */
     public function call()
     {
-        $argv = $this->input->env('argv');
+        $argv = $this->input->raw('argv');
         $arg_parser = new ArgParser(array_slice($argv, 1), $this->usage);
         $arg_parser->program($argv[0] . ' ' . $argv[1]);
 

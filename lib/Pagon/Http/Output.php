@@ -84,8 +84,8 @@ class Output extends \Pagon\EventEmitter
             'content_type' => 'text/html',
             'length'       => null,
             'charset'      => $this->app->config['charset'],
-            'header'      => array('content-type' => 'text/html; charset=' . $this->app->config['charset']),
-            'cookie'      => array(),
+            'header'       => array('content-type' => 'text/html; charset=' . $this->app->config['charset']),
+            'cookie'       => array(),
         ));
 
         $this->locals = & $this->app->locals;
@@ -369,7 +369,8 @@ class Output extends \Pagon\EventEmitter
                         'httponly' => false,
                         'expires'  => 0,
                         'sign'     => false,
-                        'secret'   => ''
+                        'secret'   => '',
+                        'encrypt'  => false,
                     );
                 }
                 // Loop for set

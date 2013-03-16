@@ -11,8 +11,6 @@ class Session extends Middleware
 
     public function call()
     {
-        $env = $this->input->env();
-
         $this->lifetime = ini_get('session.gc_maxlifetime');
 
         if (get_called_class() !== __CLASS__) {
@@ -32,8 +30,6 @@ class Session extends Middleware
         if (!session_id()) {
             session_start();
         }
-
-        $env['sessions'] = $_SESSION;
 
         $this->next();
     }

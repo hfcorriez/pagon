@@ -608,12 +608,12 @@ class Input extends \Pagon\EventEmitter
     public function session($key = null, $value = null)
     {
         if ($value !== null) {
-            return $this->injectors['session'][$key] = $value;
+            return $_SESSION[$key] = $value;
         } elseif ($key !== null) {
-            return isset($this->injectors['session'][$key]) ? $this->injectors['session'][$key] : null;
+            return isset($_SESSION[$key]) ? $_SESSION[$key] : null;
         }
 
-        return $this->injectors['session'];
+        return $_SESSION;
     }
 
     /**
