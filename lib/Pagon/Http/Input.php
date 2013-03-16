@@ -566,10 +566,10 @@ class Input extends \Pagon\EventEmitter
      */
     public function cookie($key = null, $default = null)
     {
-        if (!isset($this->injectors['cookies'])) {
-            $this->injectors['cookies'] = $_COOKIE;
+        if (!isset($this->injectors['cookie'])) {
+            $this->injectors['cookie'] = $_COOKIE;
             $_option = $this->app->config->cookie;
-            foreach ($this->injectors['cookies'] as &$value) {
+            foreach ($this->injectors['cookie'] as &$value) {
                 if ($value) continue;
 
                 // Check crypt
@@ -594,8 +594,8 @@ class Input extends \Pagon\EventEmitter
                 }
             }
         }
-        if ($key === null) return $this->injectors['cookies'];
-        return isset($this->injectors['cookies'][$key]) ? $this->injectors['cookies'][$key] : $default;
+        if ($key === null) return $this->injectors['cookie'];
+        return isset($this->injectors['cookie'][$key]) ? $this->injectors['cookie'][$key] : $default;
     }
 
     /**
