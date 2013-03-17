@@ -71,7 +71,9 @@ class App extends EventEmitter
     /**
      * @var string View engine
      */
-    protected $engines = array();
+    protected $engines = array(
+        'jade' => 'Jade'
+    );
 
     /**
      * @var Middleware[]
@@ -438,6 +440,7 @@ class App extends EventEmitter
      * @param string $path
      * @param array  $data
      * @param array  $options
+     * @throws \RuntimeException
      * @return void
      */
     public function render($path, $data = array(), array $options = array())
@@ -450,9 +453,16 @@ class App extends EventEmitter
             // If ext then check engine with ext
             if ($ext && isset($this->engines[$ext])) {
                 // If engine exists
-                if (is_string($this->engines[$ext]) && class_exists($this->engines[$ext])) {
+                if (is_string($this->engines[$ext])) {
+                    if (class_exists($this->engines[$ext])) {
+                        $class = $this->engines[$ext];
+                    } else if (class_exists(__NAMESPACE__ . '\\Engine\\' . $this->engines[$ext])) {
+                        $class = __NAMESPACE__ . '\\Engine\\' . $this->engines[$ext];
+                    } else {
+                        throw new \RuntimeException("Unavailable view engine '{$this->engines[$ext]}'");
+                    }
                     // Create new engine
-                    $this->engines[$ext] = $engine = new $this->engines[$ext]();
+                    $this->engines[$ext] = $options['engine'] = new $class();
                 } else {
                     // Get engine from exists engines
                     $options['engine'] = $this->engines[$ext];
