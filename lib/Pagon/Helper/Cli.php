@@ -44,4 +44,44 @@ class Cli
         return "\033[" . join(';', $options) . "m$text\033[0m";
     }
 
+    /**
+     * Prompt a message and get return
+     *
+     * @param string $text
+     * @return string
+     */
+    public static function prompt($text)
+    {
+        print (string)$text;
+        $fp = fopen('php://stdin', 'r');
+        $input = trim(fgets($fp, 1024), "\n ");
+        fclose($fp);
+        return $input;
+    }
+
+    /**
+     * Confirm message
+     *
+     * @param string $text
+     * @param bool   $default
+     * @return bool
+     */
+    public static function confirm($text, $default = false)
+    {
+        print (string)$text . ' [' . ($default ? 'Y/n' : 'y/N') . ']: ';
+        $fp = fopen('php://stdin', 'r');
+        $i = 2;
+        while (($input = trim(strtolower(fgets($fp, 1024)))) && !in_array($input, array('', 'y', 'n')) && $i > 0) {
+            echo PHP_EOL . 'Confirm: ';
+            $i--;
+        }
+
+        if ($i == 0) die(PHP_EOL . 'Error input');
+
+        $ret = $input === '' ? ($default === true ? true : false) : ($input === 'y' ? true : false);
+
+        fclose($fp);
+
+        return $ret;
+    }
 }
