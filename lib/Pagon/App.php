@@ -704,7 +704,7 @@ class App extends EventEmitter
 
         // Alias check
         if (isset($this->config['alias']) && isset($this->config['alias'][$class])) {
-            $class = $this->config['alias'][$class];
+            class_alias($class, $class = $this->config['alias'][$class]);
         }
 
         // If with Pagon path, force require
