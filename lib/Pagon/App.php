@@ -55,7 +55,7 @@ class App extends EventEmitter
         'route'    => array(),
         'buffer'   => true,
         'timezone' => 'UTC',
-        'charset'  => 'UTF-8'
+        'charset'  => 'UTF-8',
     );
 
     /**
@@ -469,6 +469,9 @@ class App extends EventEmitter
                 }
             }
         }
+
+        // Default set app
+        $data['_'] = $this;
 
         // Create view
         $view = new View($path, $data + $this->locals, $options + array(
