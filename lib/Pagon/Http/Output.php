@@ -3,6 +3,7 @@
 namespace Pagon\Http;
 
 use Pagon\App;
+use Pagon\Config;
 use Pagon\Exception\Stop;
 
 class Output extends \Pagon\EventEmitter
@@ -84,7 +85,7 @@ class Output extends \Pagon\EventEmitter
             'content_type' => 'text/html',
             'length'       => false,
             'charset'      => $this->app->config['charset'],
-            'header'       => array('content-type' => 'text/html; charset=' . $this->app->config['charset']),
+            'header'       => array('Content-Type' => 'text/html; charset=' . $this->app->config['charset']),
             'cookie'       => array(),
         ));
 
@@ -166,21 +167,29 @@ class Output extends \Pagon\EventEmitter
      * @param bool   $replace
      * @return array|Output
      */
-    public function header($name = null, $value = null, $replace = false)
+    public function header($name = null, $value = null, $replace = true)
     {
         if ($name === null) {
             return $this->injectors['header'];
         } elseif (is_array($name)) {
+            // Batch set headers
             foreach ($name as $k => $v) {
                 // Force replace
                 $this->header($k, $v, $replace);
             }
         } else {
-            $name = strtolower(str_replace('_', '-', $name));
             if ($value === null) {
-                return $this->injectors['header'][$name];
+                return $this->injectors['header'][$name][1];
             } else {
-                $this->injectors['header'][$name] = !$replace && !empty($this->injectors['header'][$name]) ? $this->injectors['header'][$name] . "\n" . $value : $value;
+                if (!$replace && !empty($this->injectors['header'][$name])) {
+                    if (is_array($this->injectors['header'][$name])) {
+                        $this->injectors['header'][$name][] = $value;
+                    } else {
+                        $this->injectors['header'][$name] = array($this->injectors['header'][$name], $value);
+                    }
+                } else {
+                    $this->injectors['header'][$name] = $value;
+                }
                 return $this;
             }
         }
@@ -211,8 +220,8 @@ class Output extends \Pagon\EventEmitter
     {
         if ($time !== null) {
             if (is_integer($time)) {
-                $this->header('last-modified', date(DATE_RFC1123, $time));
-                if ($time === strtotime($this->app->input->header('if-modified-since'))) {
+                $this->header('Last-Modified', date(DATE_RFC1123, $time));
+                if ($time === strtotime($this->app->input->header('If-Modified-Since'))) {
                     $this->app->halt(304);
                 }
             }
@@ -220,7 +229,7 @@ class Output extends \Pagon\EventEmitter
             return $this;
         }
 
-        return $this->header('last-modified');
+        return $this->header('Last-Modified');
     }
 
     /**
@@ -234,10 +243,10 @@ class Output extends \Pagon\EventEmitter
         if ($value !== null) {
             //Set etag value
             $value = 'W/"' . $value . '"';
-            $this->header('etag', $value);
+            $this->header('Etag', $value);
 
             //Check conditional GET
-            if ($etag = $this->app->input->header('if-none-match')) {
+            if ($etag = $this->app->input->header('If-None-Match')) {
                 $etags = preg_split('@\s*,\s*@', $etag);
                 if (in_array($value, $etags) || in_array('*', $etags)) {
                     $this->app->halt(304);
@@ -247,7 +256,7 @@ class Output extends \Pagon\EventEmitter
             return $this;
         }
 
-        return $this->header('etag');
+        return $this->header('Etag');
     }
 
     /**
@@ -265,11 +274,11 @@ class Output extends \Pagon\EventEmitter
                 $time = time() + (int)$time;
             }
 
-            $this->header('expires', gmdate(DATE_RFC1123, $time));
+            $this->header('Expires', gmdate(DATE_RFC1123, $time));
             return $this;
         }
 
-        return $this->header('expires');
+        return $this->header('Expires');
     }
 
     /**
@@ -338,22 +347,25 @@ class Output extends \Pagon\EventEmitter
             header(sprintf('HTTP/%s %s %s', $this->app->input->protocol(), $this->injectors['status'], $this->message()));
 
             // Set content type if not exists
-            if (!isset($this->injectors['header']['CONTENT-TYPE'])) {
-                $this->injectors['header']['CONTENT-TYPE'] = $this->injectors['content_type'] . '; charset=' . $this->injectors['charset'];
+            if (!isset($this->injectors['header']['Content-Type'])) {
+                $this->injectors['header']['Content-Type'] = $this->injectors['content_type'] . '; charset=' . $this->injectors['charset'];
             }
 
             if (is_numeric($this->injectors['length'])) {
                 // Set content length
-                $this->injectors['header']['CONTENT-LENGTH'] = $this->injectors['length'];
+                $this->injectors['header']['Content-Length'] = $this->injectors['length'];
             }
 
             // Loop header to send
             if ($this->injectors['header']) {
                 foreach ($this->injectors['header'] as $name => $value) {
                     // Multiple line header support
-                    $h_values = explode("\n", $value);
-                    foreach ($h_values as $h_val) {
-                        header("$name: $h_val", false);
+                    if (is_array($value)) {
+                        foreach ($value as $v) {
+                            header("$name: $v", false);
+                        }
+                    } else {
+                        header("$name: $value");
                     }
                 }
             }
