@@ -3,6 +3,12 @@ namespace Pagon\Helper;
 
 class XML
 {
+    /**
+     * Xml to array
+     *
+     * @param string $content
+     * @return array|string
+     */
     public static function toArray($content)
     {
         $dom = new \DOMDocument();
@@ -11,7 +17,8 @@ class XML
     }
 
     /**
-     * 处理成数组
+     * Structure the array
+     *
      * @static
      * @param \DOMNode $node
      * @return array|string
@@ -70,25 +77,25 @@ class XML
     }
 
     /**
-     * 从ARRAY转换
+     * Array to xml
      *
      * @static
-     * @param        $object
+     * @param array  $array
      * @param string $root
      * @param string $unknown
      * @param string $doc_type
      * @return string
      */
-    public static function fromArray($object, $root = 'root', $unknown = 'item', $doc_type = '<?xml version="1.0" encoding="utf-8"?>')
+    public static function fromArray($array, $root = 'root', $unknown = 'item', $doc_type = '<?xml version="1.0" encoding="utf-8"?>')
     {
-        return $doc_type . "<{$root}>" . self::toXml($object, $unknown) . "</{$root}>";
+        return $doc_type . "<{$root}>" . self::toXml($array, $unknown) . "</{$root}>";
     }
 
     /**
-     * 处理XML
+     * Array item to xml node
      *
      * @static
-     * @param        $array
+     * @param array  $array
      * @param string $unknown
      * @return string
      */
@@ -116,11 +123,6 @@ class XML
                 }
             }
         }
-
         return $xml;
     }
-
-
 }
-
-// END

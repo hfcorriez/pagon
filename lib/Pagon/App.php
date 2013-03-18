@@ -56,6 +56,7 @@ class App extends EventEmitter
         'buffer'   => true,
         'timezone' => 'UTC',
         'charset'  => 'UTF-8',
+        'alias'    => array()
     );
 
     /**
@@ -698,7 +699,7 @@ class App extends EventEmitter
     /**
      * Auto load class
      *
-     * @param $class
+     * @param string $class
      * @return bool
      */
     protected function __autoload($class)
@@ -706,8 +707,9 @@ class App extends EventEmitter
         if ($class{0} == '\\') $class = ltrim($class, '\\');
 
         // Alias check
-        if (isset($this->config['alias']) && isset($this->config['alias'][$class])) {
-            class_alias($class, $class = $this->config['alias'][$class]);
+        if (!empty($this->config['alias'][$class])) {
+            class_alias($this->config['alias'][$class], $class);
+            $class = $this->config['alias'][$class];
         }
 
         // If with Pagon path, force require
@@ -721,12 +723,12 @@ class App extends EventEmitter
             $available_path = array();
 
             // Autoload
-            if (isset($this->config['autoload'])) {
+            if (!empty($this->config['autoload'])) {
                 $available_path[99] = $this->config['autoload'];
             }
 
             // Check other namespaces
-            if (isset($this->config['namespace'])) {
+            if (!empty($this->config['namespace'])) {
                 // Loop namespaces as autoload
                 foreach ($this->config['namespace'] as $_prefix => $_path) {
                     // Check if match prefix
