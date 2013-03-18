@@ -97,8 +97,8 @@ class Cli
     public static function exec($cmd, &$stdout, &$stderr, $timeout = 3600)
     {
         if ($timeout <= 0) $timeout = 3600;
-        $descriptors = array
-        (
+
+        $descriptors = array(
             1 => array("pipe", "w"),
             2 => array("pipe", "w")
         );
