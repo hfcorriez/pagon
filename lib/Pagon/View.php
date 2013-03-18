@@ -99,11 +99,12 @@ class View
     public function render()
     {
         $engine = $this->options['engine'];
+
         if (!$engine) {
-            ob_start();
             if ($this->data) {
                 extract((array)$this->data);
             }
+            ob_start();
             include($this->options['dir'] . ($this->path{0} == '/' ? '' : '/') . $this->path);
             return ob_get_clean();
         }
@@ -164,4 +165,3 @@ class View
         return $this->render();
     }
 }
-

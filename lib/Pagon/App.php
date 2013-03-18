@@ -480,7 +480,8 @@ class App extends EventEmitter
         ));
 
         // Write to output
-        $this->output->write($view);
+        echo $view;
+        //$this->output->write($view);
     }
 
     /**
@@ -742,25 +743,30 @@ class App extends EventEmitter
             }
 
             // No available path, no continue
-            if (!$available_path) return false;
-
-            // Set default file name
-            $file_name = '';
-            // PSR-0 check
-            if ($last_pos = strrpos($class, '\\')) {
-                $namespace = substr($class, 0, $last_pos);
-                $class = substr($class, $last_pos + 1);
-                $file_name = str_replace('\\', '/', $namespace) . '/';
-            }
-            // Get last file name
-            $file_name .= str_replace('_', '/', $class) . '.php';
-            // Loop available path for check
-            foreach ($available_path as $_path) {
-                // Check file if exists
-                if ($file = stream_resolve_include_path($_path . '/' . $file_name)) {
-                    require $file;
-                    return true;
+            if ($available_path) {
+                // Set default file name
+                $file_name = '';
+                // PSR-0 check
+                if ($last_pos = strrpos($class, '\\')) {
+                    $namespace = substr($class, 0, $last_pos);
+                    $class = substr($class, $last_pos + 1);
+                    $file_name = str_replace('\\', '/', $namespace) . '/';
                 }
+                // Get last file name
+                $file_name .= str_replace('_', '/', $class) . '.php';
+                // Loop available path for check
+                foreach ($available_path as $_path) {
+                    // Check file if exists
+                    if ($file = stream_resolve_include_path($_path . '/' . $file_name)) {
+                        require $file;
+                        return true;
+                    }
+                }
+            }
+
+            $try_class = __NAMESPACE__ . '\\' . $class;
+            if (class_exists($try_class)) {
+                class_alias($try_class, $class);
             }
         }
 
