@@ -20,7 +20,7 @@ class Input extends \Pagon\EventEmitter
     {
         $this->app = $app;
 
-        $this->env = parent::__construct(array('param' => array()) + $_SERVER);
+        parent::__construct(array('param' => array()) + $_SERVER);
     }
 
     /**
@@ -31,11 +31,11 @@ class Input extends \Pagon\EventEmitter
      */
     public function pathInfo()
     {
-        if (!isset($this->env['path_info'])) {
-            $this->env['path_info'] = isset($GLOBALS['argv'][1]) && $GLOBALS['argv'][1]{0} != '-' ? $GLOBALS['argv'][1] : '';
+        if (!isset($this->injectors['path_info'])) {
+            $this->injectors['path_info'] = isset($GLOBALS['argv'][1]) && $GLOBALS['argv'][1]{0} != '-' ? $GLOBALS['argv'][1] : '';
         }
 
-        return $this->env['path_info'];
+        return $this->injectors['path_info'];
     }
 
     /**
@@ -55,10 +55,10 @@ class Input extends \Pagon\EventEmitter
      */
     public function body()
     {
-        if (!isset($this->env['body'])) {
-            $this->env['body'] = @(string)file_get_contents('php://input');
+        if (!isset($this->injectors['body'])) {
+            $this->injectors['body'] = @(string)file_get_contents('php://input');
         }
-        return $this->env['body'];
+        return $this->injectors['body'];
     }
 
     /**

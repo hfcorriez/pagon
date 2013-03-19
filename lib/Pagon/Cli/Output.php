@@ -42,10 +42,10 @@ class Output extends \Pagon\EventEmitter
     public function status($status = null)
     {
         if (is_numeric($status)) {
-            $this->env['status'] = $status;
+            $this->injectors['status'] = $status;
             return $this;
         }
-        return $this->env['status'];
+        return $this->injectors['status'];
     }
 
     /**
@@ -58,11 +58,11 @@ class Output extends \Pagon\EventEmitter
     public function body($content = null)
     {
         if ($content !== null) {
-            $this->env['body'] = $content;
+            $this->injectors['body'] = $content;
             return $this;
         }
 
-        return $this->env['body'];
+        return $this->injectors['body'];
     }
 
     /**
@@ -73,9 +73,9 @@ class Output extends \Pagon\EventEmitter
      */
     public function write($data)
     {
-        if (!$data) return $this->env['body'];
+        if (!$data) return $this->injectors['body'];
 
-        $this->env['body'] .= $data;
+        $this->injectors['body'] .= $data;
 
         return $this;
     }
@@ -100,7 +100,7 @@ class Output extends \Pagon\EventEmitter
      */
     public function isOk()
     {
-        return $this->env['status'] === 0;
+        return $this->injectors['status'] === 0;
     }
 
     /**
@@ -108,6 +108,6 @@ class Output extends \Pagon\EventEmitter
      */
     public function __toString()
     {
-        return $this->env['body'];
+        return $this->injectors['body'];
     }
 }
