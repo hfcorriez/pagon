@@ -2,7 +2,7 @@
 
 namespace Pagon\Route;
 
-class Restful extends \Pagon\Route
+class Rest extends \Pagon\Route
 {
     public function run()
     {
