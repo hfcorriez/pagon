@@ -56,7 +56,11 @@ class App extends EventEmitter
         'buffer'   => true,
         'timezone' => 'UTC',
         'charset'  => 'UTF-8',
-        'alias'    => array()
+        'alias'    => array(),
+        'engines'  => array(
+            'jade' => 'Jade'
+        ),
+        'stacks'   => array('' => array()),
     );
 
     /**
@@ -68,18 +72,6 @@ class App extends EventEmitter
      * @var string Mode
      */
     protected $mode;
-
-    /**
-     * @var string View engine
-     */
-    protected $engines = array(
-        'jade' => 'Jade'
-    );
-
-    /**
-     * @var Middleware[]
-     */
-    protected $stacks = array('' => array());
 
     /**
      * @var bool Is cli?
@@ -297,12 +289,12 @@ class App extends EventEmitter
         }
 
         // Set default array
-        if (!isset($this->stacks[$path])) {
-            $this->stacks[$path] = array();
+        if (!isset($this->config['stacks'][$path])) {
+            $this->config['stacks'][$path] = array();
         }
 
         // Add to the end
-        $this->stacks[$path][] = array($middleware, $options);
+        $this->config['stacks'][$path][] = array($middleware, $options);
     }
 
     /**
@@ -430,9 +422,9 @@ class App extends EventEmitter
     {
         if ($engine) {
             // Set engine
-            $this->engines[$name] = $engine;
+            $this->config['engines'][$name] = $engine;
         }
-        return isset($this->engines[$name]) ? $this->engines[$name] : null;
+        return isset($this->config['engines'][$name]) ? $this->config['engines'][$name] : null;
     }
 
     /**
@@ -452,21 +444,21 @@ class App extends EventEmitter
             $options['engine'] = false;
 
             // If ext then check engine with ext
-            if ($ext && isset($this->engines[$ext])) {
+            if ($ext && isset($this->config['engines'][$ext])) {
                 // If engine exists
-                if (is_string($this->engines[$ext])) {
-                    if (class_exists($this->engines[$ext])) {
-                        $class = $this->engines[$ext];
-                    } else if (class_exists(__NAMESPACE__ . '\\Engine\\' . $this->engines[$ext])) {
-                        $class = __NAMESPACE__ . '\\Engine\\' . $this->engines[$ext];
+                if (is_string($this->config['engines'][$ext])) {
+                    if (class_exists($this->config['engines'][$ext])) {
+                        $class = $this->config['engines'][$ext];
+                    } else if (class_exists(__NAMESPACE__ . '\\Engine\\' . $this->config['engines'][$ext])) {
+                        $class = __NAMESPACE__ . '\\Engine\\' . $this->config['engines'][$ext];
                     } else {
-                        throw new \RuntimeException("Unavailable view engine '{$this->engines[$ext]}'");
+                        throw new \RuntimeException("Unavailable view engine '{$this->config['engines'][$ext]}'");
                     }
                     // Create new engine
-                    $this->engines[$ext] = $options['engine'] = new $class();
+                    $this->config['engines'][$ext] = $options['engine'] = new $class();
                 } else {
                     // Get engine from exists engines
-                    $options['engine'] = $this->engines[$ext];
+                    $options['engine'] = $this->config['engines'][$ext];
                 }
             }
         }
@@ -512,10 +504,10 @@ class App extends EventEmitter
         try {
             // Start buffer
             if ($this->config['buffer']) ob_start();
-            $this->stacks[''][] = array($this->router);
+            $this->config['stacks'][''][] = array($this->router);
 
             // Loop stacks to match
-            foreach ($this->stacks as $path => $middleware) {
+            foreach ($this->config['stacks'] as $path => $middleware) {
                 // Try to match the path
                 if ($path && strpos($this->input->pathInfo(), $path) !== 0) continue;
 
