@@ -20,13 +20,6 @@ class Cli extends \Pagon\Route
         $arg_parser->program($argv[0] . ' ' . (isset($argv[1]) ? $argv[1] : ''));
 
         foreach ($this->arguments as $arg => $options) {
-            if (is_int($arg)) {
-                $arg = $options;
-                $options = array();
-            } else if (!is_array($options)) {
-                $options = array();
-            }
-
             $arg_parser->add($arg, $options);
         }
 
