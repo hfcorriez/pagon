@@ -84,7 +84,7 @@ class Config extends \ArrayObject
             if (class_exists($type)) {
                 $class = $type;
             } else {
-                $class = __NAMESPACE__ . "\\Parser\\" . ucfirst($type);
+                $class = __NAMESPACE__ . "\\Config\\Parser\\" . ucfirst($type);
             }
 
             if (!class_exists($class)) {
