@@ -4,6 +4,8 @@ namespace Pagon\Http;
 
 use Pagon\App;
 use Pagon\Exception\Pass;
+use Pagon\Config;
+
 
 class Input extends \Pagon\EventEmitter
 {
@@ -19,7 +21,7 @@ class Input extends \Pagon\EventEmitter
     {
         $this->app = $app;
 
-        parent::__construct(array('params' => array()) + $_SERVER);
+        parent::__construct(array('params' => array(), 'query' => &$_GET, 'data' => &$_POST) + $_SERVER);
     }
 
     /**
@@ -485,9 +487,9 @@ class Input extends \Pagon\EventEmitter
      * @param mixed  $default
      * @return mixed
      */
-    public function get($key, $default = null)
+    public function query($key, $default = null)
     {
-        return isset($_GET[$key]) ? $_GET[$key] : $default;
+        return isset($this->injectors['query'][$key]) ? $this->injectors['query'][$key] : $default;
     }
 
     /**
@@ -497,9 +499,9 @@ class Input extends \Pagon\EventEmitter
      * @param mixed  $default
      * @return mixed
      */
-    public function post($key, $default = null)
+    public function data($key, $default = null)
     {
-        return isset($_POST[$key]) ? $_POST[$key] : $default;
+        return isset($this->injectors['data'][$key]) ? $this->injectors['data'][$key] : $default;
 
     }
 
