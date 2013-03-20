@@ -85,8 +85,8 @@ class Output extends \Pagon\EventEmitter
             'content_type' => 'text/html',
             'length'       => false,
             'charset'      => $this->app->config['charset'],
-            'header'       => array('Content-Type' => 'text/html; charset=' . $this->app->config['charset']),
-            'cookie'       => array(),
+            'headers'       => array('Content-Type' => 'text/html; charset=' . $this->app->config['charset']),
+            'cookies'       => array(),
         ));
 
         $this->locals = & $this->app->locals;
@@ -170,7 +170,7 @@ class Output extends \Pagon\EventEmitter
     public function header($name = null, $value = null, $replace = true)
     {
         if ($name === null) {
-            return $this->injectors['header'];
+            return $this->injectors['headers'];
         } elseif (is_array($name)) {
             // Batch set headers
             foreach ($name as $k => $v) {
@@ -179,16 +179,16 @@ class Output extends \Pagon\EventEmitter
             }
         } else {
             if ($value === null) {
-                return $this->injectors['header'][$name][1];
+                return $this->injectors['headers'][$name][1];
             } else {
-                if (!$replace && !empty($this->injectors['header'][$name])) {
-                    if (is_array($this->injectors['header'][$name])) {
-                        $this->injectors['header'][$name][] = $value;
+                if (!$replace && !empty($this->injectors['headers'][$name])) {
+                    if (is_array($this->injectors['headers'][$name])) {
+                        $this->injectors['headers'][$name][] = $value;
                     } else {
-                        $this->injectors['header'][$name] = array($this->injectors['header'][$name], $value);
+                        $this->injectors['headers'][$name] = array($this->injectors['headers'][$name], $value);
                     }
                 } else {
-                    $this->injectors['header'][$name] = $value;
+                    $this->injectors['headers'][$name] = $value;
                 }
                 return $this;
             }
@@ -313,12 +313,12 @@ class Output extends \Pagon\EventEmitter
     public function cookie($key = null, $value = null, $option = array())
     {
         if ($value !== null) {
-            $this->injectors['cookie'][$key] = array($value, $option);
+            $this->injectors['cookies'][$key] = array($value, $option);
             return $this;
         }
 
-        if ($key === null) return $this->injectors['cookie'];
-        return isset($this->injectors['cookie'][$key]) ? $this->injectors['cookie'][$key] : null;
+        if ($key === null) return $this->injectors['cookies'];
+        return isset($this->injectors['cookies'][$key]) ? $this->injectors['cookies'][$key] : null;
     }
 
     /**
@@ -341,24 +341,24 @@ class Output extends \Pagon\EventEmitter
     {
         // Check header
         if (headers_sent() === false) {
-            $this->emit('header');
+            $this->emit('headers');
 
             // Send header
             header(sprintf('HTTP/%s %s %s', $this->app->input->protocol(), $this->injectors['status'], $this->message()));
 
             // Set content type if not exists
-            if (!isset($this->injectors['header']['Content-Type'])) {
-                $this->injectors['header']['Content-Type'] = $this->injectors['content_type'] . '; charset=' . $this->injectors['charset'];
+            if (!isset($this->injectors['headers']['Content-Type'])) {
+                $this->injectors['headers']['Content-Type'] = $this->injectors['content_type'] . '; charset=' . $this->injectors['charset'];
             }
 
             if (is_numeric($this->injectors['length'])) {
                 // Set content length
-                $this->injectors['header']['Content-Length'] = $this->injectors['length'];
+                $this->injectors['headers']['Content-Length'] = $this->injectors['length'];
             }
 
             // Loop header to send
-            if ($this->injectors['header']) {
-                foreach ($this->injectors['header'] as $name => $value) {
+            if ($this->injectors['headers']) {
+                foreach ($this->injectors['headers'] as $name => $value) {
                     // Multiple line header support
                     if (is_array($value)) {
                         foreach ($value as $v) {
@@ -371,7 +371,7 @@ class Output extends \Pagon\EventEmitter
             }
 
             // Set cookie
-            if ($this->injectors['cookie']) {
+            if ($this->injectors['cookies']) {
                 $_default = $this->app->config->cookie;
                 if (!$_default) {
                     $_default = array(
@@ -386,7 +386,7 @@ class Output extends \Pagon\EventEmitter
                     );
                 }
                 // Loop for set
-                foreach ($this->injectors['cookie'] as $key => $value) {
+                foreach ($this->injectors['cookies'] as $key => $value) {
                     $_option = (array)$value[1] + $_default;
                     $value = $value[0];
                     // Json object cookie
@@ -477,7 +477,7 @@ class Output extends \Pagon\EventEmitter
     public function redirect($url, $status = 302)
     {
         $this->injectors['status'] = $status;
-        $this->injectors['header']['location'] = $url;
+        $this->injectors['headers']['location'] = $url;
         return $this;
     }
 

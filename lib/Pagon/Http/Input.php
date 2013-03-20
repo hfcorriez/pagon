@@ -19,7 +19,7 @@ class Input extends \Pagon\EventEmitter
     {
         $this->app = $app;
 
-        parent::__construct(array('param' => array()) + $_SERVER);
+        parent::__construct(array('params' => array()) + $_SERVER);
     }
 
     /**
@@ -512,7 +512,7 @@ class Input extends \Pagon\EventEmitter
      */
     public function param($key, $default = null)
     {
-        return isset($this->injectors['param'][$key]) ? $this->injectors['param'][$key] : $default;
+        return isset($this->injectors['params'][$key]) ? $this->injectors['params'][$key] : $default;
     }
 
     /**
@@ -523,7 +523,7 @@ class Input extends \Pagon\EventEmitter
      */
     public function header($name = null)
     {
-        if (!isset($this->injectors['header'])) {
+        if (!isset($this->injectors['headers'])) {
             $_header = array();
             foreach ($this->env as $key => $value) {
                 $_name = false;
@@ -547,14 +547,14 @@ class Input extends \Pagon\EventEmitter
                 $pass = isset($_SERVER['PHP_AUTH_PW']) ? $_SERVER['PHP_AUTH_PW'] : '';
                 $_header['authorization'] = 'Basic ' . base64_encode($_SERVER['PHP_AUTH_USER'] . ':' . $pass);
             }
-            $this->injectors['header'] = $_header;
+            $this->injectors['headers'] = $_header;
             unset($_header);
         }
 
-        if ($name === null) return $this->injectors['header'];
+        if ($name === null) return $this->injectors['headers'];
 
         $name = strtolower(str_replace('_', '-', $name));
-        return isset($this->injectors['header'][$name]) ? $this->injectors['header'][$name] : null;
+        return isset($this->injectors['headers'][$name]) ? $this->injectors['headers'][$name] : null;
     }
 
     /**
@@ -566,10 +566,10 @@ class Input extends \Pagon\EventEmitter
      */
     public function cookie($key = null, $default = null)
     {
-        if (!isset($this->injectors['cookie'])) {
-            $this->injectors['cookie'] = $_COOKIE;
+        if (!isset($this->injectors['cookies'])) {
+            $this->injectors['cookies'] = $_COOKIE;
             $_option = $this->app->config->cookie;
-            foreach ($this->injectors['cookie'] as &$value) {
+            foreach ($this->injectors['cookies'] as &$value) {
                 if ($value) continue;
 
                 // Check crypt
@@ -594,8 +594,8 @@ class Input extends \Pagon\EventEmitter
                 }
             }
         }
-        if ($key === null) return $this->injectors['cookie'];
-        return isset($this->injectors['cookie'][$key]) ? $this->injectors['cookie'][$key] : $default;
+        if ($key === null) return $this->injectors['cookies'];
+        return isset($this->injectors['cookies'][$key]) ? $this->injectors['cookies'][$key] : $default;
     }
 
     /**

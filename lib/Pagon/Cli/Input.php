@@ -20,7 +20,7 @@ class Input extends \Pagon\EventEmitter
     {
         $this->app = $app;
 
-        parent::__construct(array('param' => array()) + $_SERVER);
+        parent::__construct(array('params' => array()) + $_SERVER);
     }
 
     /**
@@ -70,7 +70,7 @@ class Input extends \Pagon\EventEmitter
      */
     public function param($key, $default = null)
     {
-        return isset($this->injectors['param'][$key]) ? $this->injectors['param'][$key] : $default;
+        return isset($this->injectors['params'][$key]) ? $this->injectors['params'][$key] : $default;
     }
 
     /**
