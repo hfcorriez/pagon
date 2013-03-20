@@ -112,6 +112,7 @@ class Router extends Middleware
      *
      * @param array|string $routes
      * @param  \Closure    $build
+     * @throws \InvalidArgumentException
      * @throws Exception\Pass
      * @return array|string
      */
@@ -126,10 +127,10 @@ class Router extends Middleware
             $runner = $route instanceof \Closure ? $route : $build($route);
             if (is_callable($runner)) {
                 call_user_func_array($runner, $param);
+                return true;
             } else {
                 throw new \InvalidArgumentException("Route '$route' is not exists");
             }
-            return true;
         };
 
         $param = array(

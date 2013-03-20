@@ -39,13 +39,14 @@ class View
         $this->options = $options + $this->options;
 
         // Set path
-        $this->path = $path;
+        $this->path = ltrim($path, '/');
 
         // If file exists?
-        if (!is_file($this->path)) {
+        if (!is_file($options['dir'] . '/' . $this->path)) {
             // Try to load file from absolute path
             if ($path{0} == '/' && is_file($path)) {
                 $this->path = $path;
+                $this->options['dir'] = '';
             } else {
                 throw new \Exception('Template file is not exist: ' . $this->path);
             }
