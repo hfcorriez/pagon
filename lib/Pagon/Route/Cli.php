@@ -17,7 +17,7 @@ class Cli extends \Pagon\Route
     {
         $argv = $this->input->raw('argv');
         $arg_parser = new ArgParser(array_slice($argv, 1), $this->usage);
-        $arg_parser->program($argv[0] . ' ' . isset($argv[1]) ? $argv[1] : '');
+        $arg_parser->program($argv[0] . ' ' . (isset($argv[1]) ? $argv[1] : ''));
 
         foreach ($this->arguments as $arg => $options) {
             if (is_int($arg)) {
