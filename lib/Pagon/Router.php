@@ -123,7 +123,12 @@ class Router extends Middleware
         $param = null;
 
         $pass = function ($route) use ($build, &$param) {
-            call_user_func_array($route instanceof \Closure ? $route : $build($route), $param);
+            $runner = $route instanceof \Closure ? $route : $build($route);
+            if (is_callable($runner)) {
+                call_user_func_array($runner, $param);
+            } else {
+                throw new \InvalidArgumentException("Route '$route' is not exists");
+            }
             return true;
         };
 
