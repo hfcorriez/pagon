@@ -7,8 +7,11 @@ class ArgParser
     // Args options
     protected $options = array();
 
+    // Saved values
+    protected $values = array();
+
     // Hash args
-    protected $args = array();
+    protected $ids = array();
 
     // Positional arguments
     protected $positions = array();
@@ -51,10 +54,10 @@ class ArgParser
     // Errors
     protected static $errors = array(
         1 => 'two few arguments',
-        2 => 'unknown arguments %s',
-        3 => 'unmatched arguments type %s of %s',
-        4 => 'expect value of %s',
-        5 => 'unmatched arguments enum %s of %s',
+        2 => 'unknown arguments "%s"',
+        3 => 'unmatched arguments type "%s" of %s',
+        4 => 'expect value "%s"',
+        5 => 'unmatched arguments enum "%s" of %s',
     );
 
     /**
@@ -116,8 +119,8 @@ class ArgParser
      *      array('x')
      *  ));
      *
-     * @param string $param
-     * @param array  $opt
+     * @param string $argument
+     * @param array  $option
      *
      *  `type`      string      the type of value   <int|bool|array>
      *  `args`      string      args name
@@ -125,71 +128,54 @@ class ArgParser
      *  `help`      string      help text
      *  `default`   string      default value
      */
-    public function add($param, array $opt = array())
+    public function add($argument, $option = array())
     {
-        // Array support
-        if (is_array($param)) {
-            foreach ($param as $p) {
-                $this->add($p[0], $p[1]);
-            }
-            return;
-        }
         // Merge with default options
-        $opt += self::$default_options;
+        $option += self::$default_options;
 
         // The param need register
-        $_param = false;
+        $params = array();
 
-        // Explode with "|"
-        $_args = explode('|', $param);
-
-        // Loop arguments
-        foreach ($_args as $_arg) {
-            // If is optional arguments
-            if ($_len = self::isArg($_arg)) {
-                // Short arg must be one letter
-                if ($_len === 1 && strlen($_arg) !== 2) {
-                    continue;
-                }
-
-                // Save args
-                $opt['args'][] = $_arg;
-
-                // Long will be the default param
-                if ($_len == 2 && !$_param) {
-                    $_param = substr($_arg, $_len);
-                }
-
-                // Save arg to lookup for parse
-                $this->args[$_arg] = $_param;
-
-                // Set default value
-                $this->params[$_param] = null;
-            } else {
-                $_param = $_arg;
-                // Set to positional args
-                $this->positions[] = $param;
+        if (is_string($argument)) {
+            if (!preg_match('/^\w+$/', $argument)) {
+                throw new \InvalidArgumentException("The input argument '$argument' is invalid");
             }
-        }
+            $this->positions[] = $params[] = $option['position'] = $argument;
+        } elseif (is_array($argument)) {
+            foreach ($argument as $arg) {
+                // Check pattern
+                if (!preg_match('/^[\-]{1,2}\w+$/', $arg)) {
+                    throw new \InvalidArgumentException("The input argument '$argument' is invalid");
+                }
 
-        // Exchange enum's array list as dict
-        if ($opt['enum'] && isset($opt['enum'][0])) {
-            foreach ($opt['enum'] as $_i => $_e) {
-                if (is_numeric($_i)) {
-                    unset($opt['enum'][$_i]);
-                    $opt['enum'][$_e] = '';
+                if ($arg{1} == '-') {
+                    // Long argument
+                    $params[] = $option['args'][] = substr($arg, 2);
+                } else {
+                    $_args_list = str_split(substr($arg, 1));
+                    // Short argument
+                    $params = array_merge($params, $_args_list);
+                    $option['args'] = array_merge($option['args'], $_args_list);
                 }
             }
+        } else {
+            throw new \InvalidArgumentException("Unknown input argument");
         }
 
-        // Set short
-        if (!$_param) $_param = $opt['args'][0];
-
-        // Default support
-        if (isset($opt['default'])) $this->params[$_param] = $opt['default'];
+        $id = uniqid();
 
         // Save options
-        $this->options[$_param] = $opt;
+        $this->values[$id] = null;
+        $this->options[$id] = $option;
+
+        // Default support
+        if (isset($option['default'])) $this->values[$id] = $option['default'];
+
+        // Set link
+        foreach ($params as $param) {
+            $this->params[$param] = & $this->values[$id];
+            $this->ids[$param] = $id;
+        }
     }
 
     /**
@@ -199,87 +185,143 @@ class ArgParser
      */
     public function parse()
     {
-        // Next except value?
-        $_expect = false;
+        try {
+            // Next except value?
+            $expect_param = false;
 
-        // Arg position
-        $_potion = 0;
+            // Arg position
+            $potion = 0;
 
-        // Loop arguments
-        foreach ($this->argv as $v) {
-            if ($_name = self::isArg($v)) {
-                // If expect value?
-                if ($_expect) {
-                    if ($this->options[$_expect]['type'] == 'bool') {
-                        // Set true if expect name is bool
-                        $this->params[$_expect] = true;
-                        $_expect = false;
-                    } else {
-                        // If not exists value
-                        return $this->error(self::ERROR_EXPECT_VALUE, $_expect);
+            // Loop arguments
+            foreach ($this->argv as $arg) {
+                if ($len = $this->isArg($arg)) {
+                    $value = false;
+
+                    // If expect value?
+                    if ($expect_param) {
+                        if (in_array($this->option($expect_param, 'type', false), array(false, 'bool'))) {
+                            // Set true if expect name is bool
+                            $this->params[$expect_param] = true;
+                            $expect_param = false;
+                            continue;
+                        } else {
+                            // If not exists value
+                            $this->error(self::ERROR_EXPECT_VALUE, $this->buildArg($expect_param));
+                        }
                     }
-                }
-                // If arg then check args and get param
-                if (isset($this->args[$v]) && ($_param = $this->args[$v])) {
-                    // Expect value
-                    $_expect = $_param;
-                }
-            } elseif ($_expect) {
-                // Check value
-                switch ($this->options[$_expect]['type']) {
-                    case 'int':
-                        if (is_numeric($_expect)) {
-                            // Convert to int if value is numberic
-                            $this->params[$_expect] = (int)$v;
+
+                    // Check value assign
+                    if (strpos($arg, '=')) {
+                        list($arg, $value) = explode('=', $arg);
+                    }
+
+                    // Check long or short argument
+                    if ($len == 1) {
+                        $shorts = str_split(substr($arg, 1));
+                        if (count($shorts) == 1) {
+                            if (isset($this->ids[$shorts[0]])) {
+                                if (!$value) {
+                                    // Expect value
+                                    $expect_param = $shorts[0];
+
+                                    // Pre-set
+                                    if (in_array($this->option($shorts[0], 'type', false), array(false, 'bool'))) $this->params[$shorts[0]] = true;
+                                } else {
+                                    $this->value($expect_param, $value);
+                                }
+                            } else {
+                                $this->error(self::ERROR_UNKNOWN_ARG, $arg);
+                            }
                         } else {
-                            return $this->error(self::ERROR_UNMATCHED_TYPE, 'int', $_expect);
+                            foreach ($shorts as $short) {
+                                $this->params[$short] = true;
+                            }
                         }
-                        break;
-                    case 'bool':
-                        if ($v == 'true') {
-                            // Check "true" text
-                            $this->params[$_expect] = true;
-                        } elseif ($v == 'false') {
-                            // Check "false" text
-                            $this->params[$_expect] = false;
-                        } else {
-                            return $this->error(self::ERROR_UNMATCHED_TYPE, 'bool', $_expect);
-                        }
-                        break;
-                    case 'array':
-                        // Init as array
-                        if (!isset($this->params[$_expect])) $this->params[$_expect] = array();
+                    } else {
+                        $long = substr($arg, 2);
 
-                        // Push to array
-                        $this->params[$_expect][] = $v;
-                        break;
-                    default:
-                        if ($this->options[$_expect]['enum'] && !in_array($v, $this->options[$_expect]['enum'])) {
-                            return $this->error(self::ERROR_UNMATCHED_ENUM, $v, $_expect);
+                        // If arg then check args and get param
+                        if (isset($this->ids[$long])) {
+                            if (!$value) {
+                                // Expect value
+                                $expect_param = $long;
+
+                                // Pre-set
+                                if (in_array($this->option($long, 'type', false), array(false, 'bool'))) $this->params[$long] = true;
+                            } else {
+                                $this->value($long, $value);
+                            }
                         }
-                        // Set value to params
-                        $this->params[$_expect] = $v;
+                    }
+                } elseif ($expect_param) {
+                    $this->value($expect_param, $arg);
+                    $expect_param = false;
+                } elseif (isset($this->positions[$potion])) {
+                    // If checked positional argument
+                    $this->params[$this->positions[$potion]] = $arg;
+                    $potion++;
+                } else {
+                    $this->error(self::ERROR_UNKNOWN_ARG, $arg);
                 }
-                $_expect = false;
-            } elseif (isset($this->positions[$_potion])) {
-                // If checked positional argument
-                $this->params[$this->positions[$_potion]] = $v;
-                $_potion++;
-            } else {
-                return $this->error(self::ERROR_UNKNOWN_ARG, $v);
             }
-        }
 
-        // Check position arguments if all matched
-        foreach ($this->positions as $pos) {
-            // Check value if exists?
-            if (!isset($this->params[$pos])) {
-                return $this->error(self::ERROR_FEW_ARGS);
+            // Check position arguments if all matched
+            foreach ($this->positions as $position) {
+                // Check value if exists?
+                if (!isset($this->params[$position])) {
+                    $this->error(self::ERROR_FEW_ARGS);
+                }
             }
-        }
 
-        // Return matched params
-        return $this->params;
+            // Return matched params
+            return $this->params;
+        } catch (\Exception $e) {
+            return false;
+        }
+    }
+
+    /**
+     * @param $param
+     * @param $value
+     * @return bool
+     */
+    protected function value($param, $value)
+    {
+        $option = $this->options[$this->ids[$param]];
+        switch ($option['type']) {
+            case 'int':
+                if (is_numeric($value)) {
+                    // Convert to int if value is numberic
+                    $this->params[$param] = (int)$value;
+                } else {
+                    $this->error(self::ERROR_UNMATCHED_TYPE, 'int', $this->buildArg($param));
+                }
+                break;
+            case 'bool':
+                if ($value == 'true' || $value == '1') {
+                    // Check "true" text
+                    $this->params[$param] = true;
+                } elseif ($value == 'false' || $value == '0') {
+                    // Check "false" text
+                    $this->params[$param] = false;
+                } else {
+                    $this->error(self::ERROR_UNMATCHED_TYPE, 'bool', $this->buildArg($param));
+                }
+                break;
+            case 'array':
+                // Init as array
+                $this->params[$param] = array();
+
+                // Push to array
+                $this->params[$param][] = $value;
+                break;
+            default:
+                if ($option['enum'] && !in_array($value, $option['enum'])) {
+                    $this->error(self::ERROR_UNMATCHED_ENUM, $value, $this->buildArg($param));
+                }
+                // Set value to params
+                $this->params[$param] = $value;
+        }
     }
 
     /**
@@ -296,10 +338,11 @@ class ArgParser
 
         $chunks = array('usage: ' . $this->program);
 
-        foreach ($this->options as $param => $opt) {
-            if (!in_array($param, $this->positions)) {
-                $chunks[] = '[' . join('|', $opt['args']) . ($opt['type'] != 'bool' ? '=<' . ($opt['enum'] ? join('|', $opt['enum']) : strtoupper($param)) . '>' : '') . ']';
-            }
+        foreach ($this->options as $option) {
+            if (!empty($option['position'])) continue;
+
+            $args = array_map(array($this, 'buildArg'), $option['args']);
+            $chunks[] = '[' . join('|', $args) . ($option['type'] != 'bool' ? '=<' . ($option['enum'] ? join('|', $option['enum']) : 'VALUE') . '>' : '') . ']';
         }
 
         foreach ($this->positions as $param) {
@@ -322,19 +365,19 @@ class ArgParser
         $optionals = array();
         $positional = array();
 
-        foreach ($this->options as $param => $opt) {
-            if (!in_array($param, $this->positions)) {
-                $arg = join(', ', $opt['args']);
-                $optionals[$arg] = $opt['help'];
+        foreach ($this->positions as $param) {
+            $positional[$param] = $this->option($param, 'help');
+
+            if ($enums = $this->option($param, 'enum')) {
+                $blocks[] = self::buildHelpBlock("argument <$param> enum:", $enums);
             }
         }
 
-        foreach ($this->positions as $param) {
-            $positional[$param] = $this->options[$param]['help'];
+        foreach ($this->options as $option) {
+            if (!empty($option['position'])) continue;
 
-            if ($enums = $this->options[$param]['enum']) {
-                $blocks[] = self::buildHelpBlock("argument <$param> enum:", $enums);
-            }
+            $args = array_map(array($this, 'buildArg'), $option['args']);
+            $optionals[join(',', $args)] = $option['help'];
         }
 
         if ($positional) {
@@ -342,7 +385,7 @@ class ArgParser
         }
 
         if ($optionals) {
-            $blocks[] = self::buildHelpBlock('positional arguments:', $optionals);
+            $blocks[] = self::buildHelpBlock('optional arguments:', $optionals);
         }
 
         return $this->usage() . PHP_EOL . join(PHP_EOL . PHP_EOL, $blocks) . PHP_EOL;
@@ -352,6 +395,7 @@ class ArgParser
      * Get error
      *
      * @param int $type
+     * @throws \Exception
      * @return bool
      */
     public function error($type = null)
@@ -359,7 +403,7 @@ class ArgParser
         if ($type !== null && isset(self::$errors[$type])) {
             $_args = array(self::$errors[$type]);
             $this->error = call_user_func_array('sprintf', $_args + func_get_args());
-            return false;
+            throw new \Exception('ArgParser parse error');
         }
         return $this->error ? $this->error : false;
     }
@@ -378,12 +422,42 @@ class ArgParser
     }
 
     /**
+     * Get id by param
+     *
+     * @param string $param
+     * @return bool
+     */
+    protected function id($param)
+    {
+        return isset($this->ids[$param]) ? $this->ids[$param] : false;
+    }
+
+    /**
+     * Get options
+     *
+     * @param string $param
+     * @param bool   $key
+     * @param mixed  $default
+     * @return bool|null
+     */
+    protected function option($param, $key = false, $default = null)
+    {
+        if (!isset($this->ids[$param])) return false;
+
+        $option = $this->options[$this->ids[$param]];
+
+        if (!$key) return $option;
+
+        return isset($option[$key]) ? $option[$key] : $default;
+    }
+
+    /**
      * Check if arguments
      *
      * @param string $str
      * @return bool|int
      */
-    protected static function isArg($str)
+    protected function isArg($str)
     {
         if ($str{0} == '-') {
             if ($str{1} == '-') {
@@ -393,6 +467,24 @@ class ArgParser
             }
         }
         return false;
+    }
+
+    /**
+     * Build argument
+     *
+     * @param string $param
+     * @return string
+     */
+    protected function buildArg($param)
+    {
+        if (!empty($this->options[$this->ids[$param]]['position'])) {
+            return $param;
+        }
+
+        if (strlen($param) > 1) {
+            return '--' . $param;
+        }
+        return '-' . $param;
     }
 
     /**
