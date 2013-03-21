@@ -71,6 +71,8 @@ class ArgParser
         $this->program = array_shift($argv);
         $this->argv = array_values($argv);
         $this->usage = $usage;
+
+        $this->add(array('-h', '--help'), array('help' => 'help of the command', 'type' => 'bool'));
     }
 
     /**
@@ -108,16 +110,9 @@ class ArgParser
      *
      * @example
      *
-     *  $parser->add('--long')      // => params.long
+     *  $parser->add('param')                   // => params.param
      *
-     *  $parser->add('-l|--long')   // => params.long
-     *
-     *  $parser->add('x')           // => params.x with position 0
-     *
-     *  $parser->add(array(
-     *      array('-l|--long', array('type' => 'bool')),
-     *      array('x')
-     *  ));
+     *  $parser->add(array('-l', '--long'))     // => params.long params.l
      *
      * @param string $argument
      * @param array  $option
@@ -127,6 +122,7 @@ class ArgParser
      *  `enum`      string      enumerable list
      *  `help`      string      help text
      *  `default`   string      default value
+     * @throws \InvalidArgumentException
      */
     public function add($argument, $option = array())
     {
@@ -185,6 +181,11 @@ class ArgParser
      */
     public function parse()
     {
+        if (in_array('-h', $this->argv) || in_array('--help', $this->argv)) {
+            print $this->help();
+            exit(0);
+        }
+
         try {
             // Next except value?
             $expect_param = false;
@@ -377,7 +378,7 @@ class ArgParser
             if (!empty($option['position'])) continue;
 
             $args = array_map(array($this, 'buildArg'), $option['args']);
-            $optionals[join(',', $args)] = $option['help'];
+            $optionals[join(', ', $args)] = $option['help'];
         }
 
         if ($positional) {
