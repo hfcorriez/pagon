@@ -341,7 +341,7 @@ class Output extends \Pagon\EventEmitter
     {
         // Check header
         if (headers_sent() === false) {
-            $this->emit('headers');
+            $this->emit('header');
 
             // Send header
             header(sprintf('HTTP/%s %s %s', $this->app->input->protocol(), $this->injectors['status'], $this->message()));
