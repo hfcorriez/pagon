@@ -565,7 +565,7 @@ class App extends EventEmitter
      */
     public function error($route = null)
     {
-        if (is_callable($route) && !$route instanceof \Exception) {
+        if (!$route instanceof \Exception) {
             $this->router->set('error', $route);
         } else {
             ob_get_level() && ob_clean();
@@ -584,7 +584,7 @@ class App extends EventEmitter
      */
     public function notFound($route = null)
     {
-        if (is_callable($route) && !$route instanceof \Exception) {
+        if (!$route instanceof \Exception) {
             $this->router->set('404', $route);
         } else {
             ob_get_level() && ob_clean();
@@ -603,7 +603,7 @@ class App extends EventEmitter
      */
     public function crash($route = null)
     {
-        if (is_callable($route) && !$route instanceof \Exception) {
+        if (!$route instanceof \Exception) {
             $this->router->set('crash', $route);
         } else {
             ob_get_level() && ob_clean();
