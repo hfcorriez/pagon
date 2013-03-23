@@ -31,7 +31,7 @@ class Cryptor
             }
         }
 
-        if (!$this->options['key']) throw new \InvalidArgumentException('Cyptor need key param');
+        if (!$this->options['key']) throw new \InvalidArgumentException('Cryptor need key param');
 
         // Find the max length of the key, based on cipher and mode
         $size = mcrypt_get_key_size($this->options['cipher'], $this->options['mode']);

@@ -572,7 +572,7 @@ class Input extends \Pagon\EventEmitter
             $this->injectors['cookies'] = $_COOKIE;
             $_option = $this->app->config->cookie;
             foreach ($this->injectors['cookies'] as &$value) {
-                if ($value) continue;
+                if (!$value) continue;
 
                 // Check crypt
                 if (strpos($value, 'c:') === 0 && isset($this->app->cryptor)) {

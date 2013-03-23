@@ -85,8 +85,8 @@ class Output extends \Pagon\EventEmitter
             'content_type' => 'text/html',
             'length'       => false,
             'charset'      => $this->app->config['charset'],
-            'headers'       => array('Content-Type' => 'text/html; charset=' . $this->app->config['charset']),
-            'cookies'       => array(),
+            'headers'      => array('Content-Type' => 'text/html; charset=' . $this->app->config['charset']),
+            'cookies'      => array(),
         ));
 
         $this->locals = & $this->app->locals;
@@ -400,8 +400,11 @@ class Output extends \Pagon\EventEmitter
                     }
 
                     // Encrypt
-                    if ($_option['encrypt'] && isset($this->app->cryptor)) {
-                        $value = 'c:' . $this->app->crptor->encrypt($value);
+                    if ($_option['encrypt']) {
+                        if (!isset($this->app->cryptor)) {
+                            throw new \RuntimeException('Encrypt cookie need configure config["crypt"]');
+                        }
+                        $value = 'c:' . $this->app->cryptor->encrypt($value);
                     }
 
                     // Set cookie
