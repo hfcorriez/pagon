@@ -2,6 +2,10 @@
 
 namespace Pagon\Utility;
 
+if (!function_exists('mcrypt_encrypt')) {
+    throw new \RuntimeException("Use Cryptor need install php-mcrypt extension");
+}
+
 class Cryptor
 {
     protected $options = array(
@@ -66,7 +70,7 @@ class Cryptor
      * to convert it to a string. This string can be stored in a database,
      * displayed, and passed using most other means without corruption.
      *
-     * @param   string  $data   data to be encrypted
+     * @param   string $data   data to be encrypted
      * @return  string
      */
     public function encrypt($data)
@@ -90,7 +94,7 @@ class Cryptor
     /**
      * Decrypts an encoded string back to its original value.
      *
-     * @param   string  $data   encoded string to be decrypted
+     * @param   string $data   encoded string to be decrypted
      * @return  bool|string
      */
     public function decrypt($data)

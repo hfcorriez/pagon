@@ -2,6 +2,10 @@
 
 namespace Pagon\Middleware\Session;
 
+if (!class_exists('\Redis')) {
+    throw new \RuntimeException("Use Session\Redis middleware need Redis installed");
+}
+
 use Pagon\Middleware\Session;
 
 class Redis extends Session
