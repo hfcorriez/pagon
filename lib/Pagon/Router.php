@@ -22,27 +22,16 @@ class Router extends Middleware
      * Register a route for path
      *
      * @param string               $path
-     * @param \Closure|string      $runner
+     * @param \Closure|string      $route
      * @param \Closure|string|null $more
      */
-    public function on($path, $runner, $more = null)
+    public function set($path, $route, $more = null)
     {
         if ($more) {
             $_args = func_get_args();
             $path = array_shift($_args);
-            $runner = $_args;
+            $route = $_args;
         }
-        $this->app->config['route'][$path] = $runner;
-    }
-
-    /**
-     * Set route
-     *
-     * @param $path
-     * @param $route
-     */
-    public function set($path, $route)
-    {
         $this->app->config['route'][$path] = $route;
     }
 

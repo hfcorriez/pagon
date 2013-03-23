@@ -315,9 +315,9 @@ class App extends EventEmitter
         if ($this->_cli || !$this->input->isGet()) return;
 
         if ($more !== null) {
-            call_user_func_array(array($this->router, 'on'), func_get_args());
+            call_user_func_array(array($this->router, 'set'), func_get_args());
         } else {
-            $this->router->on($path, $route);
+            $this->router->set($path, $route);
         }
     }
 
@@ -333,9 +333,9 @@ class App extends EventEmitter
         if ($this->_cli || !$this->input->isPost()) return;
 
         if ($more !== null) {
-            call_user_func_array(array($this->router, 'on'), func_get_args());
+            call_user_func_array(array($this->router, 'set'), func_get_args());
         } else {
-            $this->router->on($path, $route);
+            $this->router->set($path, $route);
         }
     }
 
@@ -351,9 +351,9 @@ class App extends EventEmitter
         if ($this->_cli || !$this->input->isPut()) return;
 
         if ($more !== null) {
-            call_user_func_array(array($this->router, 'on'), func_get_args());
+            call_user_func_array(array($this->router, 'set'), func_get_args());
         } else {
-            $this->router->on($path, $route);
+            $this->router->set($path, $route);
         }
     }
 
@@ -369,9 +369,9 @@ class App extends EventEmitter
         if ($this->_cli || !$this->input->isDelete()) return;
 
         if ($more !== null) {
-            call_user_func_array(array($this->router, 'on'), func_get_args());
+            call_user_func_array(array($this->router, 'set'), func_get_args());
         } else {
-            $this->router->on($path, $route);
+            $this->router->set($path, $route);
         }
     }
 
@@ -387,9 +387,9 @@ class App extends EventEmitter
         if ($this->_cli) return;
 
         if ($more !== null) {
-            call_user_func_array(array($this->router, 'on'), func_get_args());
+            call_user_func_array(array($this->router, 'set'), func_get_args());
         } else {
-            $this->router->on($path, $route);
+            $this->router->set($path, $route);
         }
     }
 
@@ -405,9 +405,9 @@ class App extends EventEmitter
         if (!$this->_cli) return;
 
         if ($more !== null) {
-            call_user_func_array(array($this->router, 'on'), func_get_args());
+            call_user_func_array(array($this->router, 'set'), func_get_args());
         } else {
-            $this->router->on($path, $route);
+            $this->router->set($path, $route);
         }
     }
 
