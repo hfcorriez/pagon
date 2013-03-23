@@ -204,7 +204,6 @@ class ArgParser
                             // Set true if expect name is bool
                             $this->params[$expect_param] = true;
                             $expect_param = false;
-                            continue;
                         } else {
                             // If not exists value
                             $this->error(self::ERROR_EXPECT_VALUE, $this->buildArg($expect_param));
