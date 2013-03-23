@@ -38,9 +38,9 @@ class ExtendHttpMethods extends \Pagon\Middleware
                 if ($app->isCli() || !$app->input->is($method)) return;
 
                 if ($more !== null) {
-                    call_user_func_array(array($app->router, 'on'), func_get_args());
+                    call_user_func_array(array($app->router, 'set'), func_get_args());
                 } else {
-                    $app->router->on($path, $route);
+                    $app->router->set($path, $route);
                 }
             });
 
