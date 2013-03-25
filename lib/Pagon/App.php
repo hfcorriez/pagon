@@ -249,11 +249,9 @@ class App extends EventEmitter
 
         // Allow set mode get method when mode is closure
         if (!$mode) {
-            // Set trigger for all mode
-            $this->on('mode', $closure);
-        } else {
-            // Set trigger for the mode
-            $this->on('mode:' . $mode, $closure);
+            $closure($this->mode);
+        } elseif ($mode == $this->mode) {
+            $closure();
         }
     }
 
@@ -482,12 +480,6 @@ class App extends EventEmitter
      */
     public function run()
     {
-        // Trigger default mode
-        $this->emit('mode', $this->mode);
-
-        // If trigger exists, trigger closure
-        $this->emit('mode:' . $this->mode);
-
         // Emit run
         $this->emit('run');
 
