@@ -37,7 +37,7 @@ class Cookie extends Session
 
     public function write($id, $data)
     {
-        $this->output->cookie($this->options['name'], $data, array('encrypt' => true, 'timeout' => $this->lifetime));
+        $this->output->cookie($this->options['name'], $data, array('encrypt' => true, 'timeout' => $this->options['lifetime']));
         return true;
     }
 

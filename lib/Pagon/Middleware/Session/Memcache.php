@@ -43,7 +43,7 @@ class Memcache extends Session
 
     public function write($id, $data)
     {
-        return $this->memcache->set(strtr($this->options['name'], array(':id' => $id)), $data, $this->lifetime);
+        return $this->memcache->set(strtr($this->options['name'], array(':id' => $id)), $data, $this->options['lifetime']);
     }
 
     public function destroy($id)

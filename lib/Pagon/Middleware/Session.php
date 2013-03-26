@@ -7,11 +7,12 @@ use Pagon\Middleware;
 class Session extends Middleware
 {
     protected $cookie = true;
-    protected $lifetime;
 
     public function call()
     {
-        $this->lifetime = ini_get('session.gc_maxlifetime');
+        if (!isset($this->options['lifetime'])) {
+            $this->options['lifetime'] = ini_get('session.gc_maxlifetime');
+        }
 
         if (get_called_class() !== __CLASS__) {
             if (!$this->cookie) {

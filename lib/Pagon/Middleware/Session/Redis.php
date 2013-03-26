@@ -47,8 +47,8 @@ class Redis extends Session
 
     public function write($id, $data)
     {
-        if ($this->lifetime) {
-            return $this->redis->setex(strtr($this->options['name'], array(':id' => $id)), $this->lifetime, $data);
+        if ($this->options['lifetime']) {
+            return $this->redis->setex(strtr($this->options['name'], array(':id' => $id)), $this->options['lifetime'], $data);
         } else {
             return $this->redis->set(strtr($this->options['name'], array(':id' => $id)), $data);
         }
