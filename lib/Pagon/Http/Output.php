@@ -85,7 +85,7 @@ class Output extends \Pagon\EventEmitter
             'content_type' => 'text/html',
             'length'       => false,
             'charset'      => $this->app->config['charset'],
-            'headers'      => array('Content-Type' => 'text/html; charset=' . $this->app->config['charset']),
+            'headers'      => array(),
             'cookies'      => array(),
         ));
 
@@ -291,8 +291,10 @@ class Output extends \Pagon\EventEmitter
     {
         if ($mime_type) {
             if (!strpos($mime_type, '/')) {
-                $mime_type = Config::export('mimes')->{$mime_type}[0];
-                if (!$mime_type) return $this->injectors['content_type'];
+                if (!$type = Config::export('mimes')->{$mime_type}[0]) {
+                    throw new \InvalidArgumentException("Unknown mime type '{$mime_type}'");
+                }
+                $mime_type = $type;
             }
             $this->injectors['content_type'] = $mime_type;
 
