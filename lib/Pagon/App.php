@@ -436,6 +436,20 @@ class App extends EventEmitter
      */
     public function render($path, $data = array(), array $options = array())
     {
+        echo $this->compile($path, $data, $options);
+    }
+
+    /**
+     * Compile view
+     *
+     * @param string $path
+     * @param array  $data
+     * @param array  $options
+     * @return View
+     * @throws \RuntimeException
+     */
+    public function compile($path, $data = array(), array $options = array())
+    {
         if (!isset($options['engine'])) {
             // Get ext
             $ext = pathinfo($path, PATHINFO_EXTENSION);
@@ -469,9 +483,8 @@ class App extends EventEmitter
             'dir' => $this->config['views']
         ));
 
-        // Write to output
-        echo $view;
-        //$this->output->write($view);
+        // Return view
+        return $view;
     }
 
     /**
