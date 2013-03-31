@@ -34,7 +34,7 @@ class Cli extends \Pagon\Route
     }
 
     /**
-     *
+     * Run
      */
     public function run()
     {
