@@ -84,6 +84,21 @@ class App extends EventEmitter
     private $_run = false;
 
     /**
+     * @var App The top app
+     */
+    protected static $self;
+
+    /**
+     * Return current app
+     *
+     * @return App
+     */
+    public static function self()
+    {
+        return self::$self;
+    }
+
+    /**
      * App init
      *
      * @param array|string $config
@@ -147,6 +162,9 @@ class App extends EventEmitter
 
         // Fire init
         $this->emit('init');
+
+        // Save current app
+        self::$self = $this;
     }
 
     /**
