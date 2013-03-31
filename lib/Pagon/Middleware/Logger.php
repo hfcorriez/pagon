@@ -14,7 +14,7 @@ use Closure;
 class Logger extends \Pagon\Middleware
 {
     protected $options = array(
-        'file'         => 'pagon.log',
+        'file'         => 'app.log',
         'write_on_log' => false,
         'format'       => '[$time] $token - $level - $text'
     );
