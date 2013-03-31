@@ -17,7 +17,7 @@ class Daemon extends \Pagon\Route
         try {
             while (1) {
                 // Run
-                $this->run();
+                $this->run($this->input, $this->output);
 
                 // Sleep after run
                 if ($this->sleep_time) usleep($this->sleep_time);

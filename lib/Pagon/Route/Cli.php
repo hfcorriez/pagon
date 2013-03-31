@@ -29,7 +29,7 @@ class Cli extends \Pagon\Route
         }
 
         $this->before();
-        $this->run();
+        $this->run($this->input, $this->output);
         $this->after();
     }
 

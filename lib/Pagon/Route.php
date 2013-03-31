@@ -32,7 +32,7 @@ abstract class Route extends Middleware
     public function call()
     {
         $this->before();
-        $this->run();
+        $this->run($this->input, $this->output);
         $this->after();
     }
 

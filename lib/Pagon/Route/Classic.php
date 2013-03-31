@@ -27,9 +27,13 @@ namespace Pagon\Route;
 
 class Classic extends \Pagon\Route
 {
+    protected $params;
+
     public function run()
     {
         $action = $this->input->param('action');
+
+        $this->params = $this->input->params;
 
         if (!$action) {
             throw new \RuntimeException('Route need ":action" param');
@@ -39,7 +43,7 @@ class Classic extends \Pagon\Route
 
         // Check method
         if (method_exists($this, $method)) {
-            $this->$method();
+            $this->$method($this->input, $this->output);
         } elseif ($this->next) {
             $this->next();
         } else {
