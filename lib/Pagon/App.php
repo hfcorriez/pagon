@@ -134,22 +134,19 @@ class App extends EventEmitter
         iconv_set_encoding("internal_encoding", "UTF-8");
         mb_internal_encoding('UTF-8');
 
-        // Default things to do before run
-        $this->on('run', function () use ($app) {
-            // configure timezone
-            if ($app->config['timezone']) date_default_timezone_set($app->config['timezone']);
+        // configure timezone
+        if ($app->config['timezone']) date_default_timezone_set($app->config['timezone']);
 
-            // configure debug
-            if ($app->config['debug']) $app->add(new Middleware\PrettyException());
+        // configure debug
+        if ($app->config['debug']) $app->add(new Middleware\PrettyException());
 
-            // Check crypt
-            if (!empty($app->config['crypt'])) {
-                // Share the cryptor for the app
-                $app->share('cryptor', function ($app) {
-                    return new \Pagon\Utility\Cryptor($app->config['crypt']);
-                });
-            }
-        });
+        // Check crypt
+        if (!empty($app->config['crypt'])) {
+            // Share the cryptor for the app
+            $app->share('cryptor', function ($app) {
+                return new \Pagon\Utility\Cryptor($app->config['crypt']);
+            });
+        }
 
         // Config
         $this->config = !is_array($config) ? Config::load((string)$config)->defaults($this->config) : new Config($config + $this->config);
