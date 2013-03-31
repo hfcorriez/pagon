@@ -19,6 +19,11 @@ class Router extends Middleware
     public $app;
 
     /**
+     * @var \Closure
+     */
+    protected $automatic;
+
+    /**
      * Register a route for path
      *
      * @param string               $path
@@ -80,6 +85,19 @@ class Router extends Middleware
             }
         }
 
+        // Try to check automatic route parser
+        if ($this->automatic instanceof \Closure) {
+            $route = call_user_func($this->automatic, $this->options['path']);
+
+            if (class_exists($route)) {
+                try {
+                    return $this->run($route);
+                } catch (Pass $e) {
+                    // When catch Next, continue next route
+                }
+            }
+        }
+
         return false;
     }
 
@@ -135,6 +153,14 @@ class Router extends Middleware
         );
 
         return $pass(current($routes));
+    }
+
+    /**
+     * @param callable $closure
+     */
+    public function automatic(\Closure $closure)
+    {
+        $this->automatic = $closure;
     }
 
     /**

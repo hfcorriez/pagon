@@ -407,6 +407,27 @@ class App extends EventEmitter
     }
 
     /**
+     * Use auto route
+     *
+     * @param callable|bool $closure
+     */
+    public function autoRoute($closure)
+    {
+        if ($closure instanceof \Closure) {
+            $this->router->automatic($closure);
+        } elseif ($closure === true || is_string($closure)) {
+            // Set route use default automatic
+            $this->router->automatic(function ($path) use ($closure) {
+                $splits = array_map(function ($split) {
+                    return ucfirst(strtolower($split));
+                }, explode('/', ltrim($path, '/')));
+
+                return ($closure === true ? '' : $closure . '\\') . join('\\', $splits);
+            });
+        }
+    }
+
+    /**
      * Map cli route
      *
      * @param string          $path
