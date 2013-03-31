@@ -4,7 +4,7 @@ namespace Pagon\Middleware;
 
 use Pagon\Middleware;
 
-class BasicAuth extends Middleware
+class HttpBasicAuth extends Middleware
 {
     protected $options = array(
         // Username and Password to authorize

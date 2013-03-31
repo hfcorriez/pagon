@@ -2,7 +2,7 @@
 
 namespace Pagon\Middleware;
 
-class ExtendHttpMethods extends \Pagon\Middleware
+class HttpMethods extends \Pagon\Middleware
 {
     protected $options = array(
         'methods' => array(
