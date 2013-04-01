@@ -421,12 +421,13 @@ class App extends EventEmitter
         if ($closure instanceof \Closure) {
             $this->router->automatic($closure);
         } elseif ($closure === true || is_string($closure)) {
+            $_cli = $this->_cli;
             // Set route use default automatic
-            $this->router->automatic(function ($path) use ($closure) {
-                if ($path !== '/') {
+            $this->router->automatic(function ($path) use ($closure, $_cli) {
+                if (!$_cli && $path !== '/' || $_cli && $path !== '') {
                     $splits = array_map(function ($split) {
                         return ucfirst(strtolower($split));
-                    }, explode('/', ltrim($path, '/')));
+                    }, $_cli ? explode(':', $path) : explode('/', ltrim($path, '/')));
                 } else {
                     // If path is root or is not found
                     $splits = array('Index');

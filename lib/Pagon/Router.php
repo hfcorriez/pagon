@@ -66,9 +66,6 @@ class Router extends Middleware
         // Get routes
         $routes = (array)$this->app->config['route'];
 
-        // No routes
-        if (!$routes) return false;
-
         // Loop routes for parse and dispatch
         foreach ($routes as $p => $route) {
             // Try to parse the params
