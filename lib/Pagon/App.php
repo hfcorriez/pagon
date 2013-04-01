@@ -111,8 +111,6 @@ class App extends EventEmitter
      */
     public function __construct($config = array())
     {
-        $app = & $this;
-
         // Is cli
         $this->_cli = PHP_SAPI == 'cli';
 
@@ -124,11 +122,11 @@ class App extends EventEmitter
 
         // Set io depends on SAPI
         if (!$this->_cli) {
-            $this->input = new Http\Input($app);
-            $this->output = new Http\Output($app);
+            $this->input = new Http\Input($this);
+            $this->output = new Http\Output($this);
         } else {
-            $this->input = new Cli\Input($app);
-            $this->output = new Cli\Output($app);
+            $this->input = new Cli\Input($this);
+            $this->output = new Cli\Output($this);
         }
 
         // Init Route
@@ -139,22 +137,22 @@ class App extends EventEmitter
         iconv_set_encoding("internal_encoding", "UTF-8");
         mb_internal_encoding('UTF-8');
 
+        // Config
+        $this->config = !is_array($config) ? Config::load((string)$config)->defaults($this->config) : new Config($config + $this->config);
+
         // configure timezone
-        if ($app->config['timezone']) date_default_timezone_set($app->config['timezone']);
+        if ($this->config['timezone']) date_default_timezone_set($this->config['timezone']);
 
         // configure debug
-        if ($app->config['debug']) $app->add(new Middleware\PrettyException());
+        if ($this->config['debug']) $this->add(new Middleware\PrettyException());
 
         // Share the cryptor for the app
-        $app->share('cryptor', function ($app) {
+        $this->share('cryptor', function ($app) {
             if (empty($app->config['crypt'])) {
                 throw new \RuntimeException('Encrypt cookie need configure config["crypt"]');
             }
             return new \Pagon\Utility\Cryptor($app->config['crypt']);
         });
-
-        // Config
-        $this->config = !is_array($config) ? Config::load((string)$config)->defaults($this->config) : new Config($config + $this->config);
 
         // Set default locals
         $this->locals['config'] = & $this->config;
