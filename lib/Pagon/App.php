@@ -418,9 +418,14 @@ class App extends EventEmitter
         } elseif ($closure === true || is_string($closure)) {
             // Set route use default automatic
             $this->router->automatic(function ($path) use ($closure) {
-                $splits = array_map(function ($split) {
-                    return ucfirst(strtolower($split));
-                }, explode('/', ltrim($path, '/')));
+                if ($path !== '/') {
+                    $splits = array_map(function ($split) {
+                        return ucfirst(strtolower($split));
+                    }, explode('/', ltrim($path, '/')));
+                } else {
+                    // If path is root or is not found
+                    $splits = array('Index');
+                }
 
                 return ($closure === true ? '' : $closure . '\\') . join('\\', $splits);
             });
