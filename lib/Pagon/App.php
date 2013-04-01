@@ -91,10 +91,15 @@ class App extends EventEmitter
     /**
      * Return current app
      *
+     * @throws \RuntimeException
      * @return App
      */
     public static function self()
     {
+        if (!self::$self) {
+            throw new \RuntimeException("There is no App exists");
+        }
+
         return self::$self;
     }
 
