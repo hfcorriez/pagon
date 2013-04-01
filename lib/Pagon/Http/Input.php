@@ -575,7 +575,7 @@ class Input extends \Pagon\EventEmitter
                 if (!$value) continue;
 
                 // Check crypt
-                if (strpos($value, 'c:') === 0 && isset($this->app->cryptor)) {
+                if (strpos($value, 'c:') === 0) {
                     $value = $this->app->cryptor->decrypt(substr($value, 2));
                 }
 

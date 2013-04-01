@@ -403,9 +403,6 @@ class Output extends \Pagon\EventEmitter
 
                     // Encrypt
                     if ($_option['encrypt']) {
-                        if (!isset($this->app->cryptor)) {
-                            throw new \RuntimeException('Encrypt cookie need configure config["crypt"]');
-                        }
                         $value = 'c:' . $this->app->cryptor->encrypt($value);
                     }
 

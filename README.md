@@ -1,86 +1,149 @@
-## What's Pagon?
+## Pagon框架?
 
-Pagon is expressjs-like framework of PHP
+Pagon是一个简单的PHP框架，使用方式类似Ruby的[sinatra](http://www.sinatrarb.com)或Node的[express.js](http://expressjs.com)
 
-- Simple
-	
-	It's simple to use as [Express.js](http://expressjs.com/)
-	
-- Smart
+Pagon致力于打造一个拥有最小化核心组件且尽量不依赖第三方库的简单、智能和高效的框架。
 
-	Support much more function with better design pattern
+Pagon的高效不止是开发效率，还包括执行效率。
 
-- Flexible
+Pagon不止很好的支持Web开发，也对CLI下的支持做了很多优化。
 
-	The middleware pattern can be extend as you like
+Pagon的现阶段目标是`只需要一套框架，便能快速完成一套高效Web应用的开发`！
 
-- Standard 
-	
-	According to [PSR](https://github.com/php-fig/fig-standards) - PSR-0, PSR-1, PSR-2
+## 特性
 
-- Performence
+- 简单，几乎无需配置就能使用
+- 智能，有很多经过考虑的模式设计
+- 扩展，使用中间件方式随意扩展自己想要的
+- 标准，基于PSR标准开发
+- 性能，效率上优于目前所有主流框架
+- 事件，基于事件打造，随时随地事件驱动
+- 前卫，对良好的新技术或思想提供快速支持
 
-	It's faster than better design frameworks, such as slim, lavarel, kohana, and a  little slower than colaphp and micromvc
-
-
-## Examples
+## 例子
 
 ### Hello world
 
 ```php
 $app = new App();
 
+// 使用匿名函数实现控制器
 $app->get('/', function($req, $res){
    $res->end('Hello world');
 });
+
+// 路由映射到类控制器上
+$app->post('/submit', '\Route\Submit');
 ```
 
-### Config
+### 配置
 
 ```php
-$default = include('config.php');
+$app = new App(array(
+	'timezone' => 'Asia/Shanghai',
+	'debug' =>  true,
+	'cookie' => array(
+		'secret' => 'very secret',
+		'domain' => 'test.com',
+		'path' => '/' 		
+	)
+));
 
-$app = new App($default);
+// 设置配置
+$app->set('cookie.domain', 'abc.com');
 
-$app->set('cookie.secret', 'abc');
+// 获取配置
+$app->get('cookie.domain');
 ```
 
-### Configure
+### 中间件
+
+中间件是打通`输入`和`输出`的中间链路，可以随意发挥来实现一个中间件
+
+```php
+$app->add(function($req, $res, $next) {
+	if (!$req->session('user_id')) {
+		$res->status(403)->end('Plz login to visit');
+	}
+	return $next();
+})
+
+// 使用框架内置的中间件
+
+// 直接生成（适合一些必用的中间件）
+$app->add(new \Pagon\Middleware\Session\Cookie(array('name' => 'sessions')));
+$app->add(new \Pagon\Middleware\HttpMethodOverride());
+
+// 或者使用下面这种方式，适合不一定用到或者按路径加载的中间件
+$app->add('Session\Cookie', array('name' => 'sessions'))
+$app->add('HttpMethodOverride')
+
+// 按照路由加载中间件
+$app->add('/monitor', 'HttpBasicAuth', array('username' => 'test', 'password' => 'test'));
+```
+
+### 环境
+
+环境配置可以通过环境变量`PAGON_ENV`来设置，默认为`development`
 
 ```php
 $app = new App();
+
+// 配置development
 $app->configure('development', function(){
     $app->set('debug', true);
 });
+
+// 配置所有环境
+$app->configure(function($mode) use ($app){
+	switch ($mode) {
+		case 'development':
+			$app->set('debug', true);
+			break;
+		case 'production':
+			$app->add('PageCache', array('cache' => new Cache\Redis($app->get('redis'))));
+			break;
+	}
+})
 ```
 
-### Middleware
+### 事件
 
-```php
-$app->add(new \Pagon\Middleware\SessionCookie(array('name' => 'sessions')));
-$app->add(new \Pagon\Middleware\MethodOverride());
-
-# Or
-
-$app->add('SessionCookie', array('name' => 'sessions'))
-$app->add('MethodOverride')
-```
-
-### Event
+所有对象都基于事件实现，可以轻松在任何对象上绑定事件
 
 ```php
 $app->on('run', function(){
-	session_start();
+	// Start profiler
+	xhprof_enabled();
 });
 
 $app->on('shutdown', function(){
-	session_destroy();
+	// Get profiler data
+	$profiler_data = xhprof_disabled();
+	// Save it
 });
 ```
 
-### Usage
+### 依赖容器(DI)
 
-	wait for release...
+所有对象都基于依赖容器，都可以实现依赖注入。
+
+```php
+// 共享
+$app->share('db', function($app){
+	extrat($app->get('database'));
+	return new \PDO($dsn, $username, $password);
+})
+
+// 注入
+$app->random = function() {
+	return rand();
+}
+```
+
+## API
+
+完整文档将随`1.0`发布。
 
 ## License 
 

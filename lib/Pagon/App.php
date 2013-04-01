@@ -145,13 +145,13 @@ class App extends EventEmitter
         // configure debug
         if ($app->config['debug']) $app->add(new Middleware\PrettyException());
 
-        // Check crypt
-        if (!empty($app->config['crypt'])) {
-            // Share the cryptor for the app
-            $app->share('cryptor', function ($app) {
-                return new \Pagon\Utility\Cryptor($app->config['crypt']);
-            });
-        }
+        // Share the cryptor for the app
+        $app->share('cryptor', function ($app) {
+            if (empty($app->config['crypt'])) {
+                throw new \RuntimeException('Encrypt cookie need configure config["crypt"]');
+            }
+            return new \Pagon\Utility\Cryptor($app->config['crypt']);
+        });
 
         // Config
         $this->config = !is_array($config) ? Config::load((string)$config)->defaults($this->config) : new Config($config + $this->config);
