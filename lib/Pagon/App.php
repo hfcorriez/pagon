@@ -107,10 +107,12 @@ class App extends EventEmitter
      * App init
      *
      * @param array|string $config
-     * @throws \Exception
+     * @throws \RuntimeException
      */
     public function __construct($config = array())
     {
+        $app = & $this;
+
         // Is cli
         $this->_cli = PHP_SAPI == 'cli';
 
@@ -140,18 +142,21 @@ class App extends EventEmitter
         // Config
         $this->config = !is_array($config) ? Config::load((string)$config)->defaults($this->config) : new Config($config + $this->config);
 
-        // configure timezone
-        if ($this->config['timezone']) date_default_timezone_set($this->config['timezone']);
+        // Register some initialize
+        $this->on('run', function () use ($app) {
+            // configure timezone
+            if ($app->config['timezone']) date_default_timezone_set($app->config['timezone']);
 
-        // configure debug
-        if ($this->config['debug']) $this->add(new Middleware\PrettyException());
+            // configure debug
+            if ($app->config['debug']) $app->add(new Middleware\PrettyException());
 
-        // Share the cryptor for the app
-        $this->share('cryptor', function ($app) {
-            if (empty($app->config['crypt'])) {
-                throw new \RuntimeException('Encrypt cookie need configure config["crypt"]');
-            }
-            return new \Pagon\Utility\Cryptor($app->config['crypt']);
+            // Share the cryptor for the app
+            $app->share('cryptor', function ($app) {
+                if (empty($app->config['crypt'])) {
+                    throw new \RuntimeException('Encrypt cookie need configure config["crypt"]');
+                }
+                return new \Pagon\Utility\Cryptor($app->config['crypt']);
+            });
         });
 
         // Set default locals

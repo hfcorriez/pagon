@@ -1,14 +1,14 @@
 ## Pagon框架?
 
-Pagon是一个简单的PHP框架，使用方式类似Ruby的[sinatra](http://www.sinatrarb.com)或Node的[express.js](http://expressjs.com)
+- Pagon是一个简单的PHP框架，使用方式类似Ruby的[sinatra](http://www.sinatrarb.com)或Node的[express.js](http://expressjs.com)
 
-Pagon致力于打造一个拥有最小化核心组件且尽量不依赖第三方库的简单、智能和高效的框架。
+- Pagon致力于打造一个拥有最小化核心组件且尽量不依赖第三方库的简单、智能和高效的框架。
 
-Pagon的高效不止是开发效率，还包括执行效率。
+- Pagon的高效不止是开发效率，还包括执行效率。
 
-Pagon不止很好的支持Web开发，也对CLI下的支持做了很多优化。
+- Pagon不止很好的支持Web开发，也对CLI下的支持做了很多优化。
 
-Pagon的现阶段目标是`只需要一套框架，便能快速完成一套高效Web应用的开发`！
+- Pagon的现阶段目标是`只需要一套框架，便能快速完成一套高效Web应用的开发`！
 
 ## 特性
 
