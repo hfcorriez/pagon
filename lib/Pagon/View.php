@@ -17,57 +17,40 @@ class View
     protected $data = array();
 
     /**
-     * @var string Directory for the template path
+     * @var array
      */
-    protected $dir;
-
-    /**
-     * @var Object
-     */
-    protected $engine;
-
-    /**
-     * Create a new view
-     *
-     * @param string $path
-     * @param array  $data
-     * @return mixed
-     */
-    public static function factory($path, $data = array())
-    {
-        $view = get_called_class();
-        return new $view($path, $data);
-    }
+    protected $options = array(
+        'dir'    => '',
+        'engine' => null,
+    );
 
     /**
      * Construct a view
      *
      * @param string $path
      * @param array  $data
-     * @param array  $opt
+     * @param array  $options
      * @throws \Exception
      * @return View
      */
-    public function __construct($path, $data = array(), $opt = array())
+    public function __construct($path, $data = array(), $options = array())
     {
         // Set dir for the view
-        if (isset($opt['dir'])) $this->dir = $opt['dir'];
+        $this->options = $options + $this->options;
 
         // Set path
-        $this->path = $this->dir . ($path{0} == '/' ? '' : '/') . $path;
+        $this->path = ltrim($path, '/');
 
         // If file exists?
-        if (!is_file($this->path)) {
-            // Set file path
+        if (!is_file($options['dir'] . '/' . $this->path)) {
+            // Try to load file from absolute path
             if ($path{0} == '/' && is_file($path)) {
                 $this->path = $path;
+                $this->options['dir'] = '';
             } else {
                 throw new \Exception('Template file is not exist: ' . $this->path);
             }
         }
-
-        // Set engine for the view
-        if (isset($opt['engine'])) $this->engine = $opt['engine'];
 
         // Set data
         $this->data = $data;
@@ -81,7 +64,7 @@ class View
      */
     public function setEngine($engine)
     {
-        $this->engine = $engine;
+        $this->options['engine'] = $engine;
         return $this;
     }
 
@@ -93,7 +76,7 @@ class View
      */
     public function setDir($dir)
     {
-        $this->dir = $dir;
+        $this->options['dir'] = $dir;
         return $this;
     }
 
@@ -116,16 +99,18 @@ class View
      */
     public function render()
     {
-        if (!$this->engine) {
-            ob_start();
+        $engine = $this->options['engine'];
+
+        if (!$engine) {
             if ($this->data) {
                 extract((array)$this->data);
             }
-            include($this->path);
+            ob_start();
+            include($this->options['dir'] . ($this->path{0} == '/' ? '' : '/') . $this->path);
             return ob_get_clean();
         }
 
-        return $this->engine->render($this->path, $this->data);
+        return $engine->render($this->path, $this->data, $this->options['dir']);
     }
 
     /**
@@ -181,4 +166,3 @@ class View
         return $this->render();
     }
 }
-

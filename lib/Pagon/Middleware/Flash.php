@@ -71,14 +71,14 @@ class Flash extends \Pagon\Middleware
         $self = & $this;
 
         /** @noinspection PhpUndefinedFieldInspection */
-        $this->output->flash = function ($type = null, $message = null) use ($self) {
+        $this->output->protect('flash', function ($type = null, $message = null) use ($self) {
             if ($type && $message) {
                 return $self->set($type, $message);
             } elseif ($type) {
                 return $self->get($type);
             }
             return $self;
-        };
+        });
 
         $this->next();
 

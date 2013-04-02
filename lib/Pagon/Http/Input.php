@@ -2,27 +2,17 @@
 
 namespace Pagon\Http;
 
-use Pagon\Data\MimeType;
-use Pagon\Exception\Pass;
 use Pagon\App;
+use Pagon\Exception\Pass;
 use Pagon\Config;
+
 
 class Input extends \Pagon\EventEmitter
 {
     /**
-     * @var array Route params
-     */
-    public $params = array();
-
-    /**
      * @var \Pagon\App App
      */
     public $app;
-
-    /**
-     * @var \Pagon\Config Env
-     */
-    protected $env;
 
     /**
      * @param \Pagon\App $app
@@ -31,9 +21,7 @@ class Input extends \Pagon\EventEmitter
     {
         $this->app = $app;
 
-        $this->env = new Config(array(
-            'sessions' => &$_SESSION
-        ) + $_SERVER);
+        parent::__construct(array('params' => array(), 'query' => &$_GET, 'data' => &$_POST) + $_SERVER);
     }
 
     /**
@@ -44,7 +32,7 @@ class Input extends \Pagon\EventEmitter
      */
     public function protocol()
     {
-        return $this->env['SERVER_PROTOCOL'];
+        return $this->injectors['SERVER_PROTOCOL'];
     }
 
     /**
@@ -54,7 +42,7 @@ class Input extends \Pagon\EventEmitter
      */
     public function uri()
     {
-        return $this->env['REQUEST_URI'];
+        return $this->injectors['REQUEST_URI'];
     }
 
     /**
@@ -64,7 +52,7 @@ class Input extends \Pagon\EventEmitter
      */
     public function root()
     {
-        return rtrim($this->env['DOCUMENT_ROOT'], '/') . rtrim($this->scriptName(), '/');
+        return rtrim($this->injectors['DOCUMENT_ROOT'], '/') . rtrim($this->scriptName(), '/');
     }
 
     /**
@@ -74,14 +62,14 @@ class Input extends \Pagon\EventEmitter
      */
     public function scriptName()
     {
-        if (!isset($this->env['script_name'])) {
-            $_script_name = $this->env['SCRIPT_NAME'];
-            if (strpos($this->env['REQUEST_URI'], $_script_name) !== 0) {
+        if (!isset($this->injectors['script_name'])) {
+            $_script_name = $this->injectors['SCRIPT_NAME'];
+            if (strpos($this->injectors['REQUEST_URI'], $_script_name) !== 0) {
                 $_script_name = str_replace('\\', '/', dirname($_script_name));
             }
-            $this->env['script_name'] = rtrim($_script_name, '/');
+            $this->injectors['script_name'] = rtrim($_script_name, '/');
         }
-        return $this->env['script_name'];
+        return $this->injectors['script_name'];
     }
 
     /**
@@ -91,34 +79,33 @@ class Input extends \Pagon\EventEmitter
      */
     public function pathInfo()
     {
-        if (!isset($this->env['path_info'])) {
-            $_path_info = substr_replace($this->env['REQUEST_URI'], '', 0, strlen($this->scriptName()));
+        if (!isset($this->injectors['path_info'])) {
+            $_path_info = substr_replace($this->injectors['REQUEST_URI'], '', 0, strlen($this->scriptName()));
             if (strpos($_path_info, '?') !== false) {
                 // Query string is not removed automatically
                 $_path_info = substr_replace($_path_info, '', strpos($_path_info, '?'));
             }
-            $this->env['path_info'] = (!$_path_info || $_path_info{0} != '/' ? '/' : '') . $_path_info;
+            $this->injectors['path_info'] = (!$_path_info || $_path_info{0} != '/' ? '/' : '') . $_path_info;
         }
-        return $this->env['path_info'];
+        return $this->injectors['path_info'];
     }
 
     /**
      * Get url
      *
-     *
      * @return mixed
      */
     public function url()
     {
-        if (!isset($this->env['url'])) {
+        if (!isset($this->injectors['url'])) {
             $_url = $this->scheme() . '://' . $this->host();
             if (($this->scheme() === 'https' && $this->port() !== 443) || ($this->scheme() === 'http' && $this->port() !== 80)) {
                 $_url .= sprintf(':%s', $this->port());
             }
-            $this->env['url'] = $_url;
+            $this->injectors['url'] = $_url . $this->uri();
         }
 
-        return $this->env['url'];
+        return $this->injectors['url'];
     }
 
     /**
@@ -129,7 +116,7 @@ class Input extends \Pagon\EventEmitter
      */
     public function method()
     {
-        return $this->env['REQUEST_METHOD'];
+        return $this->injectors['REQUEST_METHOD'];
     }
 
     /**
@@ -191,7 +178,7 @@ class Input extends \Pagon\EventEmitter
      */
     public function isAjax()
     {
-        return !$this->env('X-Requested-With') && 'XMLHttpRequest' == $this->env('X-Requested-With');
+        return !$this->header('x-requested-with') && 'XMLHttpRequest' == $this->header('x-requested-with');
     }
 
     /**
@@ -232,21 +219,21 @@ class Input extends \Pagon\EventEmitter
      */
     public function accept($type = null)
     {
-        if (!isset($this->env['accept'])) {
-            $this->env['accept'] = self::buildAcceptMap($this->env('HTTP_ACCEPT'));
+        if (!isset($this->injectors['accept'])) {
+            $this->injectors['accept'] = self::buildAcceptMap($this->raw('HTTP_ACCEPT'));
         }
 
         // if no parameter was passed, just return parsed data
-        if (!$type) return $this->env['accept'];
+        if (!$type) return $this->injectors['accept'];
         // Support get best match
         if ($type === true) {
-            reset($this->env['accept']);
-            return key($this->env['accept']);
+            reset($this->injectors['accept']);
+            return key($this->injectors['accept']);
         }
 
         // If type is 'txt', 'xml' and so on, use smarty stracy
         if (is_string($type) && !strpos($type, '/')) {
-            $type = MimeType::load()->get($type);
+            $type = Config::export('mimes')->{$type};
             if (!$type) return null;
         }
 
@@ -254,12 +241,12 @@ class Input extends \Pagon\EventEmitter
         $type = (array)$type;
 
         // let’s check our supported types:
-        foreach ($this->env['accept'] as $mime => $q) {
+        foreach ($this->injectors['accept'] as $mime => $q) {
             if ($q && in_array($mime, $type)) return $mime;
         }
 
         // All match
-        if (isset($this->env['accept']['*/*'])) return $type[0];
+        if (isset($this->injectors['accept']['*/*'])) return $type[0];
         return null;
     }
 
@@ -271,23 +258,23 @@ class Input extends \Pagon\EventEmitter
      */
     public function acceptEncoding($type = null)
     {
-        if (!isset($this->env['accept_encoding'])) {
-            $this->env['accept_encoding'] = self::buildAcceptMap($this->env('HTTP_ACCEPT_LANGUAGE'));
+        if (!isset($this->injectors['accept_encoding'])) {
+            $this->injectors['accept_encoding'] = self::buildAcceptMap($this->raw('HTTP_ACCEPT_LANGUAGE'));
         }
 
         // if no parameter was passed, just return parsed data
-        if (!$type) return $this->env['accept_encoding'];
+        if (!$type) return $this->injectors['accept_encoding'];
         // Support get best match
         if ($type === true) {
-            reset($this->env['accept_encoding']);
-            return key($this->env['accept_encoding']);
+            reset($this->injectors['accept_encoding']);
+            return key($this->injectors['accept_encoding']);
         }
 
         // Force to array
         $type = (array)$type;
 
         // let’s check our supported types:
-        foreach ($this->env['accept_encoding'] as $lang => $q) {
+        foreach ($this->injectors['accept_encoding'] as $lang => $q) {
             if ($q && in_array($lang, $type)) return $lang;
         }
         return null;
@@ -301,23 +288,23 @@ class Input extends \Pagon\EventEmitter
      */
     public function acceptLanguage($type = null)
     {
-        if (!isset($this->env['accept_language'])) {
-            $this->env['accept_language'] = self::buildAcceptMap($this->env('HTTP_ACCEPT_LANGUAGE'));
+        if (!isset($this->injectors['accept_language'])) {
+            $this->injectors['accept_language'] = self::buildAcceptMap($this->raw('HTTP_ACCEPT_LANGUAGE'));
         }
 
         // if no parameter was passed, just return parsed data
-        if (!$type) return $this->env['accept_language'];
+        if (!$type) return $this->injectors['accept_language'];
         // Support get best match
         if ($type === true) {
-            reset($this->env['accept_language']);
-            return key($this->env['accept_language']);
+            reset($this->injectors['accept_language']);
+            return key($this->injectors['accept_language']);
         }
 
         // Force to array
         $type = (array)$type;
 
         // let’s check our supported types:
-        foreach ($this->env['accept_language'] as $lang => $q) {
+        foreach ($this->injectors['accept_language'] as $lang => $q) {
             if ($q && in_array($lang, $type)) return $lang;
         }
         return null;
@@ -333,7 +320,7 @@ class Input extends \Pagon\EventEmitter
         if ($ips = $this->proxy()) {
             return $ips[0];
         }
-        return $this->env['REMOTE_ADDR'];
+        return $this->injectors['REMOTE_ADDR'];
     }
 
     /**
@@ -343,7 +330,7 @@ class Input extends \Pagon\EventEmitter
      */
     public function proxy()
     {
-        if ($ips = $this->env('HTTP_X_FORWARDED_FOR')) {
+        if ($ips = $this->raw('HTTP_X_FORWARDED_FOR')) {
             return strpos($ips, ', ') ? explode(', ', $ips) : array($ips);
         }
 
@@ -355,7 +342,7 @@ class Input extends \Pagon\EventEmitter
      *
      * @return array
      */
-    public function subDomain()
+    public function subDomains()
     {
         $parts = explode('.', $this->host());
         return array_reverse(array_slice($parts, 0, -2));
@@ -369,7 +356,7 @@ class Input extends \Pagon\EventEmitter
      */
     public function refer()
     {
-        return $this->env('HTTP_REFERER');
+        return $this->raw('HTTP_REFERER');
     }
 
     /**
@@ -379,7 +366,7 @@ class Input extends \Pagon\EventEmitter
      */
     public function host()
     {
-        if ($host = $this->env('HTTP_HOST')) {
+        if ($host = $this->raw('HTTP_HOST')) {
             if (strpos($host, ':') !== false) {
                 $hostParts = explode(':', $host);
 
@@ -388,7 +375,7 @@ class Input extends \Pagon\EventEmitter
 
             return $host;
         }
-        return $this->env['SERVER_NAME'];
+        return $this->injectors['SERVER_NAME'];
     }
 
     /**
@@ -418,7 +405,7 @@ class Input extends \Pagon\EventEmitter
      */
     public function scheme()
     {
-        return !$this->env('HTTPS') || $this->env('HTTPS') === 'off' ? 'http' : 'https';
+        return !$this->raw('HTTPS') || $this->raw('HTTPS') === 'off' ? 'http' : 'https';
     }
 
     /**
@@ -428,7 +415,7 @@ class Input extends \Pagon\EventEmitter
      */
     public function port()
     {
-        return (int)$this->env('SERVER_PORT');
+        return (int)$this->raw('SERVER_PORT');
     }
 
     /**
@@ -439,7 +426,7 @@ class Input extends \Pagon\EventEmitter
      */
     public function userAgent()
     {
-        return $this->env('HTTP_USER_AGENT');
+        return $this->raw('HTTP_USER_AGENT');
     }
 
     /**
@@ -449,7 +436,7 @@ class Input extends \Pagon\EventEmitter
      */
     public function contentType()
     {
-        return $this->env('CONTENT_TYPE');
+        return $this->raw('CONTENT_TYPE');
     }
 
     /**
@@ -487,7 +474,7 @@ class Input extends \Pagon\EventEmitter
      */
     public function contentLength()
     {
-        if ($len = $this->env('CONTENT_LENGTH')) {
+        if ($len = $this->raw('CONTENT_LENGTH')) {
             return (int)$len;
         }
         return 0;
@@ -500,9 +487,9 @@ class Input extends \Pagon\EventEmitter
      * @param mixed  $default
      * @return mixed
      */
-    public function get($key, $default = null)
+    public function query($key, $default = null)
     {
-        return isset($_GET[$key]) ? $_GET[$key] : $default;
+        return isset($this->injectors['query'][$key]) ? $this->injectors['query'][$key] : $default;
     }
 
     /**
@@ -512,9 +499,9 @@ class Input extends \Pagon\EventEmitter
      * @param mixed  $default
      * @return mixed
      */
-    public function post($key, $default = null)
+    public function data($key, $default = null)
     {
-        return isset($_POST[$key]) ? $_POST[$key] : $default;
+        return isset($this->injectors['data'][$key]) ? $this->injectors['data'][$key] : $default;
 
     }
 
@@ -527,19 +514,19 @@ class Input extends \Pagon\EventEmitter
      */
     public function param($key, $default = null)
     {
-        return isset($this->params[$key]) ? $this->params[$key] : $default;
+        return isset($this->injectors['params'][$key]) ? $this->injectors['params'][$key] : $default;
     }
 
     /**
-     * Get header or headers
+     * Get header or header
      *
      * @param string $name
      * @return mixed
      */
     public function header($name = null)
     {
-        if (!isset($this->env['headers'])) {
-            $_headers = array();
+        if (!isset($this->injectors['headers'])) {
+            $_header = array();
             foreach ($this->env as $key => $value) {
                 $_name = false;
                 if ('HTTP_' === substr($key, 0, 5)) {
@@ -554,21 +541,22 @@ class Input extends \Pagon\EventEmitter
                 }
                 if (!$_name) continue;
 
-                // Set headers
-                $_headers[strtoupper(str_replace('_', '-', $_name))] = trim($value);
+                // Set header
+                $_header[strtolower(str_replace('_', '-', $_name))] = trim($value);
             }
 
             if (isset($_SERVER['PHP_AUTH_USER'])) {
                 $pass = isset($_SERVER['PHP_AUTH_PW']) ? $_SERVER['PHP_AUTH_PW'] : '';
-                $_headers['AUTHORIZATION'] = 'Basic ' . base64_encode($_SERVER['PHP_AUTH_USER'] . ':' . $pass);
+                $_header['authorization'] = 'Basic ' . base64_encode($_SERVER['PHP_AUTH_USER'] . ':' . $pass);
             }
-            $this->env['headers'] = $_headers;
-            unset($_headers);
+            $this->injectors['headers'] = $_header;
+            unset($_header);
         }
 
-        if ($name === null) return $this->env['headers'];
-        $name = strtoupper($name);
-        return isset($this->env['headers'][$name]) ? $this->env['headers'][$name] : null;
+        if ($name === null) return $this->injectors['headers'];
+
+        $name = strtolower(str_replace('_', '-', $name));
+        return isset($this->injectors['headers'][$name]) ? $this->injectors['headers'][$name] : null;
     }
 
     /**
@@ -580,10 +568,17 @@ class Input extends \Pagon\EventEmitter
      */
     public function cookie($key = null, $default = null)
     {
-        if (!isset($this->env['cookies'])) {
-            $this->env['cookies'] = $_COOKIE;
+        if (!isset($this->injectors['cookies'])) {
+            $this->injectors['cookies'] = $_COOKIE;
             $_option = $this->app->config->cookie;
-            foreach ($this->env['cookies'] as &$value) {
+            foreach ($this->injectors['cookies'] as &$value) {
+                if (!$value) continue;
+
+                // Check crypt
+                if (strpos($value, 'c:') === 0) {
+                    $value = $this->app->cryptor->decrypt(substr($value, 2));
+                }
+
                 // Parse signed cookie
                 if ($value && strpos($value, 's:') === 0 && $_option['secret']) {
                     $_pos = strrpos($value, '.');
@@ -594,14 +589,15 @@ class Input extends \Pagon\EventEmitter
                         $value = false;
                     }
                 }
+
                 // Parse json cookie
                 if ($value && strpos($value, 'j:') === 0) {
                     $value = json_decode(substr($value, 2), true);
                 }
             }
         }
-        if ($key === null) return $this->env['cookies'];
-        return isset($this->env['cookies'][$key]) ? $this->env['cookies'][$key] : $default;
+        if ($key === null) return $this->injectors['cookies'];
+        return isset($this->injectors['cookies'][$key]) ? $this->injectors['cookies'][$key] : $default;
     }
 
     /**
@@ -614,12 +610,12 @@ class Input extends \Pagon\EventEmitter
     public function session($key = null, $value = null)
     {
         if ($value !== null) {
-            return $this->env['sessions'][$key] = $value;
+            return $_SESSION[$key] = $value;
         } elseif ($key !== null) {
-            return isset($this->env['sessions'][$key]) ? $this->env['sessions'][$key] : null;
+            return isset($_SESSION[$key]) ? $_SESSION[$key] : null;
         }
 
-        return $this->env['sessions'];
+        return $_SESSION;
     }
 
     /**
@@ -629,10 +625,10 @@ class Input extends \Pagon\EventEmitter
      */
     public function body()
     {
-        if (!isset($this->env['body'])) {
-            $this->env['body'] = @(string)file_get_contents('php://input');
+        if (!isset($this->injectors['body'])) {
+            $this->injectors['body'] = @(string)file_get_contents('php://input');
         }
-        return $this->env['body'];
+        return $this->injectors['body'];
     }
 
     /**
@@ -644,24 +640,6 @@ class Input extends \Pagon\EventEmitter
     {
         ob_get_level() && ob_clean();
         throw new Pass();
-    }
-
-    /**
-     * Env
-     *
-     * @param $key
-     * @return mixed
-     */
-    public function env($key = null)
-    {
-        if (is_array($key)) {
-            $this->env = new Config($key);
-            return $this->env;
-        }
-
-        if ($key === null) return $this->env;
-
-        return isset($this->env[$key]) ? $this->env[$key] : null;
     }
 
     /**

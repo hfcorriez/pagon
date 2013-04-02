@@ -2,10 +2,9 @@
 
 namespace Pagon\Http;
 
-use Pagon\Data\MimeType;
-use Pagon\Exception\Stop;
-use Pagon\Config;
 use Pagon\App;
+use Pagon\Config;
+use Pagon\Exception\Stop;
 
 class Output extends \Pagon\EventEmitter
 {
@@ -74,24 +73,19 @@ class Output extends \Pagon\EventEmitter
     public $app;
 
     /**
-     * @var Config Env
-     */
-    protected $env;
-
-    /**
      * @param App $app
      */
     public function __construct(App $app)
     {
         $this->app = $app;
 
-        $this->env = new Config(array(
+        parent::__construct(array(
             'status'       => 200,
             'body'         => '',
             'content_type' => 'text/html',
-            'length'       => 0,
-            'charset'      => 'utf-8',
-            'headers'      => array('CONTENT-TYPE' => 'text/html; charset=utf-8'),
+            'length'       => false,
+            'charset'      => $this->app->config['charset'],
+            'headers'      => array(),
             'cookies'      => array(),
         ));
 
@@ -108,27 +102,12 @@ class Output extends \Pagon\EventEmitter
     public function body($content = null)
     {
         if ($content !== null) {
-            $this->env['body'] = $content;
-            $this->env['length'] = strlen($this->env['body']);
+            $this->injectors['body'] = $content;
+            $this->injectors['length'] = strlen($this->injectors['body']);
             return $this;
         }
 
-        return $this->env['body'];
-    }
-
-    /**
-     * Get or set charset
-     *
-     * @param $charset
-     * @return string|Output
-     */
-    public function charset($charset = null)
-    {
-        if ($charset) {
-            $this->env['charset'] = $charset;
-            return $this;
-        }
-        return $this->env['charset'];
+        return $this->injectors['body'];
     }
 
     /**
@@ -139,10 +118,10 @@ class Output extends \Pagon\EventEmitter
      */
     public function write($data)
     {
-        if (!$data) return $this->env['body'];
+        if (!$data) return $this->injectors['body'];
 
-        $this->env['body'] .= $data;
-        $this->env['length'] = strlen($this->env['body']);
+        $this->injectors['body'] .= $data;
+        $this->injectors['length'] = strlen($this->injectors['body']);
 
         return $this;
     }
@@ -171,11 +150,13 @@ class Output extends \Pagon\EventEmitter
     public function status($status = null)
     {
         if ($status === null) {
-            return $this->env['status'];
+            return $this->injectors['status'];
         } elseif (isset(self::$messages[$status])) {
-            $this->env['status'] = (int)$status;
+            $this->injectors['status'] = (int)$status;
             return $this;
-        } else throw new \Exception('Unknown status :value', array(':value' => $status));
+        } else {
+            throw new \Exception('Unknown status :value', array(':value' => $status));
+        }
     }
 
     /**
@@ -186,24 +167,118 @@ class Output extends \Pagon\EventEmitter
      * @param bool   $replace
      * @return array|Output
      */
-    public function header($name = null, $value = null, $replace = false)
+    public function header($name = null, $value = null, $replace = true)
     {
         if ($name === null) {
-            return $this->env['headers'];
+            return $this->injectors['headers'];
         } elseif (is_array($name)) {
+            // Batch set headers
             foreach ($name as $k => $v) {
                 // Force replace
-                $this->header($k, $v, true);
+                $this->header($k, $v, $replace);
             }
         } else {
-            $name = strtoupper(str_replace('_', '-', $name));
             if ($value === null) {
-                return $this->env['headers'][$name];
+                return $this->injectors['headers'][$name][1];
             } else {
-                $this->env['headers'][$name] = !$replace && !empty($this->env['headers'][$name]) ? $this->env['headers'][$name] . "\n" . $value : $value;
+                if (!$replace && !empty($this->injectors['headers'][$name])) {
+                    if (is_array($this->injectors['headers'][$name])) {
+                        $this->injectors['headers'][$name][] = $value;
+                    } else {
+                        $this->injectors['headers'][$name] = array($this->injectors['headers'][$name], $value);
+                    }
+                } else {
+                    $this->injectors['headers'][$name] = $value;
+                }
                 return $this;
             }
         }
+    }
+
+    /**
+     * Get or set charset
+     *
+     * @param $charset
+     * @return string|Output
+     */
+    public function charset($charset = null)
+    {
+        if ($charset) {
+            $this->injectors['charset'] = $charset;
+            return $this;
+        }
+        return $this->injectors['charset'];
+    }
+
+    /**
+     * Set LAST-MODIFIED Header
+     *
+     * @param int|null $time
+     * @return string|Output
+     */
+    public function lastModified($time = null)
+    {
+        if ($time !== null) {
+            if (is_integer($time)) {
+                $this->header('Last-Modified', date(DATE_RFC1123, $time));
+                if ($time === strtotime($this->app->input->header('If-Modified-Since'))) {
+                    $this->app->halt(304);
+                }
+            }
+
+            return $this;
+        }
+
+        return $this->header('Last-Modified');
+    }
+
+    /**
+     * Set ETAG Header
+     *
+     * @param  string|null $value
+     * @return string|Output
+     */
+    public function etag($value = null)
+    {
+        if ($value !== null) {
+            //Set etag value
+            $value = 'W/"' . $value . '"';
+            $this->header('Etag', $value);
+
+            //Check conditional GET
+            if ($etag = $this->app->input->header('If-None-Match')) {
+                $etags = preg_split('@\s*,\s*@', $etag);
+                if (in_array($value, $etags) || in_array('*', $etags)) {
+                    $this->app->halt(304);
+                }
+            }
+
+            return $this;
+        }
+
+        return $this->header('Etag');
+    }
+
+    /**
+     * Set expires for header
+     *
+     * @param int|string|null $time
+     * @return string|Output
+     */
+    public function expires($time = null)
+    {
+        if ($time !== null) {
+            if (!is_numeric($time) && is_string($time)) {
+                $time = strtotime($time);
+            } elseif (is_numeric($time) && strlen($time) != 10) {
+                $time = time() + (int)$time;
+            }
+
+            $this->header('Expires', gmdate(DATE_RFC1123, $time));
+            return $this;
+        }
+
+        return $this->header('Expires');
     }
 
     /**
@@ -216,15 +291,17 @@ class Output extends \Pagon\EventEmitter
     {
         if ($mime_type) {
             if (!strpos($mime_type, '/')) {
-                $mime_type = MimeType::load()->{$mime_type}[0];
-                if (!$mime_type) return $this->env['content_type'];
+                if (!$type = Config::export('mimes')->{$mime_type}[0]) {
+                    throw new \InvalidArgumentException("Unknown mime type '{$mime_type}'");
+                }
+                $mime_type = $type;
             }
-            $this->env['content_type'] = $mime_type;
+            $this->injectors['content_type'] = $mime_type;
 
             return $this;
         }
 
-        return $this->env['content_type'];
+        return $this->injectors['content_type'];
     }
 
     /**
@@ -238,12 +315,12 @@ class Output extends \Pagon\EventEmitter
     public function cookie($key = null, $value = null, $option = array())
     {
         if ($value !== null) {
-            $this->env['cookies'][$key] = array($value, $option);
+            $this->injectors['cookies'][$key] = array($value, $option);
             return $this;
         }
 
-        if ($key === null) return $this->env['cookie'];
-        return isset($this->env['cookies'][$key]) ? $this->env['cookies'][$key] : null;
+        if ($key === null) return $this->injectors['cookies'];
+        return isset($this->injectors['cookies'][$key]) ? $this->injectors['cookies'][$key] : null;
     }
 
     /**
@@ -253,42 +330,50 @@ class Output extends \Pagon\EventEmitter
      */
     public function message()
     {
-        if (isset(self::$messages[$this->env['status']])) {
-            return self::$messages[$this->env['status']];
+        if (isset(self::$messages[$this->injectors['status']])) {
+            return self::$messages[$this->injectors['status']];
         }
         return null;
     }
 
     /**
-     * Send headers
+     * Send header
      */
     public function sendHeader()
     {
-        // Check headers
+        // Check header
         if (headers_sent() === false) {
             $this->emit('header');
 
             // Send header
-            header(sprintf('HTTP/%s %s %s', $this->app->input->protocol(), $this->env['status'], $this->message()));
+            header(sprintf('HTTP/%s %s %s', $this->app->input->protocol(), $this->injectors['status'], $this->message()));
 
             // Set content type if not exists
-            if (!isset($this->env['headers']['CONTENT-TYPE'])) {
-                $this->env['headers']['content-type'] = $this->env['content_type'] . '; charset=' . $this->env['charset'];
+            if (!isset($this->injectors['headers']['Content-Type'])) {
+                $this->injectors['headers']['Content-Type'] = $this->injectors['content_type'] . '; charset=' . $this->injectors['charset'];
             }
 
-            // Loop headers to send
-            if ($this->env['headers']) {
-                foreach ($this->env['headers'] as $name => $value) {
-                    // Multiple line headers support
-                    $h_values = explode("\n", $value);
-                    foreach ($h_values as $h_val) {
-                        header("$name: $h_val", false);
+            if (is_numeric($this->injectors['length'])) {
+                // Set content length
+                $this->injectors['headers']['Content-Length'] = $this->injectors['length'];
+            }
+
+            // Loop header to send
+            if ($this->injectors['headers']) {
+                foreach ($this->injectors['headers'] as $name => $value) {
+                    // Multiple line header support
+                    if (is_array($value)) {
+                        foreach ($value as $v) {
+                            header("$name: $v", false);
+                        }
+                    } else {
+                        header("$name: $value");
                     }
                 }
             }
 
-            // Set cookies
-            if ($this->env['cookies']) {
+            // Set cookie
+            if ($this->injectors['cookies']) {
                 $_default = $this->app->config->cookie;
                 if (!$_default) {
                     $_default = array(
@@ -296,47 +381,37 @@ class Output extends \Pagon\EventEmitter
                         'domain'   => null,
                         'secure'   => false,
                         'httponly' => false,
-                        'expires'  => 0,
+                        'timeout'  => 0,
                         'sign'     => false,
-                        'secret'   => ''
+                        'secret'   => '',
+                        'encrypt'  => false,
                     );
                 }
                 // Loop for set
-                foreach ($this->env['cookies'] as $key => $value) {
+                foreach ($this->injectors['cookies'] as $key => $value) {
                     $_option = (array)$value[1] + $_default;
                     $value = $value[0];
                     // Json object cookie
                     if (is_array($value)) {
                         $value = 'j:' . json_encode($value);
                     }
+
                     // Sign cookie
                     if ($_option['sign'] && $_default['secret']) {
                         $value = 's:' . $value . '.' . hash_hmac('sha1', $value, $_default['secret']);
                     }
+
+                    // Encrypt
+                    if ($_option['encrypt']) {
+                        $value = 'c:' . $this->app->cryptor->encrypt($value);
+                    }
+
                     // Set cookie
-                    setcookie($key, $value, $_option['expires'], $_option['path'], $_option['domain'], $_option['secure'], $_option['httponly']);
+                    setcookie($key, $value, time() + $_option['timeout'], $_option['path'], $_option['domain'], $_option['secure'], $_option['httponly']);
                 }
             }
         }
         return $this;
-    }
-
-    /**
-     * Set expires time
-     *
-     * @param string|int $time
-     * @return array|null
-     */
-    public function expires($time = null)
-    {
-        if ($time) {
-            if (is_string($time)) {
-                $time = strtotime($time);
-            }
-            $this->header('Expires', gmdate(DATE_RFC1123, $time));
-            return $this;
-        }
-        return $this->header('Expires');
     }
 
     /**
@@ -403,8 +478,8 @@ class Output extends \Pagon\EventEmitter
      */
     public function redirect($url, $status = 302)
     {
-        $this->env['status'] = $status;
-        $this->env['headers']['LOCATION'] = $url;
+        $this->injectors['status'] = $status;
+        $this->injectors['headers']['location'] = $url;
         return $this;
     }
 
@@ -413,9 +488,19 @@ class Output extends \Pagon\EventEmitter
      *
      * @throws Stop
      */
-    public static function stop()
+    public function stop()
     {
         throw new Stop();
+    }
+
+    /**
+     * Is response cachable?
+     *
+     * @return bool
+     */
+    public function isCachable()
+    {
+        return $this->injectors['status'] >= 200 && $this->injectors['status'] < 300 || $this->injectors['status'] == 304;
     }
 
     /**
@@ -425,7 +510,7 @@ class Output extends \Pagon\EventEmitter
      */
     public function isEmpty()
     {
-        return in_array($this->env['status'], array(201, 204, 304));
+        return in_array($this->injectors['status'], array(201, 204, 304));
     }
 
     /**
@@ -435,7 +520,7 @@ class Output extends \Pagon\EventEmitter
      */
     public function isOk()
     {
-        return $this->env['status'] === 200;
+        return $this->injectors['status'] === 200;
     }
 
     /**
@@ -445,7 +530,7 @@ class Output extends \Pagon\EventEmitter
      */
     public function isSuccessful()
     {
-        return $this->env['status'] >= 200 && $this->env['status'] < 300;
+        return $this->injectors['status'] >= 200 && $this->injectors['status'] < 300;
     }
 
     /**
@@ -455,7 +540,7 @@ class Output extends \Pagon\EventEmitter
      */
     public function isRedirect()
     {
-        return in_array($this->env['status'], array(301, 302, 303, 307));
+        return in_array($this->injectors['status'], array(301, 302, 303, 307));
     }
 
     /**
@@ -465,7 +550,7 @@ class Output extends \Pagon\EventEmitter
      */
     public function isForbidden()
     {
-        return $this->env['status'] === 403;
+        return $this->injectors['status'] === 403;
     }
 
     /**
@@ -475,7 +560,7 @@ class Output extends \Pagon\EventEmitter
      */
     public function isNotFound()
     {
-        return $this->env['status'] === 404;
+        return $this->injectors['status'] === 404;
     }
 
     /**
@@ -485,7 +570,7 @@ class Output extends \Pagon\EventEmitter
      */
     public function isClientError()
     {
-        return $this->env['status'] >= 400 && $this->env['status'] < 500;
+        return $this->injectors['status'] >= 400 && $this->injectors['status'] < 500;
     }
 
     /**
@@ -495,25 +580,7 @@ class Output extends \Pagon\EventEmitter
      */
     public function isServerError()
     {
-        return $this->env['status'] >= 500 && $this->env['status'] < 600;
-    }
-
-    /**
-     * Env
-     *
-     * @param $key
-     * @return mixed
-     */
-    public function env($key = null)
-    {
-        if (is_array($key)) {
-            $this->env = new Config($key);
-            return $this->env;
-        }
-
-        if ($key === null) return $this->env;
-
-        return isset($this->env[$key]) ? $this->env[$key] : null;
+        return $this->injectors['status'] >= 500 && $this->injectors['status'] < 600;
     }
 
     /**
@@ -521,6 +588,6 @@ class Output extends \Pagon\EventEmitter
      */
     public function __toString()
     {
-        return $this->env['body'];
+        return $this->injectors['body'];
     }
 }

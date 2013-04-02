@@ -1,18 +1,28 @@
 <?php
 
-namespace Pagon\Module {
+namespace Pagon\Middleware {
 
-    use \Pagon\App;
+    class I18N extends \Pagon\Middleware
+    {
+        /**
+         * @return mixed
+         */
+        function call()
+        {
+            I18NTranslator::init($this->options);
+            $this->next();
+        }
+    }
 
     /**
      * I18N
      */
-    class I18N
+    class I18NTranslator
     {
         protected static $lang = 'en-US';
         protected static $cache = array();
         protected static $enable = false;
-        protected static $config;
+        protected static $config = array();
 
         /**
          * Init i18n config
@@ -21,13 +31,12 @@ namespace Pagon\Module {
          */
         public static function init(array $config = array())
         {
-            if ($config) self::$config = &$config;
-            elseif (!empty(App::$config['i18n'])) self::$config = &App::$config['i18n'];
+            self::$config += $config;
 
             if (!self::$config) return;
 
             if (self::$config['lang'] && self::$config['dir']) self::$enable = true;
-            self::lang(I18N::preferLanguage(self::$config['lang']));
+            self::lang(self::preferLanguage(self::$config['lang']));
         }
 
         /**
@@ -44,7 +53,7 @@ namespace Pagon\Module {
         }
 
         /**
-         * Get words tranlation
+         * Get words translation
          *
          * @static
          * @param             $string
@@ -67,7 +76,6 @@ namespace Pagon\Module {
          */
         public static function preferLanguage($languages = array())
         {
-            if (isset($_COOKIE['lang'])) return $_COOKIE['lang'];
             if (!$languages) return 'en-US';
 
             preg_match_all("/([[:alpha:]]{1,8})(-([[:alpha:]|-]{1,8}))?" . "(\s*;\s*q\s*=\s*(1\.0{0,3}|0\.\d{0,3}))?\s*(,|$)/i",
@@ -140,9 +148,12 @@ namespace Pagon\Module {
  * @return string
  */
 namespace {
+    use Pagon\Middleware\I18NTranslator;
+
     function __($string, array $values = NULL, $lang = 'en')
     {
-        if ($lang !== \Pagon\Module\I18N::lang()) $string = \Pagon\Module\I18N::get($string);
+        if ($lang !== I18NTranslator::lang()) $string = I18NTranslator::get($string);
+
         return empty($values) ? $string : strtr($string, $values);
     }
 }

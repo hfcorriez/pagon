@@ -19,30 +19,24 @@ class Router extends Middleware
     public $app;
 
     /**
+     * @var \Closure
+     */
+    protected $automatic;
+
+    /**
      * Register a route for path
      *
      * @param string               $path
-     * @param \Closure|string      $runner
+     * @param \Closure|string      $route
      * @param \Closure|string|null $more
      */
-    public function on($path, $runner, $more = null)
+    public function set($path, $route, $more = null)
     {
         if ($more) {
             $_args = func_get_args();
             $path = array_shift($_args);
-            $runner = $_args;
+            $route = $_args;
         }
-        $this->app->config['route'][$path] = $runner;
-    }
-
-    /**
-     * Set route
-     *
-     * @param $path
-     * @param $route
-     */
-    public function set($path, $route)
-    {
         $this->app->config['route'][$path] = $route;
     }
 
@@ -67,26 +61,34 @@ class Router extends Middleware
     public function dispatch()
     {
         // Check path
-        if (!$this->options['path']) return false;
+        if ($this->options['path'] === null) return false;
 
         // Get routes
         $routes = (array)$this->app->config['route'];
 
-        // No routes
-        if (!$routes) return false;
-
         // Loop routes for parse and dispatch
         foreach ($routes as $p => $route) {
-            if (!$p) continue;
-
             // Try to parse the params
-            if (($params = self::match($this->options['path'], $p)) !== false) {
+            if (($param = self::match($this->options['path'], $p)) !== false) {
                 try {
-                    $params && $this->app->param($params);
+                    $param && $this->app->param($param);
 
-                    return self::run($route);
+                    return $this->run($route);
 
                     // If multiple controller
+                } catch (Pass $e) {
+                    // When catch Next, continue next route
+                }
+            }
+        }
+
+        // Try to check automatic route parser
+        if ($this->automatic instanceof \Closure) {
+            $route = call_user_func($this->automatic, $this->options['path']);
+
+            if (class_exists($route)) {
+                try {
+                    return $this->run($route);
                 } catch (Pass $e) {
                     // When catch Next, continue next route
                 }
@@ -114,6 +116,7 @@ class Router extends Middleware
      *
      * @param array|string $routes
      * @param  \Closure    $build
+     * @throws \InvalidArgumentException
      * @throws Exception\Pass
      * @return array|string
      */
@@ -125,8 +128,13 @@ class Router extends Middleware
         $param = null;
 
         $pass = function ($route) use ($build, &$param) {
-            call_user_func_array($route instanceof \Closure ? $route : $build($route), $param);
-            return true;
+            $runner = $route instanceof \Closure ? $route : $build($route);
+            if (is_callable($runner)) {
+                call_user_func_array($runner, $param);
+                return true;
+            } else {
+                throw new \InvalidArgumentException("Route '$route' is not exists");
+            }
         };
 
         $param = array(
@@ -142,6 +150,14 @@ class Router extends Middleware
         );
 
         return $pass(current($routes));
+    }
+
+    /**
+     * @param callable $closure
+     */
+    public function automatic(\Closure $closure)
+    {
+        $this->automatic = $closure;
     }
 
     /**
@@ -183,23 +199,23 @@ class Router extends Middleware
      */
     protected static function match($path, $route)
     {
-        $params = false;
+        $param = false;
 
         // Regex or Param check
         if (!strpos($route, ':') && strpos($route, '^') === false) {
             if ($path === $route) {
-                $params = array();
+                $param = array();
             }
         } else {
             // Try match
             if (preg_match(self::toRegex($route), $path, $matches)) {
                 array_shift($matches);
-                $params = $matches;
+                $param = $matches;
             }
         }
 
         // When complete the return
-        return $params;
+        return $param;
     }
 
     /**
@@ -218,7 +234,7 @@ class Router extends Middleware
                 $regex = '/' . $regex . '/';
             } elseif (strpos($regex, ':')) {
                 // Need replace
-                $regex = '/^' . preg_replace('/:([a-zA-Z0-9]+)/', '(?<$1>[^\/]+?)', $regex) . '\/?$/';
+                $regex = '/^' . preg_replace('/\(:([a-zA-Z0-9]+)\)/', '(?<$1>[^\/]+?)', $regex) . '\/?$/';
             } else {
                 // Full match
                 $regex = '/^' . $regex . '$/';

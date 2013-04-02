@@ -9,19 +9,9 @@ use Pagon\Config;
 class Input extends \Pagon\EventEmitter
 {
     /**
-     * @var array Route params
-     */
-    public $params = array();
-
-    /**
      * @var \Pagon\App App
      */
     public $app;
-
-    /**
-     * @var \Pagon\Config Env
-     */
-    protected $env;
 
     /**
      * @param \Pagon\App $app
@@ -30,7 +20,7 @@ class Input extends \Pagon\EventEmitter
     {
         $this->app = $app;
 
-        $this->env = new Config($_SERVER);
+        parent::__construct(array('params' => array()) + $_SERVER);
     }
 
     /**
@@ -41,11 +31,11 @@ class Input extends \Pagon\EventEmitter
      */
     public function pathInfo()
     {
-        if (!isset($this->env['path_info'])) {
-            $this->env['path_info'] = '/' . join('/', array_slice($this->env('argv'), 1));
+        if (!isset($this->injectors['path_info'])) {
+            $this->injectors['path_info'] = isset($GLOBALS['argv'][1]) && $GLOBALS['argv'][1]{0} != '-' ? $GLOBALS['argv'][1] : '';
         }
 
-        return $this->env['path_info'];
+        return $this->injectors['path_info'];
     }
 
     /**
@@ -65,10 +55,10 @@ class Input extends \Pagon\EventEmitter
      */
     public function body()
     {
-        if (!isset($this->env['body'])) {
-            $this->env['body'] = @(string)file_get_contents('php://input');
+        if (!isset($this->injectors['body'])) {
+            $this->injectors['body'] = @(string)file_get_contents('php://input');
         }
-        return $this->env['body'];
+        return $this->injectors['body'];
     }
 
     /**
@@ -80,7 +70,7 @@ class Input extends \Pagon\EventEmitter
      */
     public function param($key, $default = null)
     {
-        return isset($this->params[$key]) ? $this->params[$key] : $default;
+        return isset($this->injectors['params'][$key]) ? $this->injectors['params'][$key] : $default;
     }
 
     /**
@@ -92,23 +82,5 @@ class Input extends \Pagon\EventEmitter
     {
         ob_get_level() && ob_clean();
         throw new Pass();
-    }
-
-    /**
-     * Env
-     *
-     * @param $key
-     * @return mixed
-     */
-    public function env($key = null)
-    {
-        if (is_array($key)) {
-            $this->env = new Config($key);
-            return $this->env;
-        }
-
-        if ($key === null) return $this->env;
-
-        return isset($this->env[$key]) ? $this->env[$key] : null;
     }
 }

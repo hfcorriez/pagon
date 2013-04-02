@@ -9,10 +9,17 @@
 
 namespace Pagon;
 
-const VERSION = '0.3';
+const VERSION = '0.4';
+
+// Depend Fiber
+if (!class_exists('Fiber')) {
+    require __DIR__ . '/Fiber.php';
+}
 
 // Depend Emitter
-require __DIR__ . '/EventEmitter.php';
+if (!class_exists('EventEmitter')) {
+    require __DIR__ . '/EventEmitter.php';
+}
 
 /*********************
  * core app
@@ -47,7 +54,13 @@ class App extends EventEmitter
         'error'    => false,
         'route'    => array(),
         'buffer'   => true,
-        'timezone' => 'UTC'
+        'timezone' => 'UTC',
+        'charset'  => 'UTF-8',
+        'alias'    => array(),
+        'engines'  => array(
+            'jade' => 'Jade'
+        ),
+        'stacks'   => array('' => array()),
     );
 
     /**
@@ -61,29 +74,9 @@ class App extends EventEmitter
     protected $mode;
 
     /**
-     * @var string View engine
-     */
-    protected $engines = array();
-
-    /**
-     * @var Middleware[]
-     */
-    protected $stacks = array('/' => array());
-
-    /**
-     * @var Module[]
-     */
-    protected $modules = array();
-
-    /**
      * @var bool Is cli?
      */
     private $_cli = false;
-
-    /**
-     * @var bool Is win?
-     */
-    private $_win = false;
 
     /**
      * @var bool Is run?
@@ -91,10 +84,30 @@ class App extends EventEmitter
     private $_run = false;
 
     /**
+     * @var App The top app
+     */
+    protected static $self;
+
+    /**
+     * Return current app
+     *
+     * @throws \RuntimeException
+     * @return App
+     */
+    public static function self()
+    {
+        if (!self::$self) {
+            throw new \RuntimeException("There is no App exists");
+        }
+
+        return self::$self;
+    }
+
+    /**
      * App init
      *
-     * @param array $config
-     * @throws \Exception
+     * @param array|string $config
+     * @throws \RuntimeException
      */
     public function __construct($config = array())
     {
@@ -102,9 +115,6 @@ class App extends EventEmitter
 
         // Is cli
         $this->_cli = PHP_SAPI == 'cli';
-
-        // Is win
-        $this->_win = substr(PHP_OS, 0, 3) == 'WIN';
 
         // Register shutdown
         register_shutdown_function(array($this, '__shutdown'));
@@ -114,11 +124,11 @@ class App extends EventEmitter
 
         // Set io depends on SAPI
         if (!$this->_cli) {
-            $this->input = new Http\Input($app);
-            $this->output = new Http\Output($app);
+            $this->input = new Http\Input($this);
+            $this->output = new Http\Output($this);
         } else {
-            $this->input = new Cli\Input($app);
-            $this->output = new Cli\Output($app);
+            $this->input = new Cli\Input($this);
+            $this->output = new Cli\Output($this);
         }
 
         // Init Route
@@ -129,26 +139,37 @@ class App extends EventEmitter
         iconv_set_encoding("internal_encoding", "UTF-8");
         mb_internal_encoding('UTF-8');
 
-        // Default things to do before run
+        // Config
+        $this->config = !is_array($config) ? Config::load((string)$config)->defaults($this->config) : new Config($config + $this->config);
+
+        // Register some initialize
         $this->on('run', function () use ($app) {
             // configure timezone
             if ($app->config['timezone']) date_default_timezone_set($app->config['timezone']);
 
             // configure debug
             if ($app->config['debug']) $app->add(new Middleware\PrettyException());
-        });
 
-        // Config
-        $this->config = $config instanceof Config ? $config : new Config($config + $this->config);
+            // Share the cryptor for the app
+            $app->share('cryptor', function ($app) {
+                if (empty($app->config['crypt'])) {
+                    throw new \RuntimeException('Encrypt cookie need configure config["crypt"]');
+                }
+                return new \Pagon\Utility\Cryptor($app->config['crypt']);
+            });
+        });
 
         // Set default locals
         $this->locals['config'] = & $this->config;
 
         // Set mode
-        $this->mode = ($_mode = getenv('OMNI_ENV')) ? $_mode : 'development';
+        $this->mode = ($_mode = getenv('PAGON_ENV')) ? $_mode : 'development';
 
         // Fire init
         $this->emit('init');
+
+        // Save current app
+        self::$self = $this;
     }
 
     /**
@@ -159,16 +180,6 @@ class App extends EventEmitter
     public function isCli()
     {
         return $this->_cli;
-    }
-
-    /**
-     * Check if windows, if not, it must be *unix
-     *
-     * @return bool
-     */
-    public function isWin()
-    {
-        return $this->_win;
     }
 
     /**
@@ -261,11 +272,9 @@ class App extends EventEmitter
 
         // Allow set mode get method when mode is closure
         if (!$mode) {
-            // Set trigger for all mode
-            $this->on('mode', $closure);
-        } else {
-            // Set trigger for the mode
-            $this->on('mode:' . $mode, $closure);
+            $closure($this->mode);
+        } elseif ($mode == $this->mode) {
+            $closure();
         }
     }
 
@@ -275,7 +284,7 @@ class App extends EventEmitter
      * @param Middleware|\Closure|string $path
      * @param Middleware|\Closure|string $middleware
      * @param array                      $options
-     * @throws \Exception
+     * @throws \RuntimeException
      * @return void
      */
     public function add($path, $middleware = null, $options = array())
@@ -284,7 +293,7 @@ class App extends EventEmitter
             // If not path
             $options = (array)$middleware;
             $middleware = $path;
-            $path = '/';
+            $path = '';
         }
 
         if (is_string($middleware)) {
@@ -296,51 +305,17 @@ class App extends EventEmitter
 
             // Check if base on Middleware class
             if (!is_subclass_of($middleware, Middleware::_CLASS_)) {
-                throw new \Exception("Bad middleware can not be added");
+                throw new \RuntimeException("Bad middleware can not be called");
             }
         }
 
         // Set default array
-        if (!isset($this->stacks[$path])) {
-            $this->stacks[$path] = array();
+        if (!isset($this->config['stacks'][$path])) {
+            $this->config['stacks'][$path] = array();
         }
-        // Add to the end
-        $this->stacks[$path][] = array($middleware, $options);
-    }
-
-    /**
-     * Add modules
-     *
-     * @param string|\StdClass $module
-     * @throws \Exception
-     * @return void
-     */
-    public function load($module)
-    {
-        if (is_string($module)) {
-            if ($module{0} !== '\\') {
-                $module = __NAMESPACE__ . '\Module\\' . $module;
-            }
-
-            if (is_subclass_of($module, Module::_CLASS_)) {
-                $module = new $module();
-            } elseif (is_subclass_of($module . '\\Loader', Module::_CLASS_)) {
-                $module = $module . '\\Loader';
-                $module = new $module();
-            }
-        }
-
-        // Check module
-        if (!$module instanceof Module) {
-            // Not base module
-            throw new \Exception("Bad module can not be added");
-        }
-
-        // Load module
-        $module->load($this);
 
         // Add to the end
-        $this->modules[] = $module;
+        $this->config['stacks'][$path][] = array($middleware, $options);
     }
 
     /**
@@ -361,9 +336,9 @@ class App extends EventEmitter
         if ($this->_cli || !$this->input->isGet()) return;
 
         if ($more !== null) {
-            call_user_func_array(array($this->router, 'on'), func_get_args());
+            call_user_func_array(array($this->router, 'set'), func_get_args());
         } else {
-            $this->router->on($path, $route);
+            $this->router->set($path, $route);
         }
     }
 
@@ -379,9 +354,9 @@ class App extends EventEmitter
         if ($this->_cli || !$this->input->isPost()) return;
 
         if ($more !== null) {
-            call_user_func_array(array($this->router, 'on'), func_get_args());
+            call_user_func_array(array($this->router, 'set'), func_get_args());
         } else {
-            $this->router->on($path, $route);
+            $this->router->set($path, $route);
         }
     }
 
@@ -397,9 +372,9 @@ class App extends EventEmitter
         if ($this->_cli || !$this->input->isPut()) return;
 
         if ($more !== null) {
-            call_user_func_array(array($this->router, 'on'), func_get_args());
+            call_user_func_array(array($this->router, 'set'), func_get_args());
         } else {
-            $this->router->on($path, $route);
+            $this->router->set($path, $route);
         }
     }
 
@@ -415,9 +390,9 @@ class App extends EventEmitter
         if ($this->_cli || !$this->input->isDelete()) return;
 
         if ($more !== null) {
-            call_user_func_array(array($this->router, 'on'), func_get_args());
+            call_user_func_array(array($this->router, 'set'), func_get_args());
         } else {
-            $this->router->on($path, $route);
+            $this->router->set($path, $route);
         }
     }
 
@@ -433,25 +408,54 @@ class App extends EventEmitter
         if ($this->_cli) return;
 
         if ($more !== null) {
-            call_user_func_array(array($this->router, 'on'), func_get_args());
+            call_user_func_array(array($this->router, 'set'), func_get_args());
         } else {
-            $this->router->on($path, $route);
+            $this->router->set($path, $route);
         }
     }
 
     /**
-     * Map route
+     * Use auto route
+     *
+     * @param callable|bool $closure
+     */
+    public function autoRoute($closure)
+    {
+        if ($closure instanceof \Closure) {
+            $this->router->automatic($closure);
+        } elseif ($closure === true || is_string($closure)) {
+            $_cli = $this->_cli;
+            // Set route use default automatic
+            $this->router->automatic(function ($path) use ($closure, $_cli) {
+                if (!$_cli && $path !== '/' || $_cli && $path !== '') {
+                    $splits = array_map(function ($split) {
+                        return ucfirst(strtolower($split));
+                    }, $_cli ? explode(':', $path) : explode('/', ltrim($path, '/')));
+                } else {
+                    // If path is root or is not found
+                    $splits = array('Index');
+                }
+
+                return ($closure === true ? '' : $closure . '\\') . join('\\', $splits);
+            });
+        }
+    }
+
+    /**
+     * Map cli route
      *
      * @param string          $path
      * @param \Closure|string $route
      * @param \Closure|string $more
      */
-    public function route($path, $route, $more = null)
+    public function cli($path, $route = null, $more = null)
     {
+        if (!$this->_cli) return;
+
         if ($more !== null) {
-            call_user_func_array(array($this->router, 'on'), func_get_args());
+            call_user_func_array(array($this->router, 'set'), func_get_args());
         } else {
-            $this->router->on($path, $route);
+            $this->router->set($path, $route);
         }
     }
 
@@ -466,9 +470,9 @@ class App extends EventEmitter
     {
         if ($engine) {
             // Set engine
-            $this->engines[$name] = $engine;
+            $this->config['engines'][$name] = $engine;
         }
-        return isset($this->engines[$name]) ? $this->engines[$name] : null;
+        return isset($this->config['engines'][$name]) ? $this->config['engines'][$name] : null;
     }
 
     /**
@@ -476,30 +480,61 @@ class App extends EventEmitter
      *
      * @param string $path
      * @param array  $data
+     * @param array  $options
+     * @throws \RuntimeException
+     * @return void
      */
-    public function render($path, $data = array())
+    public function render($path, $data = array(), array $options = array())
     {
-        // Get ext
-        $ext = pathinfo($path, PATHINFO_EXTENSION);
-        $engine = false;
+        echo $this->compile($path, $data, $options);
+    }
 
-        // If ext then check engine with ext
-        if ($ext && isset($this->engines[$ext])) {
-            // If engine exists
-            if (is_string($this->engines[$ext]) && class_exists($this->engines[$ext])) {
-                // Create new engine
-                $this->engines[$ext] = $engine = new $this->engines[$ext]();
-            } else {
-                // Get engine from exists engines
-                $engine = $this->engines[$ext];
+    /**
+     * Compile view
+     *
+     * @param string $path
+     * @param array  $data
+     * @param array  $options
+     * @return View
+     * @throws \RuntimeException
+     */
+    public function compile($path, $data = array(), array $options = array())
+    {
+        if (!isset($options['engine'])) {
+            // Get ext
+            $ext = pathinfo($path, PATHINFO_EXTENSION);
+            $options['engine'] = false;
+
+            // If ext then check engine with ext
+            if ($ext && isset($this->config['engines'][$ext])) {
+                // If engine exists
+                if (is_string($this->config['engines'][$ext])) {
+                    if (class_exists($this->config['engines'][$ext])) {
+                        $class = $this->config['engines'][$ext];
+                    } else if (class_exists(__NAMESPACE__ . '\\Engine\\' . $this->config['engines'][$ext])) {
+                        $class = __NAMESPACE__ . '\\Engine\\' . $this->config['engines'][$ext];
+                    } else {
+                        throw new \RuntimeException("Unavailable view engine '{$this->config['engines'][$ext]}'");
+                    }
+                    // Create new engine
+                    $this->config['engines'][$ext] = $options['engine'] = new $class();
+                } else {
+                    // Get engine from exists engines
+                    $options['engine'] = $this->config['engines'][$ext];
+                }
             }
         }
+
+        // Default set app
+        $data['_'] = $this;
+
         // Create view
-        $view = new View($path, $data + $this->locals, array(
-            'engine' => $engine,
-            'dir'    => $this->config['views']
+        $view = new View($path, $data + $this->locals, $options + array(
+            'dir' => $this->config['views']
         ));
-        echo $view;
+
+        // Return view
+        return $view;
     }
 
     /**
@@ -508,12 +543,6 @@ class App extends EventEmitter
      */
     public function run()
     {
-        // Trigger default mode
-        $this->emit('mode', $this->mode);
-
-        // If trigger exists, trigger closure
-        $this->emit('mode:' . $this->mode);
-
         // Emit run
         $this->emit('run');
 
@@ -529,21 +558,20 @@ class App extends EventEmitter
 
         try {
             // Start buffer
-            if ($_buffer_enabled = $this->config['buffer']) ob_start();
-
-            $_used_router = false;
+            if ($this->config['buffer']) ob_start();
+            $this->config['stacks'][''][] = array($this->router);
 
             // Loop stacks to match
-            foreach ($this->stacks as $path => $middleware) {
+            foreach ($this->config['stacks'] as $path => $middleware) {
                 // Try to match the path
-                if (strpos($this->input->pathInfo(), $path) !== 0) continue;
+                if ($path && strpos($this->input->pathInfo(), $path) !== 0) continue;
 
                 $middleware = (array)$middleware;
                 if (empty($middleware)) continue;
 
                 try {
                     $this->router->pass($middleware, function ($m) {
-                        return Middleware::build($m[0], $m[1]);
+                        return Middleware::build($m[0], isset($m[1]) ? $m[1] : array());
                     });
 
                     break;
@@ -551,12 +579,9 @@ class App extends EventEmitter
                 }
             }
 
-            if (!$_used_router) {
-                $this->router->call();
-            }
-
             // Write direct output to the head of buffer
-            if ($_buffer_enabled) $this->output->write(ob_get_clean());
+            if ($this->config['buffer']) $this->output->write(ob_get_clean());
+        } catch (Exception\Stop $e) {
         } catch (\Exception $e) {
             if ($this->config['debug']) {
                 throw $e;
@@ -595,7 +620,7 @@ class App extends EventEmitter
      */
     public function error($route = null)
     {
-        if (is_callable($route) && !$route instanceof \Exception) {
+        if ($route && !$route instanceof \Exception) {
             $this->router->set('error', $route);
         } else {
             ob_get_level() && ob_clean();
@@ -603,7 +628,7 @@ class App extends EventEmitter
             if (!$this->router->handle('error', array($route))) {
                 echo 'Error occurred';
             }
-            $this->output(500, ob_get_clean());
+            $this->halt(500, ob_get_clean());
         }
     }
 
@@ -614,7 +639,7 @@ class App extends EventEmitter
      */
     public function notFound($route = null)
     {
-        if (is_callable($route) && !$route instanceof \Exception) {
+        if ($route && !$route instanceof \Exception) {
             $this->router->set('404', $route);
         } else {
             ob_get_level() && ob_clean();
@@ -622,7 +647,7 @@ class App extends EventEmitter
             if (!$this->router->handle('404', array($route))) {
                 echo 'Path not found';
             }
-            $this->output(404, ob_get_clean());
+            $this->halt(404, ob_get_clean());
         }
     }
 
@@ -633,7 +658,7 @@ class App extends EventEmitter
      */
     public function crash($route = null)
     {
-        if (is_callable($route) && !$route instanceof \Exception) {
+        if ($route && !$route instanceof \Exception) {
             $this->router->set('crash', $route);
         } else {
             ob_get_level() && ob_clean();
@@ -641,7 +666,7 @@ class App extends EventEmitter
             if (!$this->router->handle('crash', array($route))) {
                 echo 'App is down';
             }
-            $this->output(500, ob_get_clean());
+            $this->halt(500, ob_get_clean());
         }
     }
 
@@ -652,7 +677,7 @@ class App extends EventEmitter
      * @param string $body
      * @throws Exception\Stop
      */
-    public function output($status, $body)
+    public function halt($status, $body = '')
     {
         $this->output->status($status)->body($body);
         throw new Exception\Stop;
@@ -722,12 +747,18 @@ class App extends EventEmitter
     /**
      * Auto load class
      *
-     * @param $class
+     * @param string $class
      * @return bool
      */
     protected function __autoload($class)
     {
         if ($class{0} == '\\') $class = ltrim($class, '\\');
+
+        // Alias check
+        if (!empty($this->config['alias'][$class])) {
+            class_alias($this->config['alias'][$class], $class);
+            $class = $this->config['alias'][$class];
+        }
 
         // If with Pagon path, force require
         if (substr($class, 0, strlen(__NAMESPACE__) + 1) == __NAMESPACE__ . '\\') {
@@ -737,11 +768,17 @@ class App extends EventEmitter
             }
         } else {
             // Set the 99 high order for default autoload
-            $available_path = array(99 => $this->config['autoload']);
+            $available_path = array();
+
+            // Autoload
+            if (!empty($this->config['autoload'])) {
+                $available_path[99] = $this->config['autoload'];
+            }
+
             // Check other namespaces
-            if (isset($this->config['autoload_namespaces'])) {
+            if (!empty($this->config['namespace'])) {
                 // Loop namespaces as autoload
-                foreach ($this->config['autoload_namespaces'] as $_prefix => $_path) {
+                foreach ($this->config['namespace'] as $_prefix => $_path) {
                     // Check if match prefix
                     if (($_pos = strpos($class, $_prefix)) === 0) {
                         // Set ordered path
@@ -753,25 +790,30 @@ class App extends EventEmitter
             }
 
             // No available path, no continue
-            if (!$available_path) return false;
-
-            // Set default file name
-            $file_name = '';
-            // PSR-0 check
-            if ($last_pos = strrpos($class, '\\')) {
-                $namespace = substr($class, 0, $last_pos);
-                $class = substr($class, $last_pos + 1);
-                $file_name = str_replace('\\', '/', $namespace) . '/';
-            }
-            // Get last file name
-            $file_name .= str_replace('_', '/', $class) . '.php';
-            // Loop available path for check
-            foreach ($available_path as $_path) {
-                // Check file if exists
-                if ($file = stream_resolve_include_path($_path . '/' . $file_name)) {
-                    require $file;
-                    return true;
+            if ($available_path) {
+                // Set default file name
+                $file_name = '';
+                // PSR-0 check
+                if ($last_pos = strrpos($class, '\\')) {
+                    $namespace = substr($class, 0, $last_pos);
+                    $class = substr($class, $last_pos + 1);
+                    $file_name = str_replace('\\', '/', $namespace) . '/';
                 }
+                // Get last file name
+                $file_name .= str_replace('_', '/', $class) . '.php';
+                // Loop available path for check
+                foreach ($available_path as $_path) {
+                    // Check file if exists
+                    if ($file = stream_resolve_include_path($_path . '/' . $file_name)) {
+                        require $file;
+                        return true;
+                    }
+                }
+            }
+
+            $try_class = __NAMESPACE__ . '\\' . $class;
+            if (class_exists($try_class)) {
+                class_alias($try_class, $class);
             }
         }
 

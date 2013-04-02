@@ -3,7 +3,6 @@
 namespace Pagon\Cli;
 
 use Pagon\App;
-use Pagon\Config;
 use Pagon\Exception\Stop;
 
 class Output extends \Pagon\EventEmitter
@@ -19,18 +18,14 @@ class Output extends \Pagon\EventEmitter
     public $app;
 
     /**
-     * @var Config Env
-     */
-    protected $env;
-
-    /**
      * @param App $app
+     * @return Output
      */
     public function __construct(App $app)
     {
         $this->app = $app;
 
-        $this->env = new Config(array(
+        parent::__construct(array(
             'status' => 0,
             'body'   => '',
         ));
@@ -47,10 +42,10 @@ class Output extends \Pagon\EventEmitter
     public function status($status = null)
     {
         if (is_numeric($status)) {
-            $this->env['status'] = $status;
+            $this->injectors['status'] = $status;
             return $this;
         }
-        return $this->env['status'];
+        return $this->injectors['status'];
     }
 
     /**
@@ -63,11 +58,11 @@ class Output extends \Pagon\EventEmitter
     public function body($content = null)
     {
         if ($content !== null) {
-            $this->env['body'] = $content;
+            $this->injectors['body'] = $content;
             return $this;
         }
 
-        return $this->env['body'];
+        return $this->injectors['body'];
     }
 
     /**
@@ -78,9 +73,9 @@ class Output extends \Pagon\EventEmitter
      */
     public function write($data)
     {
-        if (!$data) return $this->env['body'];
+        if (!$data) return $this->injectors['body'];
 
-        $this->env['body'] .= $data;
+        $this->injectors['body'] .= $data;
 
         return $this;
     }
@@ -105,25 +100,7 @@ class Output extends \Pagon\EventEmitter
      */
     public function isOk()
     {
-        return $this->env['status'] === 0;
-    }
-
-    /**
-     * Env
-     *
-     * @param $key
-     * @return mixed
-     */
-    public function env($key = null)
-    {
-        if (is_array($key)) {
-            $this->env = new Config($key);
-            return $this->env;
-        }
-
-        if ($key === null) return $this->env;
-
-        return isset($this->env[$key]) ? $this->env[$key] : null;
+        return $this->injectors['status'] === 0;
     }
 
     /**
@@ -131,6 +108,6 @@ class Output extends \Pagon\EventEmitter
      */
     public function __toString()
     {
-        return $this->env['body'];
+        return $this->injectors['body'];
     }
 }

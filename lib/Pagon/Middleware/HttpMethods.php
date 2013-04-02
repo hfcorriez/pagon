@@ -2,7 +2,7 @@
 
 namespace Pagon\Middleware;
 
-class ExtendHttpMethods extends \Pagon\Middleware
+class HttpMethods extends \Pagon\Middleware
 {
     protected $options = array(
         'methods' => array(
@@ -34,22 +34,22 @@ class ExtendHttpMethods extends \Pagon\Middleware
             $app = $this->app;
 
             // Register route
-            $this->app->{$method} = function ($path, $route, $more = null) use ($app, $method) {
+            $this->app->protect($method, function ($path, $route, $more = null) use ($app, $method) {
                 if ($app->isCli() || !$app->input->is($method)) return;
 
                 if ($more !== null) {
-                    call_user_func_array(array($app->router, 'on'), func_get_args());
+                    call_user_func_array(array($app->router, 'set'), func_get_args());
                 } else {
-                    $app->router->on($path, $route);
+                    $app->router->set($path, $route);
                 }
-            };
+            });
 
             // Register method check
             $input = $this->input;
-            $_method = 'is' . ucfirst($method);
-            $this->input->{$_method} = function () use ($input, $method) {
+
+            $this->input->protect('is' . ucfirst($method), function () use ($input, $method) {
                 return $input->is($method);
-            };
+            });
         }
 
         $this->next();

@@ -2,7 +2,7 @@
 
 namespace Pagon;
 
-abstract class Middleware
+abstract class Middleware extends EventEmitter
 {
     const _CLASS_ = __CLASS__;
 
@@ -43,6 +43,7 @@ abstract class Middleware
      * Create new controller
      *
      * @param string|\Closure $route
+     * @param array           $options
      * @return bool|Route
      */
     public static function build($route, $options = array())
@@ -76,7 +77,7 @@ abstract class Middleware
     }
 
     /**
-     *
+     * Call next
      */
     public function next()
     {

@@ -4,20 +4,97 @@ namespace Pagon;
 
 class Config extends \ArrayObject
 {
-    public function __construct($input)
+    const LOAD_AUTODETECT = 0;
+
+    /**
+     * @var array Config registers
+     */
+    protected static $imports = array(
+        'mimes' => array('mimes.php', 0),
+    );
+
+    /**
+     * Init config
+     *
+     * @param array $input
+     * @return Config
+     */
+    public function __construct(array $input)
     {
-        parent::__construct($this->parse($input));
+        parent::__construct($input);
     }
 
     /**
-     * Parse the input, Config must implements this method
+     * Register a config
      *
-     * @param $input
-     * @return mixed
+     * @param string     $name
+     * @param string     $file
+     * @param int|string $type
+     * @return void
      */
-    protected function parse($input)
+    public static function import($name, $file, $type = self::LOAD_AUTODETECT)
     {
-        return (array)$input;
+        static::$imports[$name] = array($file, $type);
+    }
+
+    /**
+     * Load config by name
+     */
+    public static function export($name)
+    {
+        if (!isset(static::$imports[$name])) {
+            throw new \InvalidArgumentException("Load config error with non-exists name \"$name\"");
+        }
+
+        // Check if config already exists?
+        if (static::$imports[$name] instanceof Config) {
+            return static::$imports[$name];
+        }
+
+        // Try to load
+        list($file, $type) = static::$imports[$name];
+
+        // Use data dir
+        if ($file{0} != '/') $file = __DIR__ . '/Config/' . $file;
+
+        return static::$imports[$name] = static::load($file, $type);
+    }
+
+    /**
+     * Load from file
+     *
+     * @param string     $file
+     * @param int|string $type
+     * @throws \InvalidArgumentException
+     * @return Config
+     */
+    public static function load($file, $type = self::LOAD_AUTODETECT)
+    {
+        if (!is_file($file)) {
+            throw new \InvalidArgumentException("Config load error with non-exists file");
+        }
+
+        if ($type === self::LOAD_AUTODETECT) {
+            $type = pathinfo($file, PATHINFO_EXTENSION);
+        }
+        $type = strtolower($type);
+
+        if ($type !== 'php') {
+            // Try to use custom parser
+            if (class_exists($type)) {
+                $class = $type;
+            } else {
+                $class = __NAMESPACE__ . "\\Config\\Parser\\" . ucfirst($type);
+            }
+
+            if (!class_exists($class)) {
+                throw new \InvalidArgumentException("There is no parser '$class' for '$type'");
+            }
+
+            return new self($class::parse(file_get_contents($file)));
+        } else {
+            return new self(include($file));
+        }
     }
 
     /**
@@ -71,6 +148,30 @@ class Config extends \ArrayObject
         } else {
             $this[$key] = $value;
         }
+    }
+
+    /**
+     * Set defaults for array
+     *
+     * @param array $config
+     * @return Config
+     */
+    public function defaults(array $config)
+    {
+        $this->exchangeArray($this->getArrayCopy() + $config);
+        return $this;
+    }
+
+    /**
+     * Add array for config
+     *
+     * @param array $config
+     * @return Config
+     */
+    public function add(array $config)
+    {
+        $this->exchangeArray($config + $this->getArrayCopy());
+        return $this;
     }
 
     /**
