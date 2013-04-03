@@ -1,14 +1,10 @@
 ## Pagon框架?
 
-- Pagon是一个简单的PHP框架，使用方式类似Ruby的[sinatra](http://www.sinatrarb.com)或Node的[express.js](http://expressjs.com)
-
-- Pagon致力于打造一个拥有最小化核心组件且尽量不依赖第三方库的简单、智能和高效的框架。
-
-- Pagon的高效不止是开发效率，还包括执行效率。
-
-- Pagon不止很好的支持Web开发，也对CLI下的支持做了很多优化。
-
-- Pagon的现阶段目标是`只需要一套框架，便能快速完成一套高效Web应用的开发`！
+- 简单高效的PHP框架，使用方式类似Ruby的[Sinatra](http://www.sinatrarb.com)或Node的[Express.js](http://expressjs.com)
+- 致力于打造一个拥有最小化核心组件且尽量不依赖第三方库的简单、智能和高效的框架。
+- 高效不止是开发效率，还包括执行效率。
+- 不止支持Web开发，也支持CLI下的开发并且做了很多优化。
+- 现阶段是实现`只需要一套框架，便能快速完成一套高效Web应用的开发`！
 
 ## 特性
 
@@ -18,7 +14,21 @@
 - 标准，基于PSR标准开发
 - 性能，效率上优于目前所有主流框架
 - 事件，基于事件打造，随时随地事件驱动
-- 前卫，对良好的新技术或思想提供快速支持
+- 前卫，对良好的新技术或思想提供快速支持，比如Restful
+
+## 安装
+
+已有项目
+
+```
+composer.phar require pagon/app=0.5.0
+```
+
+新项目（使用`pagon/app`skelton创建应用）
+
+```
+composer.phar create-project pagon/app myapp 0.1.0
+```
 
 ## 例子
 
@@ -105,6 +115,23 @@ $app->configure(function($mode) use ($app){
 			break;
 	}
 })
+```
+
+### 控制器
+
+可以使用Closure的方式实现控制器，也可以使用类继承的方式来创造一个控制器
+
+```php
+class Api extend \Pagon\Rest {
+    public function get($req, $res) {
+        $res->json(array(
+            'error' => 0,
+            'message' => 'OK'
+        ));
+    }
+}
+
+$app->get('/api', 'Api');
 ```
 
 ### 事件
