@@ -27,7 +27,7 @@ composer.phar require pagon/app=0.5.0
 新项目（使用[`pagon/app`](https://github.com/pagon/app)skelton创建应用）
 
 ```
-composer.phar create-project pagon/app myapp 0.1.0
+composer.phar create-project pagon/app myapp
 ```
 
 ## 例子
