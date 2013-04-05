@@ -132,7 +132,7 @@ class App extends EventEmitter
         }
 
         // Init Route
-        $this->router = new Router(array('path' => $this->input->pathInfo()));
+        $this->router = new Router(array('path' => $this->input->path()));
         $this->router->app = $this;
 
         // Force use UTF-8 encoding
@@ -564,7 +564,7 @@ class App extends EventEmitter
             // Loop stacks to match
             foreach ($this->config['stacks'] as $path => $middleware) {
                 // Try to match the path
-                if ($path && strpos($this->input->pathInfo(), $path) !== 0) continue;
+                if ($path && strpos($this->input->path(), $path) !== 0) continue;
 
                 $middleware = (array)$middleware;
                 if (empty($middleware)) continue;

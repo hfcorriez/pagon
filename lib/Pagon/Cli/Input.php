@@ -29,7 +29,7 @@ class Input extends \Pagon\EventEmitter
      *
      * @return mixed
      */
-    public function pathInfo()
+    public function path()
     {
         if (!isset($this->injectors['path_info'])) {
             $this->injectors['path_info'] = isset($GLOBALS['argv'][1]) && $GLOBALS['argv'][1]{0} != '-' ? $GLOBALS['argv'][1] : '';

@@ -77,7 +77,7 @@ class Input extends \Pagon\EventEmitter
      *
      * @return string
      */
-    public function pathInfo()
+    public function path()
     {
         if (!isset($this->injectors['path_info'])) {
             $_path_info = substr_replace($this->injectors['REQUEST_URI'], '', 0, strlen($this->scriptName()));
