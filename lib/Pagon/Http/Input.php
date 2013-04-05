@@ -109,6 +109,16 @@ class Input extends \Pagon\EventEmitter
     }
 
     /**
+     * Get site url
+     *
+     * @return string
+     */
+    public function site()
+    {
+        return $this->scheme() . '://' . $this->domain();
+    }
+
+    /**
      * Get method
      *
      *
