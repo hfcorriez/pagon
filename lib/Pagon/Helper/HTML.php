@@ -96,9 +96,9 @@ class Html
      * @param array  $attributes
      * @return string
      */
-    public static function image($src, array $attributes = array())
+    public static function img($src, array $attributes = array())
     {
-        return self::element('image', array('src' => Url::toAsset($src) + $attributes));
+        return self::element('img', array('src' => Url::toAsset($src) + $attributes));
     }
 
     /**
