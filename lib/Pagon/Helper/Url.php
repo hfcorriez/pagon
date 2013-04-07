@@ -24,6 +24,24 @@ class Url
     }
 
     /**
+     * To asset url
+     *
+     * @param string $path
+     * @param array  $query
+     * @param bool   $full
+     * @return string
+     */
+    public static function toAsset($path, array $query = null, $full = false)
+    {
+        $asset_url = App::self()->get('asset_url');
+
+        return
+            ($asset_url ? $asset_url : ($full ? self::site() : '') . self::base()) .
+            '/' . ltrim($path, '/') .
+            ($query ? '?' . http_build_query($query) : '');
+    }
+
+    /**
      * Get current path with give query replaced
      *
      * @param array $query
@@ -43,7 +61,7 @@ class Url
      */
     public static function site()
     {
-        return ($site = App::self()->get('site')) ? $site : App::self()->input->site();
+        return ($site = App::self()->get('site_url')) ? $site : App::self()->input->site();
     }
 
     /**

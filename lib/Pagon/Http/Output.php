@@ -465,7 +465,7 @@ class Output extends \Pagon\EventEmitter
     public function xml($data, $root = 'root', $item = 'item')
     {
         $this->contentType('application/xml');
-        $this->body(\Pagon\Helper\XML::fromArray($data, $root, $item));
+        $this->body(\Pagon\Helper\Xml::fromArray($data, $root, $item));
         return $this;
     }
 
