@@ -73,7 +73,7 @@ class Html
      */
     public static function script($src, array $attributes = array())
     {
-        return self::element('script', '', ($src ? array('src' => Url::toAsset($src)) : array()) + $attributes + array('type' => 'text/javascript'));
+        return self::element('script', '', ($src ? array('src' => Url::asset($src)) : array()) + $attributes + array('type' => 'text/javascript'));
     }
 
     /**
@@ -86,7 +86,7 @@ class Html
      */
     public static function link($src, $rel = 'stylesheet', array $attributes = array())
     {
-        return self::element('link', array('rel' => $rel, 'href' => Url::toAsset($src)) + $attributes);
+        return self::element('link', array('rel' => $rel, 'href' => Url::asset($src)) + $attributes);
     }
 
     /**
@@ -110,7 +110,7 @@ class Html
      */
     public static function img($src, array $attributes = array())
     {
-        return self::element('img', array('src' => Url::toAsset($src) + $attributes));
+        return self::element('img', array('src' => Url::asset($src) + $attributes));
     }
 
     /**

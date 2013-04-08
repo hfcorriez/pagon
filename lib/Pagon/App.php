@@ -52,7 +52,8 @@ class App extends EventEmitter
         'debug'    => false,
         'views'    => false,
         'error'    => false,
-        'route'    => array(),
+        'routes'   => array(),
+        'names'    => array(),
         'buffer'   => true,
         'timezone' => 'UTC',
         'charset'  => 'UTF-8',
@@ -324,7 +325,7 @@ class App extends EventEmitter
      * @param string          $path
      * @param \Closure|string $route
      * @param \Closure|string $more
-     * @return mixed
+     * @return mixed|Router
      */
     public function get($path, $route = null, $more = null)
     {
@@ -336,9 +337,9 @@ class App extends EventEmitter
         if ($this->_cli || !$this->input->isGet()) return;
 
         if ($more !== null) {
-            call_user_func_array(array($this->router, 'set'), func_get_args());
+            return call_user_func_array(array($this->router, 'set'), func_get_args());
         } else {
-            $this->router->set($path, $route);
+            return $this->router->set($path, $route);
         }
     }
 
@@ -348,15 +349,16 @@ class App extends EventEmitter
      * @param string          $path
      * @param \Closure|string $route
      * @param \Closure|string $more
+     * @return Router|mixed
      */
     public function post($path, $route, $more = null)
     {
         if ($this->_cli || !$this->input->isPost()) return;
 
         if ($more !== null) {
-            call_user_func_array(array($this->router, 'set'), func_get_args());
+            return call_user_func_array(array($this->router, 'set'), func_get_args());
         } else {
-            $this->router->set($path, $route);
+            return $this->router->set($path, $route);
         }
     }
 
@@ -366,15 +368,16 @@ class App extends EventEmitter
      * @param string          $path
      * @param \Closure|string $route
      * @param \Closure|string $more
+     * @return Router|mixed
      */
     public function put($path, $route, $more = null)
     {
         if ($this->_cli || !$this->input->isPut()) return;
 
         if ($more !== null) {
-            call_user_func_array(array($this->router, 'set'), func_get_args());
+            return call_user_func_array(array($this->router, 'set'), func_get_args());
         } else {
-            $this->router->set($path, $route);
+            return $this->router->set($path, $route);
         }
     }
 
@@ -384,15 +387,16 @@ class App extends EventEmitter
      * @param string          $path
      * @param \Closure|string $route
      * @param \Closure|string $more
+     * @return Router|mixed
      */
     public function delete($path, $route, $more = null)
     {
         if ($this->_cli || !$this->input->isDelete()) return;
 
         if ($more !== null) {
-            call_user_func_array(array($this->router, 'set'), func_get_args());
+            return call_user_func_array(array($this->router, 'set'), func_get_args());
         } else {
-            $this->router->set($path, $route);
+            return $this->router->set($path, $route);
         }
     }
 
@@ -402,15 +406,16 @@ class App extends EventEmitter
      * @param string          $path
      * @param \Closure|string $route
      * @param \Closure|string $more
+     * @return Router|mixed
      */
     public function all($path, $route = null, $more = null)
     {
         if ($this->_cli) return;
 
         if ($more !== null) {
-            call_user_func_array(array($this->router, 'set'), func_get_args());
+            return call_user_func_array(array($this->router, 'set'), func_get_args());
         } else {
-            $this->router->set($path, $route);
+            return $this->router->set($path, $route);
         }
     }
 
@@ -418,15 +423,16 @@ class App extends EventEmitter
      * Use auto route
      *
      * @param callable|bool $closure
+     * @return Router|mixed
      */
     public function autoRoute($closure)
     {
         if ($closure instanceof \Closure) {
-            $this->router->automatic($closure);
+            return $this->router->automatic($closure);
         } elseif ($closure === true || is_string($closure)) {
             $_cli = $this->_cli;
             // Set route use default automatic
-            $this->router->automatic(function ($path) use ($closure, $_cli) {
+            return $this->router->automatic(function ($path) use ($closure, $_cli) {
                 if (!$_cli && $path !== '/' || $_cli && $path !== '') {
                     $splits = array_map(function ($split) {
                         return ucfirst(strtolower($split));
@@ -447,15 +453,16 @@ class App extends EventEmitter
      * @param string          $path
      * @param \Closure|string $route
      * @param \Closure|string $more
+     * @return Router|mixed
      */
     public function cli($path, $route = null, $more = null)
     {
         if (!$this->_cli) return;
 
         if ($more !== null) {
-            call_user_func_array(array($this->router, 'set'), func_get_args());
+            return call_user_func_array(array($this->router, 'set'), func_get_args());
         } else {
-            $this->router->set($path, $route);
+            return $this->router->set($path, $route);
         }
     }
 

@@ -17,10 +17,35 @@ class Url
     public static function to($path, array $query = null, $full = false)
     {
         return
-            ($full ? self::site() : '') .
-            self::base() .
+            ($full ? self::site() : self::base()) .
             '/' . ltrim($path, '/') .
             ($query ? '?' . http_build_query($query) : '');
+    }
+
+    /**
+     * To url with route
+     *
+     * @param string $name
+     * @param array  $params
+     * @param array  $query
+     * @param bool   $full
+     * @return string
+     */
+    public static function route($name, array $params, array $query = null, $full = false)
+    {
+        $app = App::self();
+
+        $path = $app->router->path($name);
+
+        foreach ($params as $param => $value) {
+            if (is_string($param)) {
+                $path = preg_replace('/\(:' . $param . '\)/', $value, $path, 1);
+            } else {
+                $path = preg_replace('/\(.+?\)|\*/', $value, $path, 1);
+            }
+        }
+
+        return self::to($path, $query, $full);
     }
 
     /**
@@ -31,12 +56,12 @@ class Url
      * @param bool   $full
      * @return string
      */
-    public static function toAsset($path, array $query = null, $full = false)
+    public static function asset($path, array $query = null, $full = false)
     {
         $asset_url = App::self()->get('asset_url');
 
         return
-            ($asset_url ? $asset_url : ($full ? self::site() : '') . self::base()) .
+            ($asset_url ? $asset_url : ($full ? self::site() : self::base())) .
             '/' . ltrim($path, '/') .
             ($query ? '?' . http_build_query($query) : '');
     }

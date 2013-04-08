@@ -29,6 +29,7 @@ class Router extends Middleware
      * @param string               $path
      * @param \Closure|string      $route
      * @param \Closure|string|null $more
+     * @return $this
      */
     public function set($path, $route, $more = null)
     {
@@ -37,7 +38,8 @@ class Router extends Middleware
             $path = array_shift($_args);
             $route = $_args;
         }
-        $this->app->config['route'][$path] = $route;
+        $this->app->config['routes'][$path] = $route;
+        return $this;
     }
 
     /**
@@ -48,7 +50,36 @@ class Router extends Middleware
      */
     public function get($path)
     {
-        return $this->app->config['route'][$path];
+        return $this->app->config['routes'][$path];
+    }
+
+    /**
+     * Naming the route
+     *
+     * @param string $name
+     * @param string $path
+     * @return $this
+     */
+    public function name($name, $path = null)
+    {
+        if ($path === null) {
+            $path = array_keys($this->app->config['routes']);
+            $path = end($path);
+        }
+
+        $this->app->config['names'][$name] = $path;
+        return $this;
+    }
+
+    /**
+     * Get path by name
+     *
+     * @param string $name
+     * @return mixed
+     */
+    public function path($name)
+    {
+        return isset($this->app->config['names'][$name]) ? $this->app->config['names'][$name] : false;
     }
 
     /**
@@ -64,7 +95,7 @@ class Router extends Middleware
         if ($this->options['path'] === null) return false;
 
         // Get routes
-        $routes = (array)$this->app->config['route'];
+        $routes = (array)$this->app->config['routes'];
 
         // Loop routes for parse and dispatch
         foreach ($routes as $p => $route) {
@@ -153,11 +184,15 @@ class Router extends Middleware
     }
 
     /**
+     * Set auto route closure
+     *
      * @param callable $closure
+     * @return $this
      */
     public function automatic(\Closure $closure)
     {
         $this->automatic = $closure;
+        return $this;
     }
 
     /**
@@ -169,9 +204,9 @@ class Router extends Middleware
      */
     public function handle($route, $args = array())
     {
-        if (isset($this->app->config['route'][$route])) {
+        if (isset($this->app->config['routes'][$route])) {
             $args && $this->app->param($args);
-            return $this->run($this->app->config['route'][$route]);
+            return $this->run($this->app->config['routes'][$route]);
         }
         return false;
     }
