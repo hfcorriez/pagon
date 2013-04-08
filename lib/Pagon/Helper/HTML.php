@@ -90,6 +90,18 @@ class Html
     }
 
     /**
+     * Alias img
+     *
+     * @param string $src
+     * @param array  $attributes
+     * @return string
+     */
+    public static function image($src, array $attributes = array())
+    {
+        return self::img($src, $attributes);
+    }
+
+    /**
      * Build a image
      *
      * @param string $src
@@ -127,7 +139,7 @@ class Html
             if (is_numeric($k)) $k = $v;
 
             if (!is_null($v)) {
-                $attr .= $k . ' = "' . static::entities($v) . '"';
+                $attr .= ' ' . $k . '="' . static::entities($v) . '"';
             }
         }
 
