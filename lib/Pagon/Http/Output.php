@@ -499,7 +499,7 @@ class Output extends \Pagon\EventEmitter
     public function redirect($url, $status = 302)
     {
         $this->injectors['status'] = $status;
-        $this->injectors['headers']['location'] = $url;
+        $this->injectors['headers']['location'] = $url == 'back' ? $this->app->input->refer() : $url;
         return $this;
     }
 
