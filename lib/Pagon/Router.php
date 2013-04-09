@@ -243,7 +243,7 @@ class Router extends Middleware
             }
         } else {
             // Try match
-            if (preg_match(self::toRegex($route), $path, $matches)) {
+            if (preg_match(self::pathToRegex($route), $path, $matches)) {
                 array_shift($matches);
                 $param = $matches;
             }
@@ -257,29 +257,29 @@ class Router extends Middleware
      * To regex
      *
      * @static
-     * @param string $regex
+     * @param string $path
      * @return string
      */
-    protected static function toRegex($regex)
+    protected static function pathToRegex($path)
     {
-        if ($regex[1] !== '^') {
-            $regex = str_replace(array('/'), array('\\/'), $regex);
-            if ($regex{0} == '^') {
+        if ($path[1] !== '^') {
+            $path = str_replace(array('/'), array('\\/'), $path);
+            if ($path{0} == '^') {
                 // As regex
-                $regex = '/' . $regex . '/';
-            } elseif (strpos($regex, ':')) {
+                $path = '/' . $path . '/';
+            } elseif (strpos($path, ':')) {
                 // Need replace
-                $regex = '/^' . preg_replace('/\(:([a-zA-Z0-9]+)\)/', '(?<$1>[^\/]+?)', $regex) . '\/?$/';
+                $path = '/^' . preg_replace('/\(:([a-zA-Z0-9]+)\)/', '(?<$1>[^\/]+?)', $path) . '\/?$/';
             } else {
                 // Full match
-                $regex = '/^' . $regex . '$/';
+                $path = '/^' . $path . '$/';
             }
 
             // * support
-            if (strpos($regex, '*')) {
-                $regex = str_replace('*', '([^\/]+?)', $regex);
+            if (strpos($path, '*')) {
+                $path = str_replace('*', '([^\/]+?)', $path);
             }
         }
-        return $regex;
+        return $path;
     }
 }
