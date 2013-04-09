@@ -66,7 +66,7 @@ class App extends EventEmitter
             'exception' => array(500, 'Error occurred'),
             'crash'     => array(500, 'Application crash')
         ),
-        'stacks'   => array('' => array()),
+        'stacks'   => array('' => array())
     );
 
     /**
@@ -170,9 +170,6 @@ class App extends EventEmitter
 
         // Set mode
         $this->mode = ($_mode = getenv('PAGON_ENV')) ? $_mode : 'development';
-
-        // Fire init
-        $this->emit('init');
 
         // Save current app
         self::$self = $this;
