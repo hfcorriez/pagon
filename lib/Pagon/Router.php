@@ -218,7 +218,7 @@ class Router extends Middleware
     {
         try {
             if (!$this->dispatch()) {
-                $this->app->error('404');
+                $this->app->handleError('404');
             }
         } catch (Stop $e) {
         }

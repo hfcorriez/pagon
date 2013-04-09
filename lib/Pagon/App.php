@@ -627,7 +627,7 @@ class App extends EventEmitter
                 throw $e;
             } else {
                 try {
-                    $this->error('exception', $e);
+                    $this->handleError('exception', $e);
                 } catch (Exception\Stop $e) {
                 }
             }
@@ -660,7 +660,7 @@ class App extends EventEmitter
      * @param callable $route
      * @throws \InvalidArgumentException
      */
-    public function error($type, $route = null)
+    public function handleError($type, $route = null)
     {
         if (!isset($this->injectors['errors'][$type])) {
             throw new \InvalidArgumentException('Unknown error type "' . $type . '" to call');
@@ -855,7 +855,7 @@ class App extends EventEmitter
         ) {
             if (!$this->injectors['debug']) {
                 try {
-                    $this->error('crash');
+                    $this->handleError('crash');
                 } catch (Exception\Stop $e) {
                     // Send headers
                     if (!$this->_cli) {
