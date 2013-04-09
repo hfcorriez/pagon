@@ -207,4 +207,14 @@ class Fiber
     {
         return array_keys($this->injectors);
     }
+
+    /**
+     * Append the multiple injectors
+     *
+     * @param array $injectors
+     */
+    public function append(array $injectors)
+    {
+        $this->injectors = $injectors + $this->injectors;
+    }
 }
