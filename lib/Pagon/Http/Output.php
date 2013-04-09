@@ -84,7 +84,7 @@ class Output extends \Pagon\EventEmitter
             'body'         => '',
             'content_type' => 'text/html',
             'length'       => false,
-            'charset'      => $this->app->config['charset'],
+            'charset'      => $this->app->charset,
             'headers'      => array(),
             'cookies'      => array(),
         ));
@@ -374,7 +374,7 @@ class Output extends \Pagon\EventEmitter
 
             // Set cookie
             if ($this->injectors['cookies']) {
-                $_default = $this->app->config->cookie;
+                $_default = $this->app->cookie;
                 if (!$_default) {
                     $_default = array(
                         'path'     => '/',

@@ -38,7 +38,7 @@ class Router extends Middleware
             $path = array_shift($_args);
             $route = $_args;
         }
-        $this->app->config['routes'][$path] = $route;
+        $this->app->routes[$path] = $route;
         return $this;
     }
 
@@ -50,7 +50,7 @@ class Router extends Middleware
      */
     public function get($path)
     {
-        return $this->app->config['routes'][$path];
+        return $this->app->routes[$path];
     }
 
     /**
@@ -63,11 +63,11 @@ class Router extends Middleware
     public function name($name, $path = null)
     {
         if ($path === null) {
-            $path = array_keys($this->app->config['routes']);
+            $path = array_keys($this->app->routes);
             $path = end($path);
         }
 
-        $this->app->config['names'][$name] = $path;
+        $this->app->names[$name] = $path;
         return $this;
     }
 
@@ -79,7 +79,7 @@ class Router extends Middleware
      */
     public function path($name)
     {
-        return isset($this->app->config['names'][$name]) ? $this->app->config['names'][$name] : false;
+        return isset($this->app->names[$name]) ? $this->app->names[$name] : false;
     }
 
     /**
@@ -95,7 +95,7 @@ class Router extends Middleware
         if ($this->options['path'] === null) return false;
 
         // Get routes
-        $routes = (array)$this->app->config['routes'];
+        $routes = (array)$this->app->routes;
 
         // Loop routes for parse and dispatch
         foreach ($routes as $p => $route) {
@@ -204,9 +204,9 @@ class Router extends Middleware
      */
     public function handle($route, $args = array())
     {
-        if (isset($this->app->config['routes'][$route])) {
+        if (isset($this->app->routes[$route])) {
             $args && $this->app->param($args);
-            return $this->run($this->app->config['routes'][$route]);
+            return $this->run($this->app->routes[$route]);
         }
         return false;
     }

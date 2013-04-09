@@ -58,14 +58,15 @@ class Fiber
      * @throws \InvalidArgumentException
      * @return mixed|\Closure
      */
-    public function __get($key)
+    public function &__get($key)
     {
         if (!isset($this->injectors[$key])) throw new \InvalidArgumentException("Non-exists $key of injector");
 
         if ($this->injectors[$key] instanceof \Closure) {
             return $this->injectors[$key]();
         } else {
-            return $this->injectors[$key];
+            $tmp = & $this->injectors[$key];
+            return $tmp;
         }
     }
 

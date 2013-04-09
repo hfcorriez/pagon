@@ -48,7 +48,7 @@ class App extends EventEmitter
     /**
      * @var Config
      */
-    public $config = array(
+    protected $injectors = array(
         'debug'    => false,
         'views'    => false,
         'error'    => false,
@@ -145,28 +145,28 @@ class App extends EventEmitter
         iconv_set_encoding("internal_encoding", "UTF-8");
         mb_internal_encoding('UTF-8');
 
-        // Config
-        $this->config = !is_array($config) ? Config::load((string)$config)->defaults($this->config) : new Config($config + $this->config);
+        // Set config
+        $this->injectors = $config + $this->injectors;
 
         // Register some initialize
         $this->on('run', function () use ($app) {
             // configure timezone
-            if ($app->config['timezone']) date_default_timezone_set($app->config['timezone']);
+            if ($app->timezone) date_default_timezone_set($app->timezone);
 
             // configure debug
-            if ($app->config['debug']) $app->add(new Middleware\PrettyException());
+            if ($app->debug) $app->add(new Middleware\PrettyException());
 
             // Share the cryptor for the app
             $app->share('cryptor', function ($app) {
-                if (empty($app->config['crypt'])) {
+                if (empty($app->crypt)) {
                     throw new \RuntimeException('Encrypt cookie need configure config["crypt"]');
                 }
-                return new \Pagon\Utility\Cryptor($app->config['crypt']);
+                return new \Pagon\Utility\Cryptor($app->crypt);
             });
         });
 
         // Set default locals
-        $this->locals['config'] = & $this->config;
+        $this->locals['config'] = & $this->injectors;
 
         // Set mode
         $this->mode = ($_mode = getenv('PAGON_ENV')) ? $_mode : 'development';
@@ -196,7 +196,21 @@ class App extends EventEmitter
      */
     public function set($key, $value)
     {
-        $this->config->set($key, $value);
+        if (is_array($key)) {
+            foreach ($key as $k => $v) {
+                $this->set($k, $v);
+            }
+        } elseif (strpos($key, '.') !== false) {
+            $config = & $this->injectors;
+            $namespaces = explode('.', $key);
+            foreach ($namespaces as $namespace) {
+                if (!isset($config[$namespace])) $config[$namespace] = array();
+                $config = & $config[$namespace];
+            }
+            $config = $value;
+        } else {
+            $this->injectors[$key] = $value;
+        }
     }
 
     /**
@@ -206,7 +220,7 @@ class App extends EventEmitter
      */
     public function enable($key)
     {
-        $this->config->set($key, true);
+        $this->set($key, true);
     }
 
     /**
@@ -216,7 +230,7 @@ class App extends EventEmitter
      */
     public function disable($key)
     {
-        $this->config->set($key, false);
+        $this->set($key, false);
     }
 
     /**
@@ -227,7 +241,7 @@ class App extends EventEmitter
      */
     public function enabled($key)
     {
-        return $this->config->set($key) === true;
+        return $this->get($key) === true;
     }
 
     /**
@@ -238,7 +252,7 @@ class App extends EventEmitter
      */
     public function disabled($key)
     {
-        return $this->config->set($key) === false;
+        return $this->get($key) === false;
     }
 
     /**
@@ -316,12 +330,12 @@ class App extends EventEmitter
         }
 
         // Set default array
-        if (!isset($this->config['stacks'][$path])) {
-            $this->config['stacks'][$path] = array();
+        if (!isset($this->injectors['stacks'][$path])) {
+            $this->injectors['stacks'][$path] = array();
         }
 
         // Add to the end
-        $this->config['stacks'][$path][] = array($middleware, $options);
+        $this->injectors['stacks'][$path][] = array($middleware, $options);
     }
 
     /**
@@ -336,10 +350,27 @@ class App extends EventEmitter
     {
         // Get config for use
         if ($route === null) {
-            return $this->config->get($path);
+            if ($path === null) return $this->injectors;
+
+            $tmp = null;
+            if (strpos($path, '.') !== false) {
+                $ks = explode('.', $path);
+                $tmp = $this->injectors;
+                foreach ($ks as $k) {
+                    if (!isset($tmp[$k])) return null;
+
+                    $tmp = & $tmp[$k];
+                }
+            } else {
+                if (isset($this->injectors[$path])) {
+                    $tmp = & $this->injectors[$path];
+                }
+            }
+
+            return $tmp;
         }
 
-        if ($this->_cli || !$this->input->isGet()) return;
+        if ($this->_cli || !$this->input->isGet()) return $this->router;
 
         if ($more !== null) {
             return call_user_func_array(array($this->router, 'set'), func_get_args());
@@ -358,7 +389,7 @@ class App extends EventEmitter
      */
     public function post($path, $route, $more = null)
     {
-        if ($this->_cli || !$this->input->isPost()) return;
+        if ($this->_cli || !$this->input->isPost()) return $this->router;
 
         if ($more !== null) {
             return call_user_func_array(array($this->router, 'set'), func_get_args());
@@ -377,7 +408,7 @@ class App extends EventEmitter
      */
     public function put($path, $route, $more = null)
     {
-        if ($this->_cli || !$this->input->isPut()) return;
+        if ($this->_cli || !$this->input->isPut()) return $this->router;
 
         if ($more !== null) {
             return call_user_func_array(array($this->router, 'set'), func_get_args());
@@ -396,7 +427,7 @@ class App extends EventEmitter
      */
     public function delete($path, $route, $more = null)
     {
-        if ($this->_cli || !$this->input->isDelete()) return;
+        if ($this->_cli || !$this->input->isDelete()) return $this->router;
 
         if ($more !== null) {
             return call_user_func_array(array($this->router, 'set'), func_get_args());
@@ -415,7 +446,7 @@ class App extends EventEmitter
      */
     public function all($path, $route = null, $more = null)
     {
-        if ($this->_cli) return;
+        if ($this->_cli) return $this->router;
 
         if ($more !== null) {
             return call_user_func_array(array($this->router, 'set'), func_get_args());
@@ -462,7 +493,7 @@ class App extends EventEmitter
      */
     public function cli($path, $route = null, $more = null)
     {
-        if (!$this->_cli) return;
+        if (!$this->_cli) return $this->router;
 
         if ($more !== null) {
             return call_user_func_array(array($this->router, 'set'), func_get_args());
@@ -482,9 +513,9 @@ class App extends EventEmitter
     {
         if ($engine) {
             // Set engine
-            $this->config['engines'][$name] = $engine;
+            $this->injectors['engines'][$name] = $engine;
         }
-        return isset($this->config['engines'][$name]) ? $this->config['engines'][$name] : null;
+        return isset($this->injectors['engines'][$name]) ? $this->injectors['engines'][$name] : null;
     }
 
     /**
@@ -518,21 +549,21 @@ class App extends EventEmitter
             $options['engine'] = false;
 
             // If ext then check engine with ext
-            if ($ext && isset($this->config['engines'][$ext])) {
+            if ($ext && isset($this->injectors['engines'][$ext])) {
                 // If engine exists
-                if (is_string($this->config['engines'][$ext])) {
-                    if (class_exists($this->config['engines'][$ext])) {
-                        $class = $this->config['engines'][$ext];
-                    } else if (class_exists(__NAMESPACE__ . '\\Engine\\' . $this->config['engines'][$ext])) {
-                        $class = __NAMESPACE__ . '\\Engine\\' . $this->config['engines'][$ext];
+                if (is_string($this->injectors['engines'][$ext])) {
+                    if (class_exists($this->injectors['engines'][$ext])) {
+                        $class = $this->injectors['engines'][$ext];
+                    } else if (class_exists(__NAMESPACE__ . '\\Engine\\' . $this->injectors['engines'][$ext])) {
+                        $class = __NAMESPACE__ . '\\Engine\\' . $this->injectors['engines'][$ext];
                     } else {
-                        throw new \RuntimeException("Unavailable view engine '{$this->config['engines'][$ext]}'");
+                        throw new \RuntimeException("Unavailable view engine '{$this->injectors['engines'][$ext]}'");
                     }
                     // Create new engine
-                    $this->config['engines'][$ext] = $options['engine'] = new $class();
+                    $this->injectors['engines'][$ext] = $options['engine'] = new $class();
                 } else {
                     // Get engine from exists engines
-                    $options['engine'] = $this->config['engines'][$ext];
+                    $options['engine'] = $this->injectors['engines'][$ext];
                 }
             }
         }
@@ -542,7 +573,7 @@ class App extends EventEmitter
 
         // Create view
         $view = new View($path, $data + $this->locals, $options + array(
-            'dir' => $this->config['views']
+            'dir' => $this->injectors['views']
         ));
 
         // Return view
@@ -562,7 +593,7 @@ class App extends EventEmitter
         $this->_run = true;
 
         $_error = false;
-        if ($this->config['error']) {
+        if ($this->injectors['error']) {
             // If config error, register error handle and set flag
             $_error = true;
             $this->registerErrorHandler();
@@ -570,11 +601,11 @@ class App extends EventEmitter
 
         try {
             // Start buffer
-            if ($this->config['buffer']) ob_start();
-            $this->config['stacks'][''][] = array($this->router);
+            if ($this->injectors['buffer']) ob_start();
+            $this->injectors['stacks'][''][] = array($this->router);
 
             // Loop stacks to match
-            foreach ($this->config['stacks'] as $path => $middleware) {
+            foreach ($this->injectors['stacks'] as $path => $middleware) {
                 // Try to match the path
                 if ($path && strpos($this->input->path(), $path) !== 0) continue;
 
@@ -592,10 +623,10 @@ class App extends EventEmitter
             }
 
             // Write direct output to the head of buffer
-            if ($this->config['buffer']) $this->output->write(ob_get_clean());
+            if ($this->injectors['buffer']) $this->output->write(ob_get_clean());
         } catch (Exception\Stop $e) {
         } catch (\Exception $e) {
-            if ($this->config['debug']) {
+            if ($this->injectors['debug']) {
                 throw $e;
             } else {
                 try {
@@ -634,19 +665,19 @@ class App extends EventEmitter
      */
     public function error($type, $route = null)
     {
-        if (!isset($this->config['errors'][$type])) {
+        if (!isset($this->injectors['errors'][$type])) {
             throw new \InvalidArgumentException('Unknown error type "' . $type . '" to call');
         }
 
         if ($route && !$route instanceof \Exception) {
-            $this->router->set('✕' . $type, $route);
+            $this->router->set('?' . $type, $route);
         } else {
             ob_get_level() && ob_clean();
             ob_start();
-            if (!$this->router->handle('✕' . $type, array($route))) {
-                echo $this->config['errors'][$type][1];
+            if (!$this->router->handle('?' . $type, array($route))) {
+                echo $this->injectors['errors'][$type][1];
             }
-            $this->halt($this->config['errors'][$type][0], ob_get_clean());
+            $this->halt($this->injectors['errors'][$type][0], ob_get_clean());
         }
     }
 
@@ -735,9 +766,9 @@ class App extends EventEmitter
         if ($class{0} == '\\') $class = ltrim($class, '\\');
 
         // Alias check
-        if (!empty($this->config['alias'][$class])) {
-            class_alias($this->config['alias'][$class], $class);
-            $class = $this->config['alias'][$class];
+        if (!empty($this->injectors['alias'][$class])) {
+            class_alias($this->injectors['alias'][$class], $class);
+            $class = $this->injectors['alias'][$class];
         }
 
         // If with Pagon path, force require
@@ -751,14 +782,14 @@ class App extends EventEmitter
             $available_path = array();
 
             // Autoload
-            if (!empty($this->config['autoload'])) {
-                $available_path[99] = $this->config['autoload'];
+            if (!empty($this->injectors['autoload'])) {
+                $available_path[99] = $this->injectors['autoload'];
             }
 
             // Check other namespaces
-            if (!empty($this->config['namespace'])) {
+            if (!empty($this->injectors['namespace'])) {
                 // Loop namespaces as autoload
-                foreach ($this->config['namespace'] as $_prefix => $_path) {
+                foreach ($this->injectors['namespace'] as $_prefix => $_path) {
                     // Check if match prefix
                     if (($_pos = strpos($class, $_prefix)) === 0) {
                         // Set ordered path
@@ -825,7 +856,7 @@ class App extends EventEmitter
         if (($error = error_get_last())
             && in_array($error['type'], array(E_PARSE, E_ERROR, E_USER_ERROR, E_COMPILE_ERROR, E_CORE_ERROR))
         ) {
-            if (!$this->config['debug']) {
+            if (!$this->injectors['debug']) {
                 try {
                     $this->error('crash');
                 } catch (Exception\Stop $e) {

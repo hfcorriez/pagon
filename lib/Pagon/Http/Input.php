@@ -580,7 +580,7 @@ class Input extends \Pagon\EventEmitter
     {
         if (!isset($this->injectors['cookies'])) {
             $this->injectors['cookies'] = $_COOKIE;
-            $_option = $this->app->config->cookie;
+            $_option = $this->app->cookie;
             foreach ($this->injectors['cookies'] as &$value) {
                 if (!$value) continue;
 
