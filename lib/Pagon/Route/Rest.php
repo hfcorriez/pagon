@@ -17,7 +17,7 @@ class Rest extends \Pagon\Route
         } elseif ($this->next) {
             $this->next();
         } else {
-            $this->app->notFound();
+            $this->app->error('404');
         }
     }
 }

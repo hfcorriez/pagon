@@ -61,6 +61,11 @@ class App extends EventEmitter
         'engines'  => array(
             'jade' => 'Jade'
         ),
+        'errors'   => array(
+            '404'       => array(404, 'Location not found'),
+            'exception' => array(500, 'Error occurred'),
+            'crash'     => array(500, 'Application crash')
+        ),
         'stacks'   => array('' => array()),
     );
 
@@ -594,7 +599,7 @@ class App extends EventEmitter
                 throw $e;
             } else {
                 try {
-                    $this->error($e);
+                    $this->error('exception', $e);
                 } catch (Exception\Stop $e) {
                 }
             }
@@ -623,57 +628,25 @@ class App extends EventEmitter
     /**
      * Register or run error
      *
+     * @param string   $type
      * @param callable $route
+     * @throws \InvalidArgumentException
      */
-    public function error($route = null)
+    public function error($type, $route = null)
     {
-        if ($route && !$route instanceof \Exception) {
-            $this->router->set('error', $route);
-        } else {
-            ob_get_level() && ob_clean();
-            ob_start();
-            if (!$this->router->handle('error', array($route))) {
-                echo 'Error occurred';
-            }
-            $this->halt(500, ob_get_clean());
+        if (!isset($this->config['errors'][$type])) {
+            throw new \InvalidArgumentException('Unknown error type "' . $type . '" to call');
         }
-    }
 
-    /**
-     * Register or run not found
-     *
-     * @param callable $route
-     */
-    public function notFound($route = null)
-    {
         if ($route && !$route instanceof \Exception) {
-            $this->router->set('404', $route);
+            $this->router->set('✕' . $type, $route);
         } else {
             ob_get_level() && ob_clean();
             ob_start();
-            if (!$this->router->handle('404', array($route))) {
-                echo 'Path not found';
+            if (!$this->router->handle('✕' . $type, array($route))) {
+                echo $this->config['errors'][$type][1];
             }
-            $this->halt(404, ob_get_clean());
-        }
-    }
-
-    /**
-     * Register or run not found
-     *
-     * @param callable $route
-     */
-    public function crash($route = null)
-    {
-        if ($route && !$route instanceof \Exception) {
-            $this->router->set('crash', $route);
-        } else {
-            ob_get_level() && ob_clean();
-            ob_start();
-            if (!$this->router->handle('crash', array($route))) {
-                echo 'App is down';
-            }
-            $this->halt(500, ob_get_clean());
+            $this->halt($this->config['errors'][$type][0], ob_get_clean());
         }
     }
 
@@ -854,7 +827,7 @@ class App extends EventEmitter
         ) {
             if (!$this->config['debug']) {
                 try {
-                    $this->crash();
+                    $this->error('crash');
                 } catch (Exception\Stop $e) {
                     // Send headers
                     if (!$this->_cli) {
