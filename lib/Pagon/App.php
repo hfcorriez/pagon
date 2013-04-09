@@ -527,7 +527,7 @@ class App extends EventEmitter
      * @throws \RuntimeException
      * @return void
      */
-    public function render($path, $data = array(), array $options = array())
+    public function render($path, array $data = array(), array $options = array())
     {
         echo $this->compile($path, $data, $options);
     }
@@ -541,7 +541,7 @@ class App extends EventEmitter
      * @return View
      * @throws \RuntimeException
      */
-    public function compile($path, $data = array(), array $options = array())
+    public function compile($path, array $data = array(), array $options = array())
     {
         if (!isset($options['engine'])) {
             // Get ext

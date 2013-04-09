@@ -5,6 +5,7 @@ namespace Pagon\Http;
 use Pagon\App;
 use Pagon\Config;
 use Pagon\Exception\Stop;
+use Pagon\View;
 
 class Output extends \Pagon\EventEmitter
 {
@@ -285,6 +286,7 @@ class Output extends \Pagon\EventEmitter
      * Set content type
      *
      * @param string $mime_type
+     * @throws \InvalidArgumentException
      * @return string|Output
      */
     public function contentType($mime_type = null)
@@ -307,15 +309,19 @@ class Output extends \Pagon\EventEmitter
     /**
      * Get or set cookie
      *
-     * @param string             $key
-     * @param array|string|mixed $value
-     * @param array              $option
+     * @param string            $key
+     * @param array|string|bool $value
+     * @param array             $option
      * @return array|string|Output
      */
     public function cookie($key = null, $value = null, $option = array())
     {
         if ($value !== null) {
-            $this->injectors['cookies'][$key] = array($value, $option);
+            if ($value !== false) {
+                $this->injectors['cookies'][$key] = array($value, $option);
+            } else {
+                unset($this->injectors['cookies'][$key]);
+            }
             return $this;
         }
 
@@ -326,12 +332,14 @@ class Output extends \Pagon\EventEmitter
     /**
      * Get message by code
      *
-     * @return string|null
+     * @param int $status
+     * @return string
      */
-    public function message()
+    public function message($status = null)
     {
-        if (isset(self::$messages[$this->injectors['status']])) {
-            return self::$messages[$this->injectors['status']];
+        !$status && $status = $this->injectors['status'];
+        if (isset(self::$messages[$status])) {
+            return self::$messages[$status];
         }
         return null;
     }
@@ -417,14 +425,26 @@ class Output extends \Pagon\EventEmitter
     /**
      * Render with template
      *
-     * @param $template
-     * @param $data
+     * @param string $template
+     * @param array  $data
      * @return Output
      */
-    public function render($template, $data = array())
+    public function render($template, array $data = array())
     {
         $this->app->render($template, $data);
         return $this;
+    }
+
+    /**
+     * Compile the template
+     *
+     * @param string $template
+     * @param array  $data
+     * @return View
+     */
+    public function compile($template, array $data = array())
+    {
+        return $this->app->compile($template, $data);
     }
 
     /**
