@@ -146,7 +146,7 @@ class App extends EventEmitter
         mb_internal_encoding('UTF-8');
 
         // Set config
-        $this->injectors = $config + $this->injectors;
+        $this->injectors = !is_array($config) ? Config::load((string)$config) : ($config + $this->injectors);
 
         // Register some initialize
         $this->on('run', function () use ($app) {
