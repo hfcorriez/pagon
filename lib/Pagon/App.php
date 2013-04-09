@@ -9,7 +9,7 @@
 
 namespace Pagon;
 
-const VERSION = '0.4';
+const VERSION = '0.5';
 
 // Depend Fiber
 if (!class_exists('Fiber')) {
