@@ -720,13 +720,16 @@ class App extends EventEmitter
                 // Set bootstrap file
                 $bootstrap = isset($options['bootstrap']) ? $options['bootstrap'] : 'bootstrap.php';
 
+                // Set dir to load
+                $dir = isset($options['dir']) ? $options['dir'] : 'bundles/' . $id;
+
                 // Path check, if not match start of path, skip
                 if (isset($options['path']) && strpos($this->input->path(), $options['path']) !== 0) {
                     continue;
                 }
 
                 // Check the file path
-                if (!$file = $this->path('bundles/' . $id . '/' . $bootstrap)) {
+                if (!$file = $this->path($dir . '/' . $bootstrap)) {
                     throw new \InvalidArgumentException('Bundle "' . $id . '" can not bootstrap');
                 }
 
