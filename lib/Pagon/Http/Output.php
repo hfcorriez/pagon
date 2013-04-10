@@ -427,11 +427,12 @@ class Output extends \Pagon\EventEmitter
      *
      * @param string $template
      * @param array  $data
+     * @param array  $options
      * @return Output
      */
-    public function render($template, array $data = array())
+    public function render($template, array $data = null, array $options = array())
     {
-        $this->app->render($template, $data);
+        $this->app->render($template, $data, $options);
         return $this;
     }
 
@@ -440,11 +441,12 @@ class Output extends \Pagon\EventEmitter
      *
      * @param string $template
      * @param array  $data
+     * @param array  $options
      * @return View
      */
-    public function compile($template, array $data = array())
+    public function compile($template, array $data = null, array $options = array())
     {
-        return $this->app->compile($template, $data);
+        return $this->app->compile($template, $data, $options);
     }
 
     /**

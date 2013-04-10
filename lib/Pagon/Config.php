@@ -108,6 +108,6 @@ class Config extends Fiber
             throw new \InvalidArgumentException("There is no parser '$class' for '$type'");
         }
 
-        return new self($class::parse(file_get_contents($file)));
+        return $class::parse(file_get_contents($file));
     }
 }

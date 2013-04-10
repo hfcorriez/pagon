@@ -24,7 +24,7 @@ abstract class Route extends Middleware
         // Implements as you like
     }
 
-    abstract public function run();
+    abstract public function run($req, $res);
 
     /**
      * @return mixed|void

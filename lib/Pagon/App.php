@@ -49,25 +49,28 @@ class App extends EventEmitter
      * @var Config
      */
     protected $injectors = array(
-        'debug'    => false,
-        'views'    => false,
-        'error'    => false,
-        'routes'   => array(),
-        'names'    => array(),
-        'buffer'   => true,
-        'timezone' => 'UTC',
-        'charset'  => 'UTF-8',
-        'alias'    => array(),
-        'engines'  => array(
+        'debug'      => false,
+        'views'      => false,
+        'error'      => false,
+        'routes'     => array(),
+        'names'      => array(),
+        'buffer'     => true,
+        'timezone'   => 'UTC',
+        'charset'    => 'UTF-8',
+        'autoload'   => null,
+        'alias'      => array(),
+        'namespaces' => array(),
+        'engines'    => array(
             'jade' => 'Jade'
         ),
-        'errors'   => array(
+        'errors'     => array(
             '404'       => array(404, 'Location not found'),
             'exception' => array(500, 'Error occurred'),
             'crash'     => array(500, 'Application crash')
         ),
-        'stacks'   => array('' => array()),
-        'mounts'   => array()
+        'stacks'     => array('' => array()),
+        'mounts'     => array(),
+        'bundles'    => array()
     );
 
     /**
@@ -120,6 +123,7 @@ class App extends EventEmitter
      *
      * @param array|string $config
      * @throws \RuntimeException
+     * @return App
      */
     public function __construct($config = array())
     {
@@ -152,7 +156,10 @@ class App extends EventEmitter
         mb_internal_encoding('UTF-8');
 
         // Set config
-        $this->injectors = !is_array($config) ? Config::load((string)$config) : ($config + $this->injectors);
+        $this->injectors =
+            (!is_array($config) ? Config::parse((string)$config) : $config)
+                + ($this->_cli ? array('buffer' => false) : array())
+                + $this->injectors;
 
         // Register some initialize
         $this->on('run', function () use ($app) {
@@ -239,7 +246,7 @@ class App extends EventEmitter
     /**
      * Check config if true
      *
-     * @param $key
+     * @param string $key
      * @return bool
      */
     public function enabled($key)
@@ -250,7 +257,7 @@ class App extends EventEmitter
     /**
      * Check config if false
      *
-     * @param $key
+     * @param string $key
      * @return bool
      */
     public function disabled($key)
@@ -339,6 +346,22 @@ class App extends EventEmitter
 
         // Add to the end
         $this->injectors['stacks'][$path][] = array($middleware, $options);
+    }
+
+    /**
+     * Add a bundle
+     *
+     * @param string       $name        Bundle name or path
+     * @param string|array $options     Bundle options or name
+     */
+    public function bundle($name, $options = array())
+    {
+        if (!is_array($options)) {
+            $path = $name;
+            $name = $options;
+            $options = array('path', $path);
+        }
+        $this->injectors['bundles'][$name] = $options;
     }
 
     /**
@@ -527,44 +550,61 @@ class App extends EventEmitter
      * @param string $file
      * @return bool|mixed
      * @throws \InvalidArgumentException
+     * @return mixed
      */
     public function load($file)
     {
-        $import = false;
+        if (!$file = $this->path($file)) {
+            throw new \InvalidArgumentException('Can load non-exists file "' . $file . '"');
+        }
+
+        if (isset(self::$loads[$file])) {
+            return self::$loads[$file];
+        }
+
+        return self::$loads[$file] = include($file);
+    }
+
+    /**
+     * Get path of mounts file system
+     *
+     * @param string $file
+     * @return bool|string
+     */
+    public function path($file)
+    {
         foreach ($this->injectors['mounts'] as $path => $dir) {
             if ($path == '' || strpos($file, $path) === 0) {
                 if (!$file = stream_resolve_include_path($dir . '/' . substr($file, strlen($path)))) continue;
-
-
-                if (array_key_exists($file, self::$loads)) {
-                    return self::$loads[$file];
-                }
-
-                if (in_array($file, get_included_files())) {
-                    return true;
-                }
-
-                self::$loads[$file] = include($file);
+                return $file;
             }
         }
 
-        if (!$import) {
-            if (!$file = stream_resolve_include_path($file)) {
-                throw new \InvalidArgumentException('Can load non-exists file "' . $file . '"');
-            }
-
-            if (array_key_exists($file, self::$loads)) {
-                return self::$loads[$file];
-            }
-
-            if (in_array($file, get_included_files())) {
-                return true;
-            }
-
-            self::$loads[$file] = include($file);
+        if (!$file = stream_resolve_include_path($file)) {
+            return $file;
         }
 
-        return self::$loads[$file];
+        return false;
+    }
+
+    /**
+     * Check if file loaded
+     *
+     * @param string $file
+     * @return bool
+     * @throws \InvalidArgumentException
+     */
+    public function loaded($file)
+    {
+        if (!$file = $this->path($file)) {
+            throw new \InvalidArgumentException('Can not check non-exists file "' . $file . '"');
+        }
+
+        if (isset(self::$loads[$file])) {
+            return true;
+        }
+
+        return false;
     }
 
     /**
@@ -592,7 +632,7 @@ class App extends EventEmitter
      * @throws \RuntimeException
      * @return void
      */
-    public function render($path, array $data = array(), array $options = array())
+    public function render($path, array $data = null, array $options = array())
     {
         echo $this->compile($path, $data, $options);
     }
@@ -606,7 +646,7 @@ class App extends EventEmitter
      * @return View
      * @throws \RuntimeException
      */
-    public function compile($path, array $data = array(), array $options = array())
+    public function compile($path, array $data = null, array $options = array())
     {
         if (!isset($options['engine'])) {
             // Get ext
@@ -632,6 +672,9 @@ class App extends EventEmitter
                 }
             }
         }
+
+        // Set default data
+        if ($data === null) $data = array();
 
         // Default set app
         $data['_'] = $this;
@@ -665,9 +708,51 @@ class App extends EventEmitter
         }
 
         try {
+            // Emit "bundle" event
+            $this->emit('bundle');
+            /**
+             * Loop bundles and lookup the bundle info and start the bundle
+             */
+            foreach ($this->injectors['bundles'] as $id => $options) {
+                // Set id
+                $id = isset($options['id']) ? $options['id'] : $id;
+
+                // Set bootstrap file
+                $bootstrap = isset($options['bootstrap']) ? $options['bootstrap'] : 'bootstrap.php';
+
+                // Path check, if not match start of path, skip
+                if (isset($options['path']) && strpos($this->input->path(), $options['path']) !== 0) {
+                    continue;
+                }
+
+                // Check the file path
+                if (!$file = $this->path('bundles/' . $id . '/' . $bootstrap)) {
+                    throw new \InvalidArgumentException('Bundle "' . $id . '" can not bootstrap');
+                }
+
+                // Check if bootstrap file loaded
+                if (isset(self::$loads[$file])) {
+                    throw new \RuntimeException('Bundle "' . $id . '" can not bootstrap twice');
+                }
+
+                // Emit "bundle.[id]" event
+                $this->emit('bundle.' . $id);
+
+                // Set variable for bootstrap file
+                $app = $this;
+                extract($options);
+                require $file;
+
+                // Save to loads
+                self::$loads[$file] = true;
+            }
+
             // Start buffer
             if ($this->injectors['buffer']) ob_start();
             $this->injectors['stacks'][''][] = array($this->router);
+
+            // Emit "middleware" event
+            $this->emit('middleware');
 
             // Loop stacks to match
             foreach ($this->injectors['stacks'] as $path => $middleware) {
@@ -847,14 +932,14 @@ class App extends EventEmitter
             $available_path = array();
 
             // Autoload
-            if (!empty($this->injectors['autoload'])) {
+            if ($this->injectors['autoload']) {
                 $available_path[99] = $this->injectors['autoload'];
             }
 
             // Check other namespaces
-            if (!empty($this->injectors['namespace'])) {
+            if ($this->injectors['namespaces']) {
                 // Loop namespaces as autoload
-                foreach ($this->injectors['namespace'] as $_prefix => $_path) {
+                foreach ($this->injectors['namespaces'] as $_prefix => $_path) {
                     // Check if match prefix
                     if (($_pos = strpos($class, $_prefix)) === 0) {
                         // Set ordered path
