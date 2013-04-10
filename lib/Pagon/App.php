@@ -66,7 +66,8 @@ class App extends EventEmitter
             'exception' => array(500, 'Error occurred'),
             'crash'     => array(500, 'Application crash')
         ),
-        'stacks'   => array('' => array())
+        'stacks'   => array('' => array()),
+        'mounts'   => array()
     );
 
     /**
@@ -93,6 +94,11 @@ class App extends EventEmitter
      * @var App The top app
      */
     protected static $self;
+
+    /**
+     * @var array The file has loads
+     */
+    protected static $loads = array();
 
     /**
      * Return current app
@@ -497,6 +503,68 @@ class App extends EventEmitter
         } else {
             return $this->router->set($path, $route);
         }
+    }
+
+    /**
+     * Mount dir to path
+     *
+     * @param string $path
+     * @param string $dir
+     */
+    public function mount($path, $dir = null)
+    {
+        if (!$dir) {
+            $dir = $path;
+            $path = '';
+        }
+
+        $this->injectors['mounts'][$path] = $dir;
+    }
+
+    /**
+     * Load PHP file
+     *
+     * @param string $file
+     * @return bool|mixed
+     * @throws \InvalidArgumentException
+     */
+    public function load($file)
+    {
+        $import = false;
+        foreach ($this->injectors['mounts'] as $path => $dir) {
+            if ($path == '' || strpos($file, $path) === 0) {
+                if (!$file = stream_resolve_include_path($dir . '/' . substr($file, strlen($path)))) continue;
+
+
+                if (array_key_exists($file, self::$loads)) {
+                    return self::$loads[$file];
+                }
+
+                if (in_array($file, get_included_files())) {
+                    return true;
+                }
+
+                self::$loads[$file] = include($file);
+            }
+        }
+
+        if (!$import) {
+            if (!$file = stream_resolve_include_path($file)) {
+                throw new \InvalidArgumentException('Can load non-exists file "' . $file . '"');
+            }
+
+            if (array_key_exists($file, self::$loads)) {
+                return self::$loads[$file];
+            }
+
+            if (in_array($file, get_included_files())) {
+                return true;
+            }
+
+            self::$loads[$file] = include($file);
+        }
+
+        return self::$loads[$file];
     }
 
     /**
