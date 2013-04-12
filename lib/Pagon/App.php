@@ -49,6 +49,7 @@ class App extends EventEmitter
      * @var Config
      */
     protected $injectors = array(
+        'mode'       => 'develop',
         'debug'      => false,
         'views'      => false,
         'error'      => false,
@@ -77,11 +78,6 @@ class App extends EventEmitter
      * @var array Local variables
      */
     public $locals = array();
-
-    /**
-     * @var string Mode
-     */
-    protected $mode;
 
     /**
      * @var bool Is cli?
@@ -166,6 +162,9 @@ class App extends EventEmitter
             // configure timezone
             if ($app->timezone) date_default_timezone_set($app->timezone);
 
+            // Set error handle
+            if ($app->mode == 'development') $app->error = true;
+
             // configure debug
             if ($app->debug) $app->add(new Middleware\PrettyException());
 
@@ -182,7 +181,7 @@ class App extends EventEmitter
         $this->locals['config'] = & $this->injectors;
 
         // Set mode
-        $this->mode = ($_mode = getenv('PAGON_ENV')) ? $_mode : 'development';
+        $this->injectors['mode'] = ($_mode = getenv('PAGON_ENV')) ? $_mode : $this->injectors['mode'];
 
         // Save current app
         self::$self = $this;
@@ -276,9 +275,9 @@ class App extends EventEmitter
     public function mode($mode = null)
     {
         if ($mode) {
-            $this->mode = $mode instanceof \Closure ? $mode() : (string)$mode;
+            $this->injectors['mode'] = $mode instanceof \Closure ? $mode() : (string)$mode;
         }
-        return $this->mode;
+        return $this->injectors['mode'];
     }
 
     /**
@@ -302,8 +301,8 @@ class App extends EventEmitter
 
         // Allow set mode get method when mode is closure
         if (!$mode) {
-            $closure($this->mode);
-        } elseif ($mode == $this->mode) {
+            $closure($this->injectors['mode']);
+        } elseif ($mode == $this->injectors['mode']) {
             $closure();
         }
     }
