@@ -819,11 +819,11 @@ class App extends EventEmitter
         }
 
         if ($route && !$route instanceof \Exception) {
-            $this->router->set('?' . $type, $route);
+            $this->router->set('_' . $type, $route);
         } else {
             ob_get_level() && ob_clean();
             ob_start();
-            if (!$this->router->handle('?' . $type, array($route))) {
+            if (!$this->router->handle('_' . $type, array($route))) {
                 echo $this->injectors['errors'][$type][1];
             }
             $this->halt($this->injectors['errors'][$type][0], ob_get_clean());
