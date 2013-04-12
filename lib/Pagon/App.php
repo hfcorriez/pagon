@@ -52,7 +52,7 @@ class App extends EventEmitter
         'mode'       => 'develop',
         'debug'      => false,
         'views'      => false,
-        'error'      => false,
+        'error'      => true,
         'routes'     => array(),
         'names'      => array(),
         'buffer'     => true,
@@ -161,9 +161,6 @@ class App extends EventEmitter
         $this->on('run', function () use ($app) {
             // configure timezone
             if ($app->timezone) date_default_timezone_set($app->timezone);
-
-            // Set error handle
-            if ($app->mode == 'development') $app->error = true;
 
             // configure debug
             if ($app->debug) $app->add(new Middleware\PrettyException());
