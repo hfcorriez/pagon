@@ -33,7 +33,10 @@ class PrettyException extends Middleware
      */
     public function render(\Exception $e)
     {
-        ob_clean();
+        // Check if buffer start
+        if ($this->app->buffer) ob_clean();
+
+        // Render the error
         $this->input->app->render(__DIR__ . '/PrettyException/' . ($this->app->isCli() ? 'cli' : 'web') . '.php', array(
             'file'    => $e->getFile(),
             'line'    => $e->getLine(),
