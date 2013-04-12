@@ -2,9 +2,10 @@
 
 namespace Pagon\Route;
 
+use Pagon\Route;
 use Pagon\Utility\ArgParser;
 
-class Cli extends \Pagon\Route
+abstract class Cli extends Route
 {
     protected $arguments = array();
     protected $usage = '';
@@ -31,13 +32,5 @@ class Cli extends \Pagon\Route
         $this->before();
         $this->run($this->input, $this->output);
         $this->after();
-    }
-
-    /**
-     * Run
-     */
-    public function run()
-    {
-        throw new \RuntimeException('Method ' . get_called_class() . '->run() mast be implements');
     }
 }

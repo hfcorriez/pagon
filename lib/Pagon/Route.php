@@ -2,7 +2,7 @@
 
 namespace Pagon;
 
-class Route extends Middleware
+abstract class Route extends Middleware
 {
     /**
      * abstract before run
@@ -22,16 +22,6 @@ class Route extends Middleware
     protected function after()
     {
         // Implements as you like
-    }
-
-    /**
-     * Run
-     *
-     * @throws \RuntimeException
-     */
-    public function run()
-    {
-        throw new \RuntimeException('Need implements "' . get_called_class() . '::run()" method to run');
     }
 
     /**

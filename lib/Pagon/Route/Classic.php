@@ -25,11 +25,13 @@
 
 namespace Pagon\Route;
 
-class Classic extends \Pagon\Route
+use Pagon\Route;
+
+abstract class Classic extends Route
 {
     protected $params;
 
-    public function run()
+    public function call()
     {
         $action = $this->input->param('action');
 
@@ -43,11 +45,11 @@ class Classic extends \Pagon\Route
 
         // Check method
         if (method_exists($this, $method)) {
+            $this->before();
             $this->$method($this->input, $this->output);
-        } elseif ($this->next) {
-            $this->next();
+            $this->after();
         } else {
-            $this->app->handleError('404');
+            $this->next();
         }
     }
 }
