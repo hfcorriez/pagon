@@ -237,7 +237,7 @@ class Router extends Middleware
                 $regex = '/^' . preg_replace('/\(:([a-zA-Z0-9]+)\)/', '(?<$1>[^\/]+?)', $regex) . '\/?$/';
             } else {
                 // Full match
-                $regex = '/^' . $regex . '$/';
+                $regex = '/^' . $regex . '\/?$/';
             }
 
             // * support
