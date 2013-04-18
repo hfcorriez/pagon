@@ -203,7 +203,7 @@ class Router extends Middleware
 
         // Regex or Param check
         if (!strpos($route, ':') && strpos($route, '^') === false) {
-            if ($path === $route) {
+            if ($path === $route || $path === $route . '/') {
                 $param = array();
             }
         } else {
