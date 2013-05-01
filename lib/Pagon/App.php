@@ -195,6 +195,16 @@ class App extends EventEmitter
     }
 
     /**
+     * Check if run
+     *
+     * @return bool
+     */
+    public function isRunning()
+    {
+        return $this->_run;
+    }
+
+    /**
      * Set with no event emit
      *
      * @param $key
@@ -690,6 +700,11 @@ class App extends EventEmitter
      */
     public function run()
     {
+        // Check if run
+        if ($this->_run) {
+            throw new \RuntimeException("Application already running");
+        }
+
         // Emit run
         $this->emit('run');
 
