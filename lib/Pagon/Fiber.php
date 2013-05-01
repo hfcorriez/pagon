@@ -63,11 +63,11 @@ class Fiber
         if (!isset($this->injectors[$key])) throw new \InvalidArgumentException(sprintf('Can not get non-exists injector "%s::%s"', get_called_class(), $key));
 
         if ($this->injectors[$key] instanceof \Closure) {
-            return $this->injectors[$key]();
+            $tmp = $this->injectors[$key]();
         } else {
             $tmp = & $this->injectors[$key];
-            return $tmp;
         }
+        return $tmp;
     }
 
     /**
