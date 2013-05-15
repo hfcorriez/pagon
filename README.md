@@ -23,7 +23,7 @@
 已有项目
 
 ```
-composer.phar require pagon/app=0.5.0
+composer.phar require pagon/app=0.5.2
 ```
 
 新项目（使用[`pagon/app`](https://github.com/pagon/app)skelton创建应用）
