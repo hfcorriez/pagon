@@ -1,6 +1,6 @@
 <?php
 
-namespace Pagon\Utility;
+namespace Pagon;
 
 if (!function_exists('mcrypt_encrypt')) {
     throw new \RuntimeException("Use Cryptor need install php-mcrypt extension");

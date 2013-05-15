@@ -1,5 +1,5 @@
 <?php
-namespace Pagon\Helper;
+namespace Pagon;
 
 class Xml
 {

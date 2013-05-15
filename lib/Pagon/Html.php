@@ -1,6 +1,6 @@
 <?php
 
-namespace Pagon\Helper;
+namespace Pagon;
 
 use Pagon\App;
 

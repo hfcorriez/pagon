@@ -1,6 +1,6 @@
 <?php
-use Pagon\Helper\Cli;
-use Pagon\Helper\Debug;
+use Pagon\Cli;
+use Pagon\Debug;
 
 function console_output($text, $option, $length = 80)
 {
