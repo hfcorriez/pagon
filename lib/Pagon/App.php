@@ -1014,7 +1014,7 @@ class App extends EventEmitter
      */
     public function __shutdown()
     {
-        $this->emit('shutdown');
+        $this->emit('exit');
         if (!$this->_run) return;
 
         if (($error = error_get_last())

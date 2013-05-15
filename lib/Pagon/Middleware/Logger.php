@@ -46,7 +46,7 @@ class Logger extends \Pagon\Middleware
         $this->app->logger = $this;
         $that = $this;
 
-        $this->app->on('shutdown', function () use ($that) {
+        $this->app->on('exit', function () use ($that) {
             $that->write();
         });
 
