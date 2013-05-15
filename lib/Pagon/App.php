@@ -154,8 +154,8 @@ class App extends EventEmitter
         // Set config
         $this->injectors =
             (!is_array($config) ? Config::parse((string)$config) : $config)
-                + ($this->_cli ? array('buffer' => false) : array())
-                + $this->injectors;
+            + ($this->_cli ? array('buffer' => false) : array())
+            + $this->injectors;
 
         // Register some initialize
         $this->on('run', function () use ($app) {
@@ -687,8 +687,8 @@ class App extends EventEmitter
 
         // Create view
         $view = new View($path, $data + $this->locals, $options + array(
-            'dir' => $this->injectors['views']
-        ));
+                'dir' => $this->injectors['views']
+            ));
 
         // Return view
         return $view;
@@ -1004,7 +1004,7 @@ class App extends EventEmitter
      * @param $line
      * @throws \ErrorException
      */
-    protected function __error($type, $message, $file, $line)
+    public function __error($type, $message, $file, $line)
     {
         if (error_reporting() & $type) throw new \ErrorException($message, $type, 0, $file, $line);
     }
