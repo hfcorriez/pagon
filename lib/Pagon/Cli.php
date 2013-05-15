@@ -64,19 +64,20 @@ class Cli
      *
      * @param string $text
      * @param bool   $default
+     * @param int    $num
      * @return bool
      */
-    public static function confirm($text, $default = false)
+    public static function confirm($text, $default = false, $num = 3)
     {
         print (string)$text . ' [' . ($default ? 'Y/n' : 'y/N') . ']: ';
         $fp = fopen('php://stdin', 'r');
-        $i = 2;
-        while (($input = trim(strtolower(fgets($fp, 1024)))) && !in_array($input, array('', 'y', 'n')) && $i > 0) {
+        $num--;
+        while (($input = trim(strtolower(fgets($fp, 1024)))) && !in_array($input, array('', 'y', 'n')) && $num > 0) {
             echo PHP_EOL . 'Confirm: ';
-            $i--;
+            $num--;
         }
 
-        if ($i == 0) die(PHP_EOL . 'Error input');
+        if ($num == 0) die(PHP_EOL . 'Error input');
 
         $ret = $input === '' ? ($default === true ? true : false) : ($input === 'y' ? true : false);
 
