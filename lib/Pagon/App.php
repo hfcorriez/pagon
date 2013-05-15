@@ -153,7 +153,7 @@ class App extends EventEmitter
 
         // Set config
         $this->injectors =
-            (!is_array($config) ? Config::parse((string)$config) : $config)
+            (!is_array($config) ? Config::load((string)$config)->dump() : $config)
             + ($this->_cli ? array('buffer' => false) : array())
             + $this->injectors;
 
@@ -170,7 +170,7 @@ class App extends EventEmitter
                 if (empty($app->crypt)) {
                     throw new \RuntimeException('Encrypt cookie need configure config["crypt"]');
                 }
-                return new Utility\Cryptor($app->crypt);
+                return new Cryptor($app->crypt);
             });
         });
 

@@ -110,4 +110,14 @@ class Config extends Fiber
 
         return $class::parse(file_get_contents($file));
     }
+
+    /**
+     * Dump to array
+     *
+     * @return array
+     */
+    public function dump()
+    {
+        return $this->injectors;
+    }
 }
