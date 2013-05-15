@@ -109,6 +109,16 @@ class Input extends \Pagon\EventEmitter
     }
 
     /**
+     * Get site url
+     *
+     * @return string
+     */
+    public function site()
+    {
+        return $this->scheme() . '://' . $this->domain();
+    }
+
+    /**
      * Get method
      *
      *
@@ -570,7 +580,7 @@ class Input extends \Pagon\EventEmitter
     {
         if (!isset($this->injectors['cookies'])) {
             $this->injectors['cookies'] = $_COOKIE;
-            $_option = $this->app->config->cookie;
+            $_option = $this->app->cookie;
             foreach ($this->injectors['cookies'] as &$value) {
                 if (!$value) continue;
 

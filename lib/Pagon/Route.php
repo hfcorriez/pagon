@@ -24,8 +24,6 @@ abstract class Route extends Middleware
         // Implements as you like
     }
 
-    abstract public function run();
-
     /**
      * @return mixed|void
      */

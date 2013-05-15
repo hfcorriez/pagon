@@ -58,15 +58,16 @@ class Fiber
      * @throws \InvalidArgumentException
      * @return mixed|\Closure
      */
-    public function __get($key)
+    public function &__get($key)
     {
-        if (!isset($this->injectors[$key])) throw new \InvalidArgumentException("Non-exists $key of injector");
+        if (!isset($this->injectors[$key])) throw new \InvalidArgumentException(sprintf('Can not get non-exists injector "%s::%s"', get_called_class(), $key));
 
         if ($this->injectors[$key] instanceof \Closure) {
-            return $this->injectors[$key]();
+            $tmp = $this->injectors[$key]();
         } else {
-            return $this->injectors[$key];
+            $tmp = & $this->injectors[$key];
         }
+        return $tmp;
     }
 
     /**
@@ -149,13 +150,13 @@ class Fiber
     public function extend($key, \Closure $closure)
     {
         if (!isset($this->injectors[$key])) {
-            throw new \InvalidArgumentException(sprintf('Injector "%s" is not defined.', $key));
+            throw new \InvalidArgumentException(sprintf('Injector "%s::%s" is not defined.', get_called_class(), $key));
         }
 
         $factory = $this->injectors[$key];
 
         if (!($factory instanceof \Closure)) {
-            throw new \InvalidArgumentException(sprintf('Injector "%s" does not contain an object definition.', $key));
+            throw new \InvalidArgumentException(sprintf('Injector "%s::%s" does not contain an object definition.', get_called_class(), $key));
         }
 
         $that = $this;
@@ -178,7 +179,7 @@ class Fiber
             return call_user_func_array($closure, $args);
         }
 
-        throw new \BadMethodCallException('Call to undefined method ' . __CLASS__ . '::' . $method . '()');
+        throw new \BadMethodCallException(sprintf('Call to undefined protect injector "%s::%s()', get_called_class(), $method));
     }
 
     /**
@@ -205,5 +206,15 @@ class Fiber
     public function keys()
     {
         return array_keys($this->injectors);
+    }
+
+    /**
+     * Append the multiple injectors
+     *
+     * @param array $injectors
+     */
+    public function append(array $injectors)
+    {
+        $this->injectors = $injectors + $this->injectors;
     }
 }

@@ -3,8 +3,9 @@
 namespace Pagon\Route;
 
 use Pagon\Exception\Stop;
+use Pagon\Route;
 
-class Daemon extends \Pagon\Route
+abstract class Daemon extends Route
 {
     protected $sleep_time = 1000000;
 
@@ -35,14 +36,6 @@ class Daemon extends \Pagon\Route
     public function stop()
     {
         throw new DaemonStop();
-    }
-
-    /**
-     *
-     */
-    public function run()
-    {
-        throw new \RuntimeException('Method ' . get_called_class() . '->run() mast be implements');
     }
 }
 

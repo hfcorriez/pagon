@@ -5,6 +5,7 @@ namespace Pagon\Http;
 use Pagon\App;
 use Pagon\Config;
 use Pagon\Exception\Stop;
+use Pagon\View;
 
 class Output extends \Pagon\EventEmitter
 {
@@ -84,7 +85,7 @@ class Output extends \Pagon\EventEmitter
             'body'         => '',
             'content_type' => 'text/html',
             'length'       => false,
-            'charset'      => $this->app->config['charset'],
+            'charset'      => $this->app->charset,
             'headers'      => array(),
             'cookies'      => array(),
         ));
@@ -285,6 +286,7 @@ class Output extends \Pagon\EventEmitter
      * Set content type
      *
      * @param string $mime_type
+     * @throws \InvalidArgumentException
      * @return string|Output
      */
     public function contentType($mime_type = null)
@@ -307,15 +309,19 @@ class Output extends \Pagon\EventEmitter
     /**
      * Get or set cookie
      *
-     * @param string             $key
-     * @param array|string|mixed $value
-     * @param array              $option
+     * @param string            $key
+     * @param array|string|bool $value
+     * @param array             $option
      * @return array|string|Output
      */
     public function cookie($key = null, $value = null, $option = array())
     {
         if ($value !== null) {
-            $this->injectors['cookies'][$key] = array($value, $option);
+            if ($value !== false) {
+                $this->injectors['cookies'][$key] = array($value, $option);
+            } else {
+                unset($this->injectors['cookies'][$key]);
+            }
             return $this;
         }
 
@@ -326,12 +332,14 @@ class Output extends \Pagon\EventEmitter
     /**
      * Get message by code
      *
-     * @return string|null
+     * @param int $status
+     * @return string
      */
-    public function message()
+    public function message($status = null)
     {
-        if (isset(self::$messages[$this->injectors['status']])) {
-            return self::$messages[$this->injectors['status']];
+        !$status && $status = $this->injectors['status'];
+        if (isset(self::$messages[$status])) {
+            return self::$messages[$status];
         }
         return null;
     }
@@ -374,7 +382,7 @@ class Output extends \Pagon\EventEmitter
 
             // Set cookie
             if ($this->injectors['cookies']) {
-                $_default = $this->app->config->cookie;
+                $_default = $this->app->cookie;
                 if (!$_default) {
                     $_default = array(
                         'path'     => '/',
@@ -417,14 +425,28 @@ class Output extends \Pagon\EventEmitter
     /**
      * Render with template
      *
-     * @param $template
-     * @param $data
+     * @param string $template
+     * @param array  $data
+     * @param array  $options
      * @return Output
      */
-    public function render($template, $data = array())
+    public function render($template, array $data = null, array $options = array())
     {
-        $this->app->render($template, $data);
+        $this->app->render($template, $data, $options);
         return $this;
+    }
+
+    /**
+     * Compile the template
+     *
+     * @param string $template
+     * @param array  $data
+     * @param array  $options
+     * @return View
+     */
+    public function compile($template, array $data = null, array $options = array())
+    {
+        return $this->app->compile($template, $data, $options);
     }
 
     /**
@@ -465,7 +487,7 @@ class Output extends \Pagon\EventEmitter
     public function xml($data, $root = 'root', $item = 'item')
     {
         $this->contentType('application/xml');
-        $this->body(\Pagon\Helper\XML::fromArray($data, $root, $item));
+        $this->body(\Pagon\Xml::fromArray($data, $root, $item));
         return $this;
     }
 
@@ -479,7 +501,7 @@ class Output extends \Pagon\EventEmitter
     public function redirect($url, $status = 302)
     {
         $this->injectors['status'] = $status;
-        $this->injectors['headers']['location'] = $url;
+        $this->injectors['headers']['location'] = $url == 'back' ? $this->app->input->refer() : $url;
         return $this;
     }
 

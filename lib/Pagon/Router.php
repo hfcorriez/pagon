@@ -29,6 +29,7 @@ class Router extends Middleware
      * @param string               $path
      * @param \Closure|string      $route
      * @param \Closure|string|null $more
+     * @return $this
      */
     public function set($path, $route, $more = null)
     {
@@ -37,7 +38,8 @@ class Router extends Middleware
             $path = array_shift($_args);
             $route = $_args;
         }
-        $this->app->config['route'][$path] = $route;
+        $this->app->routes[$path] = $route;
+        return $this;
     }
 
     /**
@@ -48,7 +50,36 @@ class Router extends Middleware
      */
     public function get($path)
     {
-        return $this->app->config['route'][$path];
+        return $this->app->routes[$path];
+    }
+
+    /**
+     * Naming the route
+     *
+     * @param string $name
+     * @param string $path
+     * @return $this
+     */
+    public function name($name, $path = null)
+    {
+        if ($path === null) {
+            $path = array_keys($this->app->routes);
+            $path = end($path);
+        }
+
+        $this->app->names[$name] = $path;
+        return $this;
+    }
+
+    /**
+     * Get path by name
+     *
+     * @param string $name
+     * @return mixed
+     */
+    public function path($name)
+    {
+        return isset($this->app->names[$name]) ? $this->app->names[$name] : false;
     }
 
     /**
@@ -64,7 +95,7 @@ class Router extends Middleware
         if ($this->options['path'] === null) return false;
 
         // Get routes
-        $routes = (array)$this->app->config['route'];
+        $routes = (array)$this->app->routes;
 
         // Loop routes for parse and dispatch
         foreach ($routes as $p => $route) {
@@ -153,11 +184,15 @@ class Router extends Middleware
     }
 
     /**
+     * Set auto route closure
+     *
      * @param callable $closure
+     * @return $this
      */
     public function automatic(\Closure $closure)
     {
         $this->automatic = $closure;
+        return $this;
     }
 
     /**
@@ -169,9 +204,9 @@ class Router extends Middleware
      */
     public function handle($route, $args = array())
     {
-        if (isset($this->app->config['route'][$route])) {
+        if (isset($this->app->routes[$route])) {
             $args && $this->app->param($args);
-            return $this->run($this->app->config['route'][$route]);
+            return $this->run($this->app->routes[$route]);
         }
         return false;
     }
@@ -183,7 +218,7 @@ class Router extends Middleware
     {
         try {
             if (!$this->dispatch()) {
-                $this->app->notFound();
+                $this->app->handleError('404');
             }
         } catch (Stop $e) {
         }
@@ -208,7 +243,7 @@ class Router extends Middleware
             }
         } else {
             // Try match
-            if (preg_match(self::toRegex($route), $path, $matches)) {
+            if (preg_match(self::pathToRegex($route), $path, $matches)) {
                 array_shift($matches);
                 $param = $matches;
             }
@@ -222,29 +257,29 @@ class Router extends Middleware
      * To regex
      *
      * @static
-     * @param string $regex
+     * @param string $path
      * @return string
      */
-    protected static function toRegex($regex)
+    protected static function pathToRegex($path)
     {
-        if ($regex[1] !== '^') {
-            $regex = str_replace(array('/'), array('\\/'), $regex);
-            if ($regex{0} == '^') {
+        if ($path[1] !== '^') {
+            $path = str_replace(array('/'), array('\\/'), $path);
+            if ($path{0} == '^') {
                 // As regex
-                $regex = '/' . $regex . '/';
-            } elseif (strpos($regex, ':')) {
+                $path = '/' . $path . '/';
+            } elseif (strpos($path, ':')) {
                 // Need replace
-                $regex = '/^' . preg_replace('/\(:([a-zA-Z0-9]+)\)/', '(?<$1>[^\/]+?)', $regex) . '\/?$/';
+                $path = '/^' . preg_replace('/\(:([a-zA-Z0-9]+)\)/', '(?<$1>[^\/]+?)', $path) . '\/?$/';
             } else {
                 // Full match
-                $regex = '/^' . $regex . '\/?$/';
+                $path = '/^' . $path . '\/?$/';
             }
 
             // * support
-            if (strpos($regex, '*')) {
-                $regex = str_replace('*', '([^\/]+?)', $regex);
+            if (strpos($path, '*')) {
+                $path = str_replace('*', '([^\/]+?)', $path);
             }
         }
-        return $regex;
+        return $path;
     }
 }

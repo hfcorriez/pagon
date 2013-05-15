@@ -1,6 +1,6 @@
 <?php
 
-namespace Pagon\Utility;
+namespace Pagon;
 
 class ArgParser
 {

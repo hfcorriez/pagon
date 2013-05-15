@@ -1,7 +1,7 @@
 <?php
-namespace Pagon\Helper;
+namespace Pagon;
 
-class XML
+class Xml
 {
     /**
      * Xml to array

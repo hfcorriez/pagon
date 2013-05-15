@@ -9,8 +9,8 @@
          processIsolation="false"
          stopOnFailure="false"
          syntaxCheck="false"
-         bootstrap="./vendor/autoload.php"
          verbose="false"
+         bootstrap="./vendor/autoload.php"
         >
     <testsuites>
         <testsuite name="Test Suite">
