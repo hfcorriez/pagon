@@ -69,7 +69,7 @@ class App extends EventEmitter
             'exception' => array(500, 'Error occurred'),
             'crash'     => array(500, 'Application crash')
         ),
-        'stacks'     => array('' => array()),
+        'stacks'     => array(),
         'mounts'     => array(),
         'bundles'    => array()
     );
@@ -345,13 +345,8 @@ class App extends EventEmitter
             }
         }
 
-        // Set default array
-        if (!isset($this->injectors['stacks'][$path])) {
-            $this->injectors['stacks'][$path] = array();
-        }
-
         // Add to the end
-        $this->injectors['stacks'][$path][] = array($middleware, $options);
+        $this->injectors['stacks'][] = array($path, $middleware, $options);
     }
 
     /**
@@ -365,7 +360,7 @@ class App extends EventEmitter
         if (!is_array($options)) {
             $path = $name;
             $name = $options;
-            $options = array('path', $path);
+            $options = array('path' => $path);
         }
         $this->injectors['bundles'][$name] = $options;
     }
@@ -581,13 +576,13 @@ class App extends EventEmitter
     {
         foreach ($this->injectors['mounts'] as $path => $dir) {
             if ($path == '' || strpos($file, $path) === 0) {
-                if (!$file = stream_resolve_include_path($dir . '/' . substr($file, strlen($path)))) continue;
-                return $file;
+                if (!$path = stream_resolve_include_path($dir . '/' . substr($file, strlen($path)))) continue;
+                return $path;
             }
         }
 
-        if (!$file = stream_resolve_include_path($file)) {
-            return $file;
+        if ($path = stream_resolve_include_path($file)) {
+            return $path;
         }
 
         return false;
@@ -763,27 +758,27 @@ class App extends EventEmitter
 
             // Start buffer
             if ($this->injectors['buffer']) ob_start();
-            $this->injectors['stacks'][''][] = array($this->router);
+            $this->injectors['stacks'][] = $this->router;
 
             // Emit "middleware" event
             $this->emit('middleware');
 
             // Loop stacks to match
-            foreach ($this->injectors['stacks'] as $path => $middleware) {
-                // Try to match the path
-                if ($path && strpos($this->input->path(), $path) !== 0) continue;
-
-                $middleware = (array)$middleware;
-                if (empty($middleware)) continue;
-
-                try {
-                    $this->router->pass($middleware, function ($m) {
-                        return Middleware::build($m[0], isset($m[1]) ? $m[1] : array());
-                    });
-
-                    break;
-                } catch (Exception\Pass $e) {
+            foreach ($this->injectors['stacks'] as $index => &$middleware) {
+                if (!is_array($middleware)) {
+                    $middleware = array('', $middleware);
                 }
+                // Try to match the path
+                if ($middleware[0] && strpos($this->input->path(), $middleware[0]) === false) {
+                    unset($this->injectors['stacks'][$index]);
+                }
+            }
+
+            try {
+                $this->router->pass($this->injectors['stacks'], function ($m) {
+                    return Middleware::build($m[1], isset($m[2]) ? $m[2] : array());
+                });
+            } catch (Exception\Pass $e) {
             }
 
             // Write direct output to the head of buffer
