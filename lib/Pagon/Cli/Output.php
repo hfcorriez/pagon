@@ -3,9 +3,10 @@
 namespace Pagon\Cli;
 
 use Pagon\App;
+use Pagon\EventEmitter;
 use Pagon\Exception\Stop;
 
-class Output extends \Pagon\EventEmitter
+class Output extends EventEmitter
 {
     /**
      * @var array Local variables

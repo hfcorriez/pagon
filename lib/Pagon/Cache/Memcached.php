@@ -2,7 +2,7 @@
 
 namespace Pagon\Cache;
 
-class Redis
+class Memcached
 {
     public $cache;
 

@@ -4,10 +4,11 @@ namespace Pagon\Http;
 
 use Pagon\App;
 use Pagon\Config;
+use Pagon\EventEmitter;
 use Pagon\Exception\Stop;
 use Pagon\View;
 
-class Output extends \Pagon\EventEmitter
+class Output extends EventEmitter
 {
     public static $messages = array(
         // Informational 1xx

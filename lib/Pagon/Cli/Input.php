@@ -3,10 +3,11 @@
 namespace Pagon\Cli;
 
 use Pagon\App;
+use Pagon\EventEmitter;
 use Pagon\Exception\Pass;
 use Pagon\Config;
 
-class Input extends \Pagon\EventEmitter
+class Input extends EventEmitter
 {
     /**
      * @var \Pagon\App App

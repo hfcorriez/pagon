@@ -2,7 +2,9 @@
 
 namespace Pagon\Middleware {
 
-    class I18N extends \Pagon\Middleware
+    use Pagon\Middleware;
+
+    class I18N extends Middleware
     {
         /**
          * @return mixed
