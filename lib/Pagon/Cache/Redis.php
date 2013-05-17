@@ -16,10 +16,15 @@ class Redis
      * Init cache
      *
      * @param array $options
+     * @throws \RuntimeException
      */
     public function __construct(array $options = array())
     {
         $this->options = $options + $this->options;
+
+        if (!extension_loaded('redis')) {
+            throw new \RuntimeException('Redis extension is not install!');
+        }
 
         $this->cache = new \Redis();
         $this->cache->connect($this->options['host'], $this->options['port'], $this->options['timeout']);
@@ -62,5 +67,16 @@ class Redis
     public function delete($key)
     {
         return $this->cache->del($key);
+    }
+
+    /**
+     * Exists the key?
+     *
+     * @param string $key
+     * @return bool
+     */
+    public function exists($key)
+    {
+        return $this->cache->exists($key);
     }
 }
