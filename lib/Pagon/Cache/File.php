@@ -13,10 +13,19 @@ class File
      * Init cache
      *
      * @param array $options
+     * @throws \InvalidArgumentException
      */
     public function __construct(array $options = array())
     {
         $this->options = $options + $this->options;
+
+        if ($this->options['hierarchy']) {
+            $this->options['hierarchy'] = (int)$this->options['hierarchy'];
+        }
+
+        if ($this->options['hierarchy'] > 3) {
+            throw new \InvalidArgumentException("File cache directories hierarchy can not more than 3 levels");
+        }
     }
 
     /**
@@ -96,7 +105,12 @@ class File
     {
         $path = sha1($key);
         if ($this->options['hierarchy']) {
-            $path = substr($path, 0, 2) . '/' . substr($path, 2);
+            $hash = $path;
+            $path = '';
+            for ($i = 1; $i <= $this->options['hierarchy']; $i++) {
+                $path .= substr($hash, ($i - 1) * 2, 2) . '/';
+            }
+            $path .= substr($hash, 2 * $this->options['hierarchy']);
         }
 
         return $this->options['path'] . '/' . $path . '.php';
