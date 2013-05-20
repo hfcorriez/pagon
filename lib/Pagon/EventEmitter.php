@@ -101,7 +101,7 @@ class EventEmitter extends Fiber
             $event = strtolower($event);
             if (!empty($this->listeners[$event])) {
                 // Find Listener index
-                if (($key = array_search($listener, $event)) !== false) {
+                if (($key = array_search($listener, $this->listeners[$event])) !== false) {
                     // Remove it
                     unset($this->listeners[$event][$key]);
                 }
@@ -152,16 +152,12 @@ class EventEmitter extends Fiber
      *
      * @param string $event
      */
-    public function removeAllListeners($event)
+    public function removeAllListeners($event = null)
     {
-        $this->listeners[$event] = array();
-    }
-
-    /**
-     * Remove all of all listeners
-     */
-    public function removeAllOfAllListeners()
-    {
-        $this->listeners = array();
+        if ($event !== null) {
+            $this->listeners[$event] = array();
+        } else {
+            $this->listeners = array();
+        }
     }
 }
