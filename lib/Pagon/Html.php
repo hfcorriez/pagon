@@ -110,7 +110,7 @@ class Html
      */
     public static function img($src, array $attributes = array())
     {
-        return self::element('img', array('src' => Url::asset($src) + $attributes));
+        return self::element('img', array('src' => Url::asset($src)) + $attributes);
     }
 
     /**
@@ -149,8 +149,8 @@ class Html
         }
 
         return '<' . $name . $attr .
-            ($self_close ? ' />' : '>' . $text) .
-            ((!$self_close) ? '</' . $name . '>' : '');
+        ($self_close ? ' />' : '>' . $text) .
+        ((!$self_close) ? '</' . $name . '>' : '');
     }
 
     /**
