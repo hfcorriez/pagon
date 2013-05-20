@@ -2,6 +2,12 @@
 
 namespace Pagon;
 
+/**
+ * Config
+ * Manage config and parse config
+ *
+ * @package Pagon
+ */
 class Config extends Fiber
 {
     const LOAD_AUTODETECT = 0;

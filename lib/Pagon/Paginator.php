@@ -102,6 +102,12 @@ namespace Pagon;
 
 use Pagon\Fiber;
 
+/**
+ * Paginator
+ * functional usage for generate Paginator HTML code
+ *
+ * @package Pagon
+ */
 class Paginator extends Fiber
 {
     /**

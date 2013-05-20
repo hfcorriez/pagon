@@ -21,12 +21,11 @@ if (!class_exists('EventEmitter')) {
     require __DIR__ . '/EventEmitter.php';
 }
 
-/*********************
- * core app
- ********************/
-
 /**
- * App Class
+ * App
+ * The core of Pagon
+ *
+ * @package Pagon
  */
 class App extends EventEmitter
 {

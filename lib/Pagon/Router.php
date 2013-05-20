@@ -6,8 +6,12 @@ use Pagon\Middleware;
 use Pagon\Exception\Pass;
 use Pagon\Exception\Stop;
 
+
 /**
- * Route
+ * Router
+ * parse andw manage the Route
+ *
+ * @package Pagon
  */
 class Router extends Middleware
 {

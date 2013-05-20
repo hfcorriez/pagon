@@ -25,6 +25,12 @@
 
 namespace Pagon;
 
+/**
+ * Fiber
+ * dependency injector container and manager
+ *
+ * @package Pagon
+ */
 class Fiber
 {
     /**

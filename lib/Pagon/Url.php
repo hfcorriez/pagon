@@ -4,6 +4,12 @@ namespace Pagon;
 
 use Pagon\App;
 
+/**
+ * Url
+ * functional usage for build URL
+ *
+ * @package Pagon
+ */
 class Url
 {
     /**

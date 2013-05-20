@@ -4,6 +4,12 @@ namespace Pagon;
 
 use Pagon\App;
 
+/**
+ * Html
+ * functional usage for generate HTML code
+ *
+ * @package Pagon
+ */
 class Html
 {
     /**

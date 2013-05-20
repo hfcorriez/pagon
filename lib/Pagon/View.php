@@ -2,6 +2,12 @@
 
 namespace Pagon;
 
+/**
+ * View
+ * base view and manage render
+ *
+ * @package Pagon
+ */
 class View
 {
     const _CLASS_ = __CLASS__;

@@ -2,6 +2,12 @@
 
 namespace Pagon;
 
+/**
+ * Route
+ * structure of base route
+ *
+ * @package Pagon
+ */
 abstract class Route extends Middleware
 {
     /**

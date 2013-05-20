@@ -2,6 +2,12 @@
 
 namespace Pagon;
 
+/**
+ * Cli
+ * functional usage for CLI mode
+ *
+ * @package Pagon
+ */
 class Cli
 {
     /**

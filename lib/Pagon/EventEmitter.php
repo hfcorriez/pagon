@@ -2,6 +2,12 @@
 
 namespace Pagon;
 
+/**
+ * EventEmitter
+ * event driven and manager
+ *
+ * @package Pagon
+ */
 class EventEmitter extends Fiber
 {
     /**
