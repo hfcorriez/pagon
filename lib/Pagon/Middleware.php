@@ -27,7 +27,7 @@ abstract class Middleware extends EventEmitter
     protected $options = array();
 
     /**
-     * @var Middleware
+     * @var callable
      */
     protected $next;
 
