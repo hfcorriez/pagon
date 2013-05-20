@@ -11,7 +11,7 @@ abstract class Route extends Middleware
      */
     protected function before()
     {
-        // Implements as you like
+        // Implements if you need
     }
 
     /**
@@ -21,7 +21,7 @@ abstract class Route extends Middleware
      */
     protected function after()
     {
-        // Implements as you like
+        // Implements if you need
     }
 
     /**
