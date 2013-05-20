@@ -7,6 +7,12 @@ use Pagon\EventEmitter;
 use Pagon\Exception\Pass;
 use Pagon\Config;
 
+/**
+ * Cli Input
+ *
+ * @package Pagon\Cli
+ * @property array params
+ */
 class Input extends EventEmitter
 {
     /**

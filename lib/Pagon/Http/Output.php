@@ -8,6 +8,17 @@ use Pagon\EventEmitter;
 use Pagon\Exception\Stop;
 use Pagon\View;
 
+/**
+ * Http Output
+ *
+ * @package Pagon\Http
+ * @property int    status
+ * @property string body
+ * @property int    length
+ * @property string charset
+ * @property array  headers
+ * @property array  cookies
+ */
 class Output extends EventEmitter
 {
     public static $messages = array(

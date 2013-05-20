@@ -117,7 +117,7 @@ class Router extends Middleware
         if ($this->automatic instanceof \Closure) {
             $route = call_user_func($this->automatic, $this->options['path']);
 
-            if (class_exists($route)) {
+            if ($route && class_exists($route)) {
                 try {
                     return $this->run($route);
                 } catch (Pass $e) {

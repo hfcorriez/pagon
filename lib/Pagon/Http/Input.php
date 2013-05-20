@@ -8,6 +8,14 @@ use Pagon\Exception\Pass;
 use Pagon\Config;
 
 
+/**
+ * Http Input
+ *
+ * @package Pagon\Http
+ * @property array params
+ * @property array query
+ * @property array data
+ */
 class Input extends EventEmitter
 {
     /**

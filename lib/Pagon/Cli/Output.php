@@ -6,6 +6,13 @@ use Pagon\App;
 use Pagon\EventEmitter;
 use Pagon\Exception\Stop;
 
+/**
+ * Cli Output
+ *
+ * @package Pagon\Cli
+ * @property int    status
+ * @property string body
+ */
 class Output extends EventEmitter
 {
     /**

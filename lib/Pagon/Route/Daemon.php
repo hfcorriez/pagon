@@ -10,10 +10,14 @@ abstract class Daemon extends Route
     protected $sleep_time = 1000000;
 
     /**
-     * Re construct the call
+     * @throws \RuntimeException
      */
     public function call()
     {
+        if (!$this->app->isCli()) {
+            throw new \RuntimeException("Daemon route can used under the CLI mode only!");
+        }
+
         $this->before();
         try {
             while (1) {
