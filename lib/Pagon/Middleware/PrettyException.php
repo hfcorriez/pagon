@@ -2,6 +2,8 @@
 
 namespace Pagon\Middleware;
 
+use Pagon\Exception\Pass;
+use Pagon\Exception\Stop;
 use Pagon\Middleware;
 
 class PrettyException extends Middleware
@@ -18,7 +20,7 @@ class PrettyException extends Middleware
             // Next middleware
             $this->next();
         } catch (\Exception $e) {
-            if ($e instanceof \Pagon\Exception\Pass || $e instanceof \Pagon\Exception\Stop) {
+            if ($e instanceof Pass || $e instanceof Stop) {
                 throw $e;
             }
             // Catch exception and render
