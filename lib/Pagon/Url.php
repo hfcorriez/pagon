@@ -82,7 +82,7 @@ class Url
     /**
      * Get site of application
      *
-     * @return mixed|string
+     * @return string
      */
     public static function site()
     {
