@@ -170,7 +170,7 @@ class App extends EventEmitter
                 if (empty($app->crypt)) {
                     throw new \RuntimeException('Encrypt cookie need configure config["crypt"]');
                 }
-                return new Cryptor($app->crypt);
+                return new Utility\Cryptor($app->crypt);
             });
         });
 

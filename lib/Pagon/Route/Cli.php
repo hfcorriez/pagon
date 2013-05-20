@@ -3,7 +3,7 @@
 namespace Pagon\Route;
 
 use Pagon\Route;
-use Pagon\ArgParser;
+use Pagon\Utility\ArgParser;
 
 abstract class Cli extends Route
 {
