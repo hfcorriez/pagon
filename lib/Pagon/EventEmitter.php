@@ -8,7 +8,7 @@ if (function_exists('FNMATCH')) {
     define('FNMATCH', false);
 }
 
-class EventEmitter
+class EventEmitter extends Fiber
 {
     /**
      * @var array Events listeners
