@@ -546,7 +546,7 @@ class Input extends EventEmitter
     {
         if (!isset($this->injectors['headers'])) {
             $_header = array();
-            foreach ($this->env as $key => $value) {
+            foreach ($this->injectors as $key => $value) {
                 $_name = false;
                 if ('HTTP_' === substr($key, 0, 5)) {
                     $_name = substr($key, 5);
