@@ -2,6 +2,12 @@
 
 namespace Pagon;
 
+if (function_exists('FNMATCH')) {
+    define('FNMATCH', true);
+} else {
+    define('FNMATCH', false);
+}
+
 class EventEmitter extends Fiber
 {
     /**
@@ -20,30 +26,46 @@ class EventEmitter extends Fiber
     {
         $event = strtolower($event);
 
-        if (!empty($this->listeners[$event])) {
-            if ($args !== null) {
-                // Check arguments, set inline args more than 1
-                $args = array_slice(func_get_args(), 1);
-            } else {
-                $args = array();
+        if ($args !== null) {
+            // Check arguments, set inline args more than 1
+            $args = array_slice(func_get_args(), 1);
+        } else {
+            $args = array();
+        }
+
+        $all_listeners = array();
+
+        foreach ($this->listeners as $name => $listeners) {
+            if (strpos($name, '*') === false || !self::match($name, $event)) {
+                continue;
             }
 
-            // Loop listeners for callback
-            foreach ($this->listeners[$event] as $i => $listener) {
+            foreach ($this->listeners[$name] as &$listener) {
+                $all_listeners[$name][] = & $listener;
+            }
+        }
+
+        if (!empty($this->listeners[$event])) {
+            foreach ($this->listeners[$event] as &$listener) {
+                $all_listeners[$event][] = & $listener;
+            }
+        }
+
+        // Loop listeners for callback
+        foreach ($all_listeners as $name => $listeners) {
+            $this_args = $args;
+            if (strpos($name, '*') !== false) {
+                array_unshift($this_args, $event);
+            }
+            foreach ($listeners as &$listener) {
                 if ($listener instanceof \Closure) {
                     // Closure Listener
-                    call_user_func_array($listener, $args);
+                    call_user_func_array($listener, $this_args);
                 } elseif (is_array($listener) && $listener[0] instanceof \Closure) {
-                    // Closure Listener
-                    call_user_func_array($listener[0], $args);
-
-                    // Process option
-                    $_option = (array)$listener[1];
-
-                    // If emit once
-                    if ($_option['once']) {
-                        // Remove from listeners
-                        unset($this->listeners[$event][$i]);
+                    if ($listener[1]['times'] > 0) {
+                        // Closure Listener
+                        call_user_func_array($listener[0], $this_args);
+                        $listener[1]['times']--;
                     }
                 }
             }
@@ -78,10 +100,28 @@ class EventEmitter extends Fiber
     {
         if (is_array($event)) {
             foreach ($event as $e) {
-                $this->listeners[strtolower($e)][] = array($listener, array('once' => true));
+                $this->listeners[strtolower($e)][] = array($listener, array('times' => 1));
             }
         } else {
-            $this->listeners[strtolower($event)][] = array($listener, array('once' => true));
+            $this->listeners[strtolower($event)][] = array($listener, array('times' => 1));
+        }
+    }
+
+    /**
+     * Attach a listener to emit once
+     *
+     * @param array|string $event
+     * @param int          $times
+     * @param callable     $listener
+     */
+    public function many($event, $times = 1, \Closure $listener)
+    {
+        if (is_array($event)) {
+            foreach ($event as $e) {
+                $this->listeners[strtolower($e)][] = array($listener, array('times' => $times));
+            }
+        } else {
+            $this->listeners[strtolower($event)][] = array($listener, array('times' => $times));
         }
     }
 
@@ -101,7 +141,7 @@ class EventEmitter extends Fiber
             $event = strtolower($event);
             if (!empty($this->listeners[$event])) {
                 // Find Listener index
-                if (($key = array_search($listener, $event)) !== false) {
+                if (($key = array_search($listener, $this->listeners[$event])) !== false) {
                     // Remove it
                     unset($this->listeners[$event][$key]);
                 }
@@ -152,16 +192,28 @@ class EventEmitter extends Fiber
      *
      * @param string $event
      */
-    public function removeAllListeners($event)
+    public function removeAllListeners($event = null)
     {
-        $this->listeners[$event] = array();
+        if ($event === null) {
+            $this->listeners = array();
+        } else if (($event = strtolower($event)) && !empty($this->listeners[$event])) {
+            $this->listeners[$event] = array();
+        }
     }
 
     /**
-     * Remove all of all listeners
+     * Match the pattern
+     *
+     * @param string $pattern
+     * @param string $string
+     * @return bool|int
      */
-    public function removeAllOfAllListeners()
+    protected static function match($pattern, $string)
     {
-        $this->listeners = array();
+        if (FNMATCH) {
+            return fnmatch($pattern, $string);
+        } else {
+            return preg_match("#^" . strtr(preg_quote($pattern, '#'), array('\*' => '.*', '\?' => '.')) . "$#i", $string);
+        }
     }
 }

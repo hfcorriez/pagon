@@ -2,7 +2,9 @@
 
 namespace Pagon\Middleware;
 
-class MethodOverride extends \Pagon\Middleware
+use Pagon\Middleware;
+
+class MethodOverride extends Middleware
 {
     protected $options = array(
         'method' => '_METHOD'

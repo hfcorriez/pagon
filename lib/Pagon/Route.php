@@ -2,6 +2,12 @@
 
 namespace Pagon;
 
+/**
+ * Route
+ * structure of base route
+ *
+ * @package Pagon
+ */
 abstract class Route extends Middleware
 {
     /**
@@ -11,7 +17,7 @@ abstract class Route extends Middleware
      */
     protected function before()
     {
-        // Implements as you like
+        // Implements if you need
     }
 
     /**
@@ -21,7 +27,7 @@ abstract class Route extends Middleware
      */
     protected function after()
     {
-        // Implements as you like
+        // Implements if you need
     }
 
     /**

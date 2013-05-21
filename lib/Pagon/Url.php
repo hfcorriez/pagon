@@ -4,6 +4,12 @@ namespace Pagon;
 
 use Pagon\App;
 
+/**
+ * Url
+ * functional usage for build URL
+ *
+ * @package Pagon
+ */
 class Url
 {
     /**
@@ -82,7 +88,7 @@ class Url
     /**
      * Get site of application
      *
-     * @return mixed|string
+     * @return string
      */
     public static function site()
     {

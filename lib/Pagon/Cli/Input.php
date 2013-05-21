@@ -3,10 +3,17 @@
 namespace Pagon\Cli;
 
 use Pagon\App;
+use Pagon\EventEmitter;
 use Pagon\Exception\Pass;
 use Pagon\Config;
 
-class Input extends \Pagon\EventEmitter
+/**
+ * Cli Input
+ *
+ * @package Pagon\Cli
+ * @property array params
+ */
+class Input extends EventEmitter
 {
     /**
      * @var \Pagon\App App

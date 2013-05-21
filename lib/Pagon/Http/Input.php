@@ -3,11 +3,20 @@
 namespace Pagon\Http;
 
 use Pagon\App;
+use Pagon\EventEmitter;
 use Pagon\Exception\Pass;
 use Pagon\Config;
 
 
-class Input extends \Pagon\EventEmitter
+/**
+ * Http Input
+ *
+ * @package Pagon\Http
+ * @property array params
+ * @property array query
+ * @property array data
+ */
+class Input extends EventEmitter
 {
     /**
      * @var \Pagon\App App
@@ -537,7 +546,7 @@ class Input extends \Pagon\EventEmitter
     {
         if (!isset($this->injectors['headers'])) {
             $_header = array();
-            foreach ($this->env as $key => $value) {
+            foreach ($this->injectors as $key => $value) {
                 $_name = false;
                 if ('HTTP_' === substr($key, 0, 5)) {
                     $_name = substr($key, 5);

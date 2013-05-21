@@ -1,7 +1,13 @@
 <?php
 
-namespace Pagon;
+namespace Pagon\Utility;
 
+/**
+ * ArgParser
+ * Console arguments parse
+ *
+ * @package Pagon\Utility
+ */
 class ArgParser
 {
     // Args options

@@ -2,7 +2,9 @@
 
 namespace Pagon\Middleware;
 
-class Flash extends \Pagon\Middleware
+use Pagon\Middleware;
+
+class Flash extends Middleware
 {
     // Some options
     protected $options = array(
@@ -18,16 +20,6 @@ class Flash extends \Pagon\Middleware
      * @var array Next messages to save
      */
     protected $next = array();
-
-    /**
-     * Construct with options
-     *
-     * @param array $options
-     */
-    public function __construct($options = array())
-    {
-        $this->options = $options + $this->options;
-    }
 
     /**
      * Set message with type

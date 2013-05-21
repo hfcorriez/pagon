@@ -1,6 +1,12 @@
 <?php
 namespace Pagon;
 
+/**
+ * Class Xml
+ * functional usage for build and parse the xml
+ *
+ * @package Pagon
+ */
 class Xml
 {
     /**

@@ -2,6 +2,8 @@
 
 namespace Pagon\Middleware;
 
+use Pagon\Exception\Pass;
+use Pagon\Exception\Stop;
 use Pagon\Middleware;
 
 class PrettyException extends Middleware
@@ -18,7 +20,7 @@ class PrettyException extends Middleware
             // Next middleware
             $this->next();
         } catch (\Exception $e) {
-            if ($e instanceof \Pagon\Exception\Pass || $e instanceof \Pagon\Exception\Stop) {
+            if ($e instanceof Pass || $e instanceof Stop) {
                 throw $e;
             }
             // Catch exception and render
@@ -36,15 +38,31 @@ class PrettyException extends Middleware
         // Check if buffer start
         if ($this->app->buffer) ob_clean();
 
+        if ($e->getFile() === dirname(__DIR__) . '/Fiber.php') {
+            $trace = $e->getTrace();
+            $err = array_shift($trace);
+            $vars = array(
+                'file'    => $err['file'],
+                'line'    => $err['line'],
+                'code'    => $e->getCode(),
+                'trace'   => $trace,
+                'message' => 'Can not get non-exists injector "' . $err['args'][0] . '"',
+                'type'    => $err['class'],
+                'info'    => $e->getTraceAsString(),
+            );
+        } else {
+            $vars = array(
+                'file'    => $e->getFile(),
+                'line'    => $e->getLine(),
+                'code'    => $e->getCode(),
+                'trace'   => $e->getTrace(),
+                'message' => $e->getMessage(),
+                'type'    => get_class($e),
+                'info'    => $e->getTraceAsString()
+            );
+        }
+
         // Render the error
-        $this->input->app->render(__DIR__ . '/PrettyException/' . ($this->app->isCli() ? 'cli' : 'web') . '.php', array(
-            'file'    => $e->getFile(),
-            'line'    => $e->getLine(),
-            'code'    => $e->getCode(),
-            'trace'   => $e->getTrace(),
-            'message' => $e->getMessage(),
-            'type'    => get_class($e),
-            'info'    => $e->getTraceAsString()
-        ));
+        $this->input->app->render(__DIR__ . '/PrettyException/' . ($this->app->isCli() ? 'cli' : 'web') . '.php', $vars);
     }
 }

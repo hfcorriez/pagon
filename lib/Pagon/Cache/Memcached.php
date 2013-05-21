@@ -2,7 +2,7 @@
 
 namespace Pagon\Cache;
 
-class Redis
+class Memcached
 {
     public $cache;
 
@@ -16,6 +16,7 @@ class Redis
      * Init cache
      *
      * @param array $options
+     * @throws \RuntimeException
      */
     public function __construct(array $options = array())
     {
@@ -23,6 +24,10 @@ class Redis
             $this->options = $options + $this->options;
         } else {
             $this->options = array($options + $this->options[0]);
+        }
+
+        if (!extension_loaded('memcached')) {
+            throw new \RuntimeException('Memcached extension is not install!');
         }
 
         $this->cache = new \Memcached();
@@ -64,5 +69,16 @@ class Redis
     public function delete($key)
     {
         return $this->cache->delete($key);
+    }
+
+    /**
+     * Exists the key?
+     *
+     * @param string $key
+     * @return bool
+     */
+    public function exists($key)
+    {
+        return !!$this->cache->get($key);
     }
 }

@@ -1,11 +1,17 @@
 <?php
 
-namespace Pagon;
+namespace Pagon\Utility;
 
 if (!function_exists('mcrypt_encrypt')) {
     throw new \RuntimeException("Use Cryptor need install php-mcrypt extension");
 }
 
+/**
+ * Cryptor
+ * encrypt and decrypt with 3DES
+ *
+ * @package Pagon\Utility
+ */
 class Cryptor
 {
     protected $options = array(

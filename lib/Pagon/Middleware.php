@@ -2,6 +2,12 @@
 
 namespace Pagon;
 
+/**
+ * Middleware
+ * structure of base middleware
+ *
+ * @package Pagon
+ */
 abstract class Middleware extends EventEmitter
 {
     const _CLASS_ = __CLASS__;
@@ -27,7 +33,7 @@ abstract class Middleware extends EventEmitter
     protected $options = array();
 
     /**
-     * @var Middleware
+     * @var callable
      */
     protected $next;
 

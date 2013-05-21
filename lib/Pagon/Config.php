@@ -2,6 +2,12 @@
 
 namespace Pagon;
 
+/**
+ * Config
+ * Manage config and parse config
+ *
+ * @package Pagon
+ */
 class Config extends Fiber
 {
     const LOAD_AUTODETECT = 0;
@@ -91,7 +97,7 @@ class Config extends Fiber
      * @param string     $file
      * @param int|string $type
      * @throws \InvalidArgumentException
-     * @return Config
+     * @return array
      */
     public static function parse($file, $type = self::LOAD_AUTODETECT)
     {

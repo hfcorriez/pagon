@@ -3,7 +3,7 @@
 namespace Pagon\Route;
 
 use Pagon\Route;
-use Pagon\ArgParser;
+use Pagon\Utility\ArgParser;
 
 abstract class Cli extends Route
 {
@@ -12,10 +12,15 @@ abstract class Cli extends Route
     protected $params = array();
 
     /**
+     * @throws \RuntimeException
      * @return mixed|void
      */
     public function call()
     {
+        if (!$this->app->isCli()) {
+            throw new \RuntimeException("Daemon route can used under the CLI mode only!");
+        }
+
         $argv = $this->input->raw('argv');
         $arg_parser = new ArgParser(array_slice($argv, 1), $this->usage);
         $arg_parser->program($argv[0] . ' ' . (isset($argv[1]) ? $argv[1] : ''));

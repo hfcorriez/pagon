@@ -9,6 +9,16 @@
  *
  *  $app->all('man/:action', 'ManController')
  *
+ * Or
+ *
+ *  $app->autoRoute(function($path) use ($app) {
+ *      list($ctrl, $act) = explode('/', $path);
+ *      if (!$act) return false;
+ *
+ *      $app->param('action', $act);
+ *      return ucfirst($ctrl);
+ *  });
+ *
  * Then add method to your 'ManController'
  *
  *  class ManController extend \Pagon\Route\Classic {

@@ -4,10 +4,22 @@ namespace Pagon\Http;
 
 use Pagon\App;
 use Pagon\Config;
+use Pagon\EventEmitter;
 use Pagon\Exception\Stop;
 use Pagon\View;
 
-class Output extends \Pagon\EventEmitter
+/**
+ * Http Output
+ *
+ * @package Pagon\Http
+ * @property int    status
+ * @property string body
+ * @property int    length
+ * @property string charset
+ * @property array  headers
+ * @property array  cookies
+ */
+class Output extends EventEmitter
 {
     public static $messages = array(
         // Informational 1xx

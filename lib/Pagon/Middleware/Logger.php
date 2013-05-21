@@ -3,6 +3,7 @@
 namespace Pagon\Middleware;
 
 use Closure;
+use Pagon\Middleware;
 
 /**
  * @method debug(string $text)
@@ -11,7 +12,7 @@ use Closure;
  * @method error(string $text)
  * @method critical(string $text)
  */
-class Logger extends \Pagon\Middleware
+class Logger extends Middleware
 {
     protected $options = array(
         'file'         => 'app.log',
