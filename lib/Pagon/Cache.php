@@ -37,7 +37,7 @@ abstract class Cache
      * Dispense the instance
      *
      * @param string $name
-     * @return mixed
+     * @return Cache
      * @throws \InvalidArgumentException
      */
     public static function dispense($name = 'default')

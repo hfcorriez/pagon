@@ -107,14 +107,22 @@ function config($key, $value = null)
 }
 
 /**
- * Get cache
+ * Get or set cache
  *
  * @param string $name
- * @return mixed
+ * @param string $key
+ * @param mixed  $value
+ * @return Cache|bool|string|array
  */
-function cache($name)
+function cache($name, $key = null, $value = null)
 {
-    return Cache::dispense($name);
+    if ($key === null) {
+        return Cache::dispense($name);
+    } else if ($value !== null) {
+        return Cache::dispense($name)->set($key, $value);
+    } else {
+        return Cache::dispense($name)->get($key);
+    }
 }
 
 /**
