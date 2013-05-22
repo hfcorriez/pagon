@@ -77,7 +77,7 @@ class Config extends Fiber
     public static function load($file, $type = self::LOAD_AUTODETECT)
     {
         if (!is_file($file)) {
-            throw new \InvalidArgumentException("Config load error with non-exists file");
+            throw new \InvalidArgumentException("Config load error with non-exists file \"$file\"");
         }
 
         if ($type === self::LOAD_AUTODETECT) {
@@ -101,16 +101,14 @@ class Config extends Fiber
      */
     public static function parse($file, $type = self::LOAD_AUTODETECT)
     {
-        $type == self::LOAD_AUTODETECT && $type = strtolower(pathinfo($file, PATHINFO_EXTENSION));
+        if ($type === self::LOAD_AUTODETECT) {
+            $type = pathinfo($file, PATHINFO_EXTENSION);
+        };
 
         // Try to use custom parser
-        if (class_exists($type)) {
-            $class = $type;
-        } else {
-            $class = __NAMESPACE__ . "\\Config\\Parser\\" . ucfirst($type);
-        }
-
-        if (!class_exists($class)) {
+        if (!class_exists($class = __NAMESPACE__ . "\\Config\\Parser\\" . ucfirst(strtolower($type)))
+            && !class_exists($class = $type)
+        ) {
             throw new \InvalidArgumentException("There is no parser '$class' for '$type'");
         }
 
@@ -120,10 +118,32 @@ class Config extends Fiber
     /**
      * Dump to array
      *
+     * @param array  $array
+     * @param string $type
+     * @throws \InvalidArgumentException
      * @return array
      */
-    public function dump()
+    public static function dump($array, $type)
     {
-        return $this->injectors;
+        // Try to use custom parser
+        if (!class_exists($class = __NAMESPACE__ . "\\Config\\Parser\\" . ucfirst(strtolower($type)))
+            && !class_exists($class = $type)
+        ) {
+            throw new \InvalidArgumentException("There is no parser '$class' for '$type'");
+        }
+
+
+        return $class::dump($array);
+    }
+
+    /**
+     * Dump to given type
+     *
+     * @param string $type
+     * @return array
+     */
+    public function dumpTo($type)
+    {
+        return self::dump($this->injectors, $type);
     }
 }
