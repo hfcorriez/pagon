@@ -195,9 +195,11 @@ class Fiber
      * @param mixed  $value
      * @return bool|mixed
      */
-    public function raw($key, $value = null)
+    public function raw($key = null, $value = null)
     {
-        if ($value !== null) {
+        if ($key === null) {
+            return $this->injectors;
+        } elseif ($value !== null) {
             $this->injectors[$key] = $value;
         }
 
