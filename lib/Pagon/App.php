@@ -894,6 +894,14 @@ class App extends EventEmitter
     }
 
     /**
+     * Start assist for common functions
+     */
+    public function assisting()
+    {
+        $this->load(dirname(__DIR__) . '/assistant.php');
+    }
+
+    /**
      * Register error and exception handlers
      *
 
@@ -992,10 +1000,10 @@ class App extends EventEmitter
     /**
      * Error handler for app
      *
-     * @param $type
-     * @param $message
-     * @param $file
-     * @param $line
+     * @param int    $type
+     * @param string $message
+     * @param string $file
+     * @param int    $line
      * @throws \ErrorException
      */
     public function __error($type, $message, $file, $line)
