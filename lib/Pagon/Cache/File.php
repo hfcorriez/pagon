@@ -2,7 +2,9 @@
 
 namespace Pagon\Cache;
 
-class File
+use Pagon\Cache;
+
+class File extends Cache
 {
     protected $options = array(
         'path'      => '/tmp',

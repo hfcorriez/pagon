@@ -2,7 +2,9 @@
 
 namespace Pagon\Cache;
 
-class Redis
+use Pagon\Cache;
+
+class Redis extends Cache
 {
     public $cache;
 

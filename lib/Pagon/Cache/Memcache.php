@@ -2,7 +2,9 @@
 
 namespace Pagon\Cache;
 
-class Memcache
+use Pagon\Cache;
+
+class Memcache extends Cache
 {
     public $cache;
 
