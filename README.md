@@ -1,6 +1,12 @@
-## Pagon框架?
+## Pagon框架? 
+
 
 [![Build Status](https://travis-ci.org/hfcorriez/pagon.png)](https://travis-ci.org/hfcorriez/pagon)
+
+```
+Test cases		: 33
+Code coverage	: 43%
+```
 
 - 简单高效的PHP框架，使用方式类似Ruby的[Sinatra](http://www.sinatrarb.com)或Node的[Express.js](http://expressjs.com)
 - 致力于打造一个拥有最小化核心组件且尽量不依赖第三方库的简单、智能和高效的框架。
