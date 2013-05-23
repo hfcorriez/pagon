@@ -179,6 +179,9 @@ class App extends EventEmitter
         // Set mode
         $this->injectors['mode'] = ($_mode = getenv('PAGON_ENV')) ? $_mode : $this->injectors['mode'];
 
+        // Set pagon root directory
+        $this->injectors['mounts']['pagon'] = dirname(dirname(__DIR__));
+
         // Save current app
         self::$self = $this;
     }
@@ -575,8 +578,8 @@ class App extends EventEmitter
     public function path($file)
     {
         foreach ($this->injectors['mounts'] as $path => $dir) {
-            if ($path == '' || strpos($file, $path) === 0) {
-                if (!$path = stream_resolve_include_path($dir . '/' . substr($file, strlen($path)))) continue;
+            if ($path === '' || strpos($file, $path) === 0) {
+                if (!$path = stream_resolve_include_path($dir . '/' . ($path ? substr($file, strlen($path)) : $file))) continue;
                 return $path;
             }
         }

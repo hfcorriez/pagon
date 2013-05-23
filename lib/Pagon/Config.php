@@ -16,10 +16,15 @@ class Config extends Fiber
     const LOAD_AUTODETECT = 0;
 
     /**
+     * @var string Config dir
+     */
+    public static $dir;
+
+    /**
      * @var array Config registers
      */
     protected static $imports = array(
-        'mimes' => array('mimes.php', 0),
+        'mimes' => array('pagon/config/mimes.php', 0),
     );
 
     /**
@@ -65,10 +70,12 @@ class Config extends Fiber
         }
 
         // Try to load
-        list($file, $type) = static::$imports[$name];
+        list($path, $type) = static::$imports[$name];
 
-        // Use data dir
-        if ($file{0} != '/') $file = __DIR__ . '/Config/' . $file;
+        // Check file in path
+        if (!$file = App::self()->path($path)) {
+            throw new \InvalidArgumentException("Can not find file path \"$path\"");
+        }
 
         return static::$imports[$name] = static::load($file, $type);
     }
