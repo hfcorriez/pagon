@@ -209,8 +209,8 @@ class App extends EventEmitter
     /**
      * Set with no event emit
      *
-     * @param $key
-     * @param $value
+     * @param string $key
+     * @param mixed  $value
      * @return void
      */
     public function set($key, $value)
@@ -235,7 +235,7 @@ class App extends EventEmitter
     /**
      * Set config as true
      *
-     * @param $key
+     * @param string $key
      */
     public function enable($key)
     {
@@ -245,7 +245,7 @@ class App extends EventEmitter
     /**
      * Set config as false
      *
-     * @param $key
+     * @param string $key
      */
     public function disable($key)
     {
