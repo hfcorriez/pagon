@@ -30,7 +30,7 @@ class Parser
         if (!class_exists($class = __NAMESPACE__ . "\\Parser\\" . ucfirst(strtolower($type)))
             && !class_exists($class = $type)
         ) {
-            throw new \InvalidArgumentException("There is no parser '$class' for '$type'");
+            throw new \InvalidArgumentException("Non-exists parser for '$type'");
         }
 
         return $class::parse($string, $option);
@@ -51,7 +51,7 @@ class Parser
         if (!class_exists($class = __NAMESPACE__ . "\\Parser\\" . ucfirst(strtolower($type)))
             && !class_exists($class = $type)
         ) {
-            throw new \InvalidArgumentException("There is no parser '$class' for '$type'");
+            throw new \InvalidArgumentException("Non-exists parser for '$type'");
         }
 
 
