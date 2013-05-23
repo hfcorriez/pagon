@@ -70,13 +70,9 @@ class App extends EventEmitter
         ),
         'stacks'     => array(),
         'mounts'     => array(),
-        'bundles'    => array()
+        'bundles'    => array(),
+        'locals'     => array(),
     );
-
-    /**
-     * @var array Local variables
-     */
-    public $locals = array();
 
     /**
      * @var bool Is cli?
@@ -174,7 +170,7 @@ class App extends EventEmitter
         });
 
         // Set default locals
-        $this->locals['config'] = & $this->injectors;
+        $this->injectors['locals']['config'] = & $this->injectors;
 
         // Set mode
         $this->injectors['mode'] = ($_mode = getenv('PAGON_ENV')) ? $_mode : $this->injectors['mode'];
@@ -684,7 +680,7 @@ class App extends EventEmitter
         $data['_'] = $this;
 
         // Create view
-        $view = new View($path, $data + $this->locals, $options + array(
+        $view = new View($path, $data + $this->injectors['locals'], $options + array(
                 'dir' => $this->injectors['views']
             ));
 
