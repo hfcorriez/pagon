@@ -152,7 +152,7 @@ class App extends EventEmitter
 
         // Set config
         $this->injectors =
-            (!is_array($config) ? Config::load((string)$config)->raw() : $config)
+            (!is_array($config) ? Parser::load((string)$config) : $config)
             + ($this->_cli ? array('buffer' => false) : array())
             + $this->injectors;
 
@@ -208,6 +208,7 @@ class App extends EventEmitter
      *
      * @param $key
      * @param $value
+     * @return void
      */
     public function set($key, $value)
     {

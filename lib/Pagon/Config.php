@@ -10,6 +10,9 @@ namespace Pagon;
  */
 class Config extends Fiber
 {
+    /**
+     * Auto Detect File Extension
+     */
     const LOAD_AUTODETECT = 0;
 
     /**
@@ -44,7 +47,11 @@ class Config extends Fiber
     }
 
     /**
-     * Load config by name
+     * Export the config
+     *
+     * @param string $name
+     * @return Config
+     * @throws \InvalidArgumentException
      */
     public static function export($name)
     {
@@ -85,55 +92,10 @@ class Config extends Fiber
         }
 
         if ($type !== 'php') {
-            return new self(self::parse($file, $type));
+            return new self(Parser::load($file, $type));
         } else {
             return new self(include($file));
         }
-    }
-
-    /**
-     * Parser file
-     *
-     * @param string     $file
-     * @param int|string $type
-     * @throws \InvalidArgumentException
-     * @return array
-     */
-    public static function parse($file, $type = self::LOAD_AUTODETECT)
-    {
-        if ($type === self::LOAD_AUTODETECT) {
-            $type = pathinfo($file, PATHINFO_EXTENSION);
-        };
-
-        // Try to use custom parser
-        if (!class_exists($class = __NAMESPACE__ . "\\Config\\Parser\\" . ucfirst(strtolower($type)))
-            && !class_exists($class = $type)
-        ) {
-            throw new \InvalidArgumentException("There is no parser '$class' for '$type'");
-        }
-
-        return $class::parse(file_get_contents($file));
-    }
-
-    /**
-     * Dump to array
-     *
-     * @param array  $array
-     * @param string $type
-     * @throws \InvalidArgumentException
-     * @return array
-     */
-    public static function dump($array, $type)
-    {
-        // Try to use custom parser
-        if (!class_exists($class = __NAMESPACE__ . "\\Config\\Parser\\" . ucfirst(strtolower($type)))
-            && !class_exists($class = $type)
-        ) {
-            throw new \InvalidArgumentException("There is no parser '$class' for '$type'");
-        }
-
-
-        return $class::dump($array);
     }
 
     /**
@@ -142,8 +104,8 @@ class Config extends Fiber
      * @param string $type
      * @return array
      */
-    public function dumpTo($type)
+    public function dump($type)
     {
-        return self::dump($this->injectors, $type);
+        return Parser::dump($this->injectors, $type);
     }
 }

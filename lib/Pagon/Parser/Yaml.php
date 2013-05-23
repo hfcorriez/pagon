@@ -1,6 +1,6 @@
 <?php
 
-namespace Pagon\Config\Parser;
+namespace Pagon\Parser;
 
 use Symfony\Component\Yaml\Yaml as YamlParser;
 

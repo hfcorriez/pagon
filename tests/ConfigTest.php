@@ -49,53 +49,11 @@ class ConfigTest extends \PHPUnit_Framework_TestCase
         unlink('/tmp/test.json');
     }
 
-    public function testParse()
-    {
-        file_put_contents('/tmp/test.json', '{"test":"abc"}');
-
-        $config = Config::parse('/tmp/test.json');
-
-        $this->assertEquals(array('test' => 'abc'), $config);
-        unlink('/tmp/test.json');
-    }
-
-    public function testParseGivenType()
-    {
-        file_put_contents('/tmp/test.abc', '{"test":"abc"}');
-
-        $config = Config::parse('/tmp/test.abc', 'json');
-
-        $this->assertEquals(array('test' => 'abc'), $config);
-        unlink('/tmp/test.abc');
-    }
-
-    public function testParseUnknownType()
-    {
-        file_put_contents('/tmp/test.abc', '{"test":"abc"}');
-
-        $this->setExpectedException('InvalidArgumentException');
-        Config::parse('/tmp/test.abc');
-
-        unlink('/tmp/test.abc');
-    }
-
     public function testDump()
-    {
-        $string = Config::dump(array('test' => 'abc'), 'json');
-        $this->assertEquals('{"test":"abc"}', $string);
-    }
-
-    public function testDumpUnknownType()
-    {
-        $this->setExpectedException('InvalidArgumentException');
-        $string = Config::dump(array('test' => 'abc'), 'abc');
-    }
-
-    public function testDumpTo()
     {
         $config = new Config(array('test' => 'abc'));
 
-        $string = $config->dumpTo('json');
+        $string = $config->dump('json');
         $this->assertEquals('{"test":"abc"}', $string);
     }
 
