@@ -12,7 +12,7 @@ class ConfigTest extends \PHPUnit_Framework_TestCase
     {
         $config = Config::export('mimes');
 
-        $mimes = include(dirname(__DIR__) . '/lib/Pagon/Config/mimes.php');
+        $mimes = include(dirname(__DIR__) . '/config/mimes.php');
 
         $this->assertInstanceOf('Pagon\Config', $config);
         $this->assertEquals(array('text/plain'), $config->txt);

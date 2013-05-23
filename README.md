@@ -4,8 +4,8 @@
 [![Build Status](https://travis-ci.org/hfcorriez/pagon.png)](https://travis-ci.org/hfcorriez/pagon)
 
 ```
-Test cases		: 41
-Code coverage	: 50%
+Test cases		: 42
+Code coverage	: 38%
 ```
 
 - 简单高效的PHP框架，使用方式类似Ruby的[Sinatra](http://www.sinatrarb.com)或Node的[Express.js](http://expressjs.com)
