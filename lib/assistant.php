@@ -298,7 +298,7 @@ function str_contains($haystack, $needle)
  * @param int $size
  * @return string
  */
-function size($size)
+function human_size($size)
 {
     $units = array('Bytes', 'KiB', 'MiB', 'GiB', 'TiB', 'PiB', 'EiB');
     return @round($size / pow(1024, ($i = floor(log($size, 1024)))), 2) . ' ' . $units[$i];
