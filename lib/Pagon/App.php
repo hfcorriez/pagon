@@ -26,6 +26,23 @@ if (!class_exists('EventEmitter')) {
  * The core of Pagon
  *
  * @package Pagon
+ * @property string mode         Current run mode, Default is "develop"
+ * @property bool   debug        Is debug mode enabled?
+ * @property string views        Views dir
+ * @property bool   error        Handle error
+ * @property bool   buffer       Buffer enabled?
+ * @property string timezone     Current timezone
+ * @property string charset      The application charset
+ * @property array  routes       Store the routes for run
+ * @property array  names        Routes names
+ * @property string autoload     The path to autoload
+ * @property array  namespaces   The namespaces to load with directory path
+ * @property array  alias        The class to alias
+ * @property array  engines      The engines to render template
+ * @property array  errors       Default error handles
+ * @property array  stacks       The middleware stacks to load
+ * @property array  bundles      The bundles to load
+ * @property array  locals       The locals variables to used in template
  */
 class App extends EventEmitter
 {
