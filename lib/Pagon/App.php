@@ -26,6 +26,23 @@ if (!class_exists('EventEmitter')) {
  * The core of Pagon
  *
  * @package Pagon
+ * @property string mode         Current run mode, Default is "develop"
+ * @property bool   debug        Is debug mode enabled?
+ * @property string views        Views dir
+ * @property bool   error        Handle error
+ * @property bool   buffer       Buffer enabled?
+ * @property string timezone     Current timezone
+ * @property string charset      The application charset
+ * @property array  routes       Store the routes for run
+ * @property array  names        Routes names
+ * @property string autoload     The path to autoload
+ * @property array  namespaces   The namespaces to load with directory path
+ * @property array  alias        The class to alias
+ * @property array  engines      The engines to render template
+ * @property array  errors       Default error handles
+ * @property array  stacks       The middleware stacks to load
+ * @property array  bundles      The bundles to load
+ * @property array  locals       The locals variables to used in template
  */
 class App extends EventEmitter
 {
@@ -70,13 +87,9 @@ class App extends EventEmitter
         ),
         'stacks'     => array(),
         'mounts'     => array(),
-        'bundles'    => array()
+        'bundles'    => array(),
+        'locals'     => array(),
     );
-
-    /**
-     * @var array Local variables
-     */
-    public $locals = array();
 
     /**
      * @var bool Is cli?
@@ -152,7 +165,7 @@ class App extends EventEmitter
 
         // Set config
         $this->injectors =
-            (!is_array($config) ? Config::load((string)$config)->dump() : $config)
+            (!is_array($config) ? Parser::load((string)$config) : $config)
             + ($this->_cli ? array('buffer' => false) : array())
             + $this->injectors;
 
@@ -174,10 +187,13 @@ class App extends EventEmitter
         });
 
         // Set default locals
-        $this->locals['config'] = & $this->injectors;
+        $this->injectors['locals']['config'] = & $this->injectors;
 
         // Set mode
         $this->injectors['mode'] = ($_mode = getenv('PAGON_ENV')) ? $_mode : $this->injectors['mode'];
+
+        // Set pagon root directory
+        $this->injectors['mounts']['pagon'] = dirname(dirname(__DIR__));
 
         // Save current app
         self::$self = $this;
@@ -206,8 +222,9 @@ class App extends EventEmitter
     /**
      * Set with no event emit
      *
-     * @param $key
-     * @param $value
+     * @param string $key
+     * @param mixed  $value
+     * @return void
      */
     public function set($key, $value)
     {
@@ -231,7 +248,7 @@ class App extends EventEmitter
     /**
      * Set config as true
      *
-     * @param $key
+     * @param string $key
      */
     public function enable($key)
     {
@@ -241,7 +258,7 @@ class App extends EventEmitter
     /**
      * Set config as false
      *
-     * @param $key
+     * @param string $key
      */
     public function disable($key)
     {
@@ -574,8 +591,8 @@ class App extends EventEmitter
     public function path($file)
     {
         foreach ($this->injectors['mounts'] as $path => $dir) {
-            if ($path == '' || strpos($file, $path) === 0) {
-                if (!$path = stream_resolve_include_path($dir . '/' . substr($file, strlen($path)))) continue;
+            if ($path === '' || strpos($file, $path) === 0) {
+                if (!$path = stream_resolve_include_path($dir . '/' . ($path ? substr($file, strlen($path)) : $file))) continue;
                 return $path;
             }
         }
@@ -680,7 +697,7 @@ class App extends EventEmitter
         $data['_'] = $this;
 
         // Create view
-        $view = new View($path, $data + $this->locals, $options + array(
+        $view = new View($path, $data + $this->injectors['locals'], $options + array(
                 'dir' => $this->injectors['views']
             ));
 
@@ -894,6 +911,14 @@ class App extends EventEmitter
     }
 
     /**
+     * Start assist for common functions
+     */
+    public function assisting()
+    {
+        $this->load(dirname(__DIR__) . '/assistant.php');
+    }
+
+    /**
      * Register error and exception handlers
      *
 
@@ -992,10 +1017,10 @@ class App extends EventEmitter
     /**
      * Error handler for app
      *
-     * @param $type
-     * @param $message
-     * @param $file
-     * @param $line
+     * @param int    $type
+     * @param string $message
+     * @param string $file
+     * @param int    $line
      * @throws \ErrorException
      */
     public function __error($type, $message, $file, $line)

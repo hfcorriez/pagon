@@ -1,28 +1,28 @@
 {
-    "name": "pagon/pagon",
-    "description": "Pagon Framework",
-    "keywords": ["framework", "pagon"],
-    "license": "MIT",
-    "authors": [
-        {
-            "name": "Corrie Zhao",
-            "email": "hfcorriez@gmail.com"
-        }
-    ],
-    "require": {
-        "php": ">=5.3.9"
-    },
-    "require-dev": {
-        "pagon/jade": "dev-master",
-        "symfony/yaml": "v2.2.0"
-    },
-    "suggest": {
-        "pagon/jade": "Support Jade template",
-        "symfony/yaml": "Support Yaml config"
-    },
-    "autoload": {
-        "psr-0": {
-            "Pagon": "lib/"
-        }
+  "name": "pagon/pagon",
+  "description": "Pagon Framework",
+  "keywords": ["framework", "pagon"],
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Corrie Zhao",
+      "email": "hfcorriez@gmail.com"
     }
+  ],
+  "require": {
+    "php": ">=5.3.9"
+  },
+  "require-dev": {
+    "pagon/jade": "dev-master",
+    "symfony/yaml": "v2.2.0"
+  },
+  "suggest": {
+    "pagon/jade": "Support Jade template",
+    "symfony/yaml": "Support Yaml config"
+  },
+  "autoload": {
+    "psr-0": {
+      "Pagon": "lib/"
+    }
+  }
 }

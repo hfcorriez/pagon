@@ -10,13 +10,21 @@ namespace Pagon;
  */
 class Config extends Fiber
 {
+    /**
+     * Auto Detect File Extension
+     */
     const LOAD_AUTODETECT = 0;
+
+    /**
+     * @var string Config dir
+     */
+    public static $dir;
 
     /**
      * @var array Config registers
      */
     protected static $imports = array(
-        'mimes' => array('mimes.php', 0),
+        'mimes' => array('pagon/config/mimes.php', 0),
     );
 
     /**
@@ -44,7 +52,11 @@ class Config extends Fiber
     }
 
     /**
-     * Load config by name
+     * Export the config
+     *
+     * @param string $name
+     * @return Config
+     * @throws \InvalidArgumentException
      */
     public static function export($name)
     {
@@ -58,10 +70,12 @@ class Config extends Fiber
         }
 
         // Try to load
-        list($file, $type) = static::$imports[$name];
+        list($path, $type) = static::$imports[$name];
 
-        // Use data dir
-        if ($file{0} != '/') $file = __DIR__ . '/Config/' . $file;
+        // Check file in path
+        if (!$file = App::self()->path($path)) {
+            throw new \InvalidArgumentException("Can not find file path \"$path\"");
+        }
 
         return static::$imports[$name] = static::load($file, $type);
     }
@@ -77,7 +91,7 @@ class Config extends Fiber
     public static function load($file, $type = self::LOAD_AUTODETECT)
     {
         if (!is_file($file)) {
-            throw new \InvalidArgumentException("Config load error with non-exists file");
+            throw new \InvalidArgumentException("Config load error with non-exists file \"$file\"");
         }
 
         if ($type === self::LOAD_AUTODETECT) {
@@ -85,45 +99,20 @@ class Config extends Fiber
         }
 
         if ($type !== 'php') {
-            return new self(self::parse($file, $type));
+            return new self(Parser::load($file, $type));
         } else {
             return new self(include($file));
         }
     }
 
     /**
-     * Parser file
+     * Dump to given type
      *
-     * @param string     $file
-     * @param int|string $type
-     * @throws \InvalidArgumentException
+     * @param string $type
      * @return array
      */
-    public static function parse($file, $type = self::LOAD_AUTODETECT)
+    public function dump($type)
     {
-        $type == self::LOAD_AUTODETECT && $type = strtolower(pathinfo($file, PATHINFO_EXTENSION));
-
-        // Try to use custom parser
-        if (class_exists($type)) {
-            $class = $type;
-        } else {
-            $class = __NAMESPACE__ . "\\Config\\Parser\\" . ucfirst($type);
-        }
-
-        if (!class_exists($class)) {
-            throw new \InvalidArgumentException("There is no parser '$class' for '$type'");
-        }
-
-        return $class::parse(file_get_contents($file));
-    }
-
-    /**
-     * Dump to array
-     *
-     * @return array
-     */
-    public function dump()
-    {
-        return $this->injectors;
+        return Parser::dump($this->injectors, $type);
     }
 }
