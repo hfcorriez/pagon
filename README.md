@@ -169,7 +169,7 @@ $app->on('run', function(){
 	xhprof_enabled();
 });
 
-$app->on('shutdown', function(){
+$app->on('exit', function(){
 	// Get profiler data
 	$profiler_data = xhprof_disabled();
 	// Save it
