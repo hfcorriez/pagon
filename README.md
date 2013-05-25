@@ -8,21 +8,22 @@ Test cases		: 42
 Code coverage	: 38%
 ```
 
-- 简单高效的PHP框架，使用方式类似Ruby的[Sinatra](http://www.sinatrarb.com)或Node的[Express.js](http://expressjs.com)
+- 简单高效的现代应用框架，使用方式类似Ruby的[Sinatra](http://www.sinatrarb.com)或Node的[Express.js](http://expressjs.com)
 - 致力于打造一个拥有最小化核心组件且尽量不依赖第三方库的简单、智能和高效的框架。
-- 高效不止是开发效率，还包括执行效率。
-- 不止支持Web开发，也支持CLI下的开发并且做了很多优化。
-- 现阶段是实现`只需要一套框架，便能快速完成一套高效Web应用的开发`！
+- 高效不只是开发效率，还有执行效率。
+- Cli下的开发并且做了很多优化。
+- `只需要一套框架，能快速完成一套高效Web应用的开发！`
+- `Write less, Do more!`
 
 ## 特性
 
-- 简单，几乎无需配置就能使用
-- 智能，有很多经过考虑的模式设计
+- 简单，无配置就能使用，小应用可快速成型
+- 智能，经过考虑的模式设计，
 - 扩展，使用中间件方式随意扩展自己想要的
-- 标准，基于PSR标准开发
+- 标准，基于[PSR规范](https://github.com/hfcorriez/fig-standards)开发
 - 性能，效率上优于目前所有主流框架
-- 事件，基于事件打造，随时随地事件驱动
-- 前卫，对良好的新技术或思想提供快速支持，比如Restful
+- 事件，基于事件打造，随时随地用事件驱动
+- 现代，支持主流的现代应用开发：Web/Cli，Restful，Xml/Yaml/Json/Ini，Jade/Twig?
 
 ## 安装
 
@@ -38,7 +39,7 @@ composer.phar require pagon/app=0.5.2
 composer.phar create-project pagon/app myapp
 ```
 
-## 例子
+## 使用
 
 ### Hello world
 
@@ -47,7 +48,7 @@ $app = new App();
 
 // 使用匿名函数实现控制器
 $app->get('/', function($req, $res){
-   $res->end('Hello world');
+   $res->write('Hello world');
 });
 
 // 路由映射到类控制器上
@@ -85,9 +86,25 @@ $app->add(function($req, $res, $next) {
 	}
 	return $next();
 })
+```
 
-// 使用框架内置的中间件
+使用框架内置的中间件
 
+```
+- PrettyException   异常和错误输出，Debug模式下默认开启。
+- Flash             信息闪存，用于验证提示等。
+- HttpMethods       完整的Http方法支持
+- HttpBasicAuth     Http Basic验证支持
+- I18N              多语言支持
+- Logger            日志支持
+- PageCache         页面缓存支持
+- Session           Session支持，包括（Cookie, Redis, Memcache）
+- MethodOveride     Http方法重载
+```
+
+自带中间件的例子
+
+```php
 // 直接生成（适合一些必用的中间件）
 $app->add(new \Pagon\Middleware\Session\Cookie(array('name' => 'sessions')));
 $app->add(new \Pagon\Middleware\HttpMethodOverride());
@@ -102,24 +119,24 @@ $app->add('/monitor', 'HttpBasicAuth', array('username' => 'test', 'password' =>
 
 ### 环境
 
-环境配置可以通过环境变量`PAGON_ENV`来设置，默认为`development`
+环境配置可以通过环境变量`PAGON_ENV`来设置，默认为`develop`
 
 ```php
 $app = new App();
 
 // 配置development
-$app->configure('development', function(){
+$app->configure('develop', function(){
     $app->set('debug', true);
 });
 
 // 配置所有环境
 $app->configure(function($mode) use ($app){
 	switch ($mode) {
-		case 'development':
+		case 'develop':
 			$app->set('debug', true);
 			break;
-		case 'production':
-			$app->add('PageCache', array('cache' => new Cache\Redis($app->get('redis'))));
+		case 'product':
+			$app->add('PageCache', array('cache' => Cache::dispense('redis')));
 			break;
 	}
 })
