@@ -1,7 +1,8 @@
 ## Pagon框架? 
 
-
 [![Build Status](https://travis-ci.org/hfcorriez/pagon.png)](https://travis-ci.org/hfcorriez/pagon)
+
+邮件列表: [https://groups.google.com/d/forum/pagonframework](https://groups.google.com/d/forum/pagonframework)
 
 ```
 Test cases		: 42
