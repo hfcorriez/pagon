@@ -9,6 +9,8 @@ Test cases		: 42
 Code coverage	: 38%
 ```
 
+;) 单元测试还在努力ing...
+
 - 简单高效的现代应用框架，使用方式类似Ruby的[Sinatra](http://www.sinatrarb.com)或Node的[Express.js](http://expressjs.com)
 - 致力于打造一个拥有最小化核心组件且尽量不依赖第三方库的简单、智能和高效的框架。
 - 高效不只是开发效率，还有执行效率。
