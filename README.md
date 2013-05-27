@@ -78,6 +78,52 @@ $app->set('cookie.domain', 'abc.com');
 $app->get('cookie.domain');
 ```
 
+通过文件加载配置，支持`xml`, `json`, `yaml`, `ini`和`php`
+
+config.php
+
+```
+return array(
+    'timezone' => 'Asia/Shanghai',
+    'debug' =>  true,
+    'cookie' => array(
+        'secret' => 'very secret',
+        'domain' => 'app.com',
+        'path' => '/'
+    )
+);
+```
+
+config.ini
+
+```ini
+timezone = 'Asia/Shanghai'
+debug = true
+
+[cookie]
+cookie.secret = 'very secret'
+cookie.domain = 'app.com'
+cookie.path = '/'
+```
+
+config.json
+
+```json
+{
+    "timezone": "Asia/Shanghai",
+    "debug": true,
+    "cookie": {
+        "secret": "very secret",
+        "domain": 'app.com',
+        "path": '/'
+    }
+}
+```
+
+```
+$app = new App('文件名');
+```
+
 ### 中间件
 
 中间件是打通`输入`和`输出`的中间链路，可以随意发挥来实现一个中间件
@@ -147,19 +193,26 @@ $app->configure(function($mode) use ($app){
 
 ### 控制器
 
-可以使用Closure的方式实现控制器，也可以使用类继承的方式来创造一个控制器
+可以使用Closure的方式实现控制器
 
 ```php
-class Api extend \Pagon\Rest {
+$app->get('/api/ping', function($req, $res) {
+    $res->end('pong');
+});
+```
+
+也可以使用类继承的方式来创造一个控制器
+
+```php
+use Pagon\Rest
+
+class Ping extend Rest {
     public function get($req, $res) {
-        $res->json(array(
-            'error' => 0,
-            'message' => 'OK'
-        ));
+        $res->end('pong');
     }
 }
 
-$app->get('/api', 'Api');
+$app->get('/api/ping', 'Ping');
 ```
 
 ### 事件
