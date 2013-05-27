@@ -82,7 +82,7 @@ $app->get('cookie.domain');
 
 config.php
 
-```
+```php
 return array(
     'timezone' => 'Asia/Shanghai',
     'debug' =>  true,
