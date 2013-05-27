@@ -24,7 +24,7 @@ Code coverage	: 38%
 - 标准，基于[PSR规范](https://github.com/hfcorriez/fig-standards)开发
 - 性能，效率上优于目前所有主流框架
 - 事件，基于事件打造，随时随地用事件驱动
-- 现代，支持主流的现代应用开发：Web/Cli，Restful，Xml/Yaml/Json/Ini，Jade/Twig?
+- 现代，支持主流的现代应用开发：Web/Cli, Restful, Xml/Yaml/Json/Ini, Jade/Twig?, DI
 
 ## 安装
 
