@@ -1,12 +1,15 @@
 ## Pagon框架? 
 
-
 [![Build Status](https://travis-ci.org/hfcorriez/pagon.png)](https://travis-ci.org/hfcorriez/pagon)
+
+邮件列表: [https://groups.google.com/d/forum/pagonframework](https://groups.google.com/d/forum/pagonframework)
 
 ```
 Test cases		: 42
 Code coverage	: 38%
 ```
+
+;) 单元测试还在努力ing...
 
 - 简单高效的现代应用框架，使用方式类似Ruby的[Sinatra](http://www.sinatrarb.com)或Node的[Express.js](http://expressjs.com)
 - 致力于打造一个拥有最小化核心组件且尽量不依赖第三方库的简单、智能和高效的框架。
@@ -23,14 +26,14 @@ Code coverage	: 38%
 - 标准，基于[PSR规范](https://github.com/hfcorriez/fig-standards)开发
 - 性能，效率上优于目前所有主流框架
 - 事件，基于事件打造，随时随地用事件驱动
-- 现代，支持主流的现代应用开发：Web/Cli，Restful，Xml/Yaml/Json/Ini，Jade/Twig?
+- 现代，支持主流的现代应用开发：Web/Cli, Restful, Xml/Yaml/Json/Ini, Jade/Twig?, DI
 
 ## 安装
 
 已有项目
 
 ```
-composer.phar require pagon/app=0.5.2
+composer.phar require pagon/pagon=0.6.2
 ```
 
 新项目（使用[`pagon/app`](https://github.com/pagon/app)skelton创建应用）
@@ -169,7 +172,7 @@ $app->on('run', function(){
 	xhprof_enabled();
 });
 
-$app->on('shutdown', function(){
+$app->on('exit', function(){
 	// Get profiler data
 	$profiler_data = xhprof_disabled();
 	// Save it
