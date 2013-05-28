@@ -230,6 +230,21 @@ $app->get('/api/ping', 'Ping');
 
 ### 事件
 
+事件列表
+
+```
+- App
+  - run       应用运行前
+  - bundle    Bundle加载前
+  - bundle.x  x Bundle加载前
+  - middlware 中间件加载前
+  - flush     输出前
+  - end       输出后
+  - exit      退出时（错误也会触发）
+  - crash     程序异常无法运行
+  - error     未捕获错误
+```
+
 所有对象都基于事件实现，可以轻松在任何对象上绑定事件
 
 ```php
@@ -245,7 +260,7 @@ $app->on('exit', function(){
 });
 ```
 
-### 依赖容器(DI)
+### 依赖容器(Denpendency Injector Container)
 
 所有对象都基于依赖容器，都可以实现依赖注入。
 
