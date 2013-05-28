@@ -26,7 +26,7 @@ Code coverage	: 38%
 - 标准，基于[PSR规范](https://github.com/hfcorriez/fig-standards)开发
 - 性能，效率上优于目前所有主流框架
 - 事件，基于事件打造，随时随地用事件驱动
-- 现代，支持主流的现代应用开发：Web/Cli, Restful, Xml/Yaml/Json/Ini, Jade/Twig?, DI
+- 现代，支持主流的现代应用开发：Web/Cli, Restful, Xml/Yaml/Json/Ini, Jade/Twig?, Dependency Injector
 
 ## 安装
 
@@ -51,14 +51,13 @@ $app = new App();
 
 // 使用匿名函数实现控制器
 $app->get('/', function($req, $res){
-   $res->write('Hello world');
+   $res->end('Hello world');
 });
-
-// 路由映射到类控制器上
-$app->post('/submit', '\Route\Submit');
 ```
 
 ### 配置
+
+直接传递配置创建应用
 
 ```php
 $app = new App(array(
@@ -78,7 +77,7 @@ $app->set('cookie.domain', 'abc.com');
 $app->get('cookie.domain');
 ```
 
-通过文件加载配置，支持`xml`, `json`, `yaml`, `ini`和`php`
+通过文件加载配置，支持`json`, `yaml`, `ini`和`php`(`xml`也会尽快支持)，例子：
 
 config.php
 
@@ -119,6 +118,19 @@ config.json
     }
 }
 ```
+
+config.yaml
+
+```yaml
+timezone: Asia/Shanghai
+debug: true
+cookie:
+    secret: "very secret"
+    domian: "app.com"
+    path: "/"
+```
+
+使用配置
 
 ```
 $app = new App('文件名');
