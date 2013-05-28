@@ -1,6 +1,7 @@
 ## Pagon框架? 
 
 [![Build Status](https://travis-ci.org/hfcorriez/pagon.png)](https://travis-ci.org/hfcorriez/pagon)
+[![Build Status](https://drone.io/github.com/hfcorriez/pagon/status.png)](https://drone.io/github.com/hfcorriez/pagon/latest)
 
 邮件列表: [https://groups.google.com/d/forum/pagonframework](https://groups.google.com/d/forum/pagonframework)
 
