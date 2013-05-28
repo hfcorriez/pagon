@@ -9,13 +9,14 @@ Test cases		: 42
 Code coverage	: 38%
 ```
 
-;) 单元测试还在努力ing...
+> ;) 单元测试还在努力ing...
 
-- 简单高效的现代应用框架，使用方式类似Ruby的[Sinatra](http://www.sinatrarb.com)或Node的[Express.js](http://expressjs.com)
-- 致力于打造一个拥有最小化核心组件且尽量不依赖第三方库的简单、智能和高效的框架。
+
+- 简单高效的现代应用框架。使用类似Ruby的[Sinatra](http://www.sinatrarb.com)或Node的[Express.js](http://expressjs.com)
+- 致力于打造一个拥有最小化核心组件且尽量不依赖粗糙三方库的简单、智能和高效的框架。
 - 高效不只是开发效率，还有执行效率。
-- Cli下的开发并且做了很多优化。
-- `只需要一套框架，能快速完成一套高效Web应用的开发！`
+- 不只WEB，CLI下的开发也做了很多优化。
+- 只需要一套框架，便能快速完成一套高效Web应用的开发！
 - `Write less, Do more!`
 
 ## 特性
