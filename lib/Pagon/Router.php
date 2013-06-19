@@ -2,10 +2,8 @@
 
 namespace Pagon;
 
-use Pagon\Middleware;
 use Pagon\Exception\Pass;
 use Pagon\Exception\Stop;
-
 
 /**
  * Router
