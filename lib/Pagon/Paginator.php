@@ -180,8 +180,8 @@ class Paginator extends Fiber
                 }
                 return $this->url($url, $pattern);
             } else if (strpos($pattern, "/") !== false) { //Friendly url : /page/123
+                list($segment, $query) = explode("?", $url, 2);
                 if (strpos($url, "?") !== false) {
-                    list($segment, $query) = explode("?", $url, 2);
                     if (preg_match("/\/$/", $segment)) {
                         $url = $segment . (preg_replace("/^\//", "", $pag_));
                         $url .= ((preg_match("/\/$/", $pag_)) ? "" : "/") . "?{$query}";
@@ -294,7 +294,7 @@ class Paginator extends Fiber
     /**
      * Return the offset for sql queries, specially
      *
-     * @return START,LIMIT
+     * @return string START,LIMIT
      *
      * @tip  : SQL tip. It's best to do two queries one with SELECT COUNT(*) FROM tableName WHERE X
      *       set the settotal()
@@ -492,7 +492,7 @@ class Paginator extends Fiber
      */
     protected function link($url, $txt)
     {
-        return "<a href=\"{$url}\">{$txt}</a>";
+        return '<a href="' . $url . '">' . $txt . '</a>';
     }
 
     /**
@@ -513,7 +513,7 @@ class Paginator extends Fiber
     }
 
     /**
-     * Rendor to HTML
+     * Render to HTML
      *
      * @return string
      */
