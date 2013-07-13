@@ -67,7 +67,7 @@ class Html
      */
     public static function a($src, $text, array $attributes = array())
     {
-        return self::element('a', $text, array('src' => Url::to($src)) + $attributes);
+        return self::dom('a', $text, array('src' => Url::to($src)) + $attributes);
     }
 
     /**
@@ -79,7 +79,7 @@ class Html
      */
     public static function script($src, array $attributes = array())
     {
-        return self::element('script', '', ($src ? array('src' => Url::asset($src)) : array()) + $attributes + array('type' => 'text/javascript'));
+        return self::dom('script', '', ($src ? array('src' => Url::asset($src)) : array()) + $attributes + array('type' => 'text/javascript'));
     }
 
     /**
@@ -92,7 +92,7 @@ class Html
      */
     public static function link($src, $rel = 'stylesheet', array $attributes = array())
     {
-        return self::element('link', array('rel' => $rel, 'href' => Url::asset($src)) + $attributes);
+        return self::dom('link', array('rel' => $rel, 'href' => Url::asset($src)) + $attributes);
     }
 
     /**
@@ -116,7 +116,7 @@ class Html
      */
     public static function img($src, array $attributes = array())
     {
-        return self::element('img', array('src' => Url::asset($src)) + $attributes);
+        return self::dom('img', array('src' => Url::asset($src)) + $attributes);
     }
 
     /**
@@ -138,7 +138,7 @@ class Html
      * @param array  $attributes
      * @return string
      */
-    public static function element($name, $text, array $attributes = array())
+    public static function dom($name, $text, array $attributes = array())
     {
         $attr = '';
         foreach ($attributes as $k => $v) {

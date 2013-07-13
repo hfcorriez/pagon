@@ -2,6 +2,7 @@
 
 use Pagon\App;
 use Pagon\Cache;
+use Pagon\Html;
 use Pagon\Paginator;
 use Pagon\Url;
 
@@ -40,6 +41,18 @@ function post($key, $default = null)
 }
 
 /**
+ * Get cookie
+ *
+ * @param string $key
+ * @param mixed  $default
+ * @return mixed
+ */
+function cookie($key, $default = null)
+{
+    return App::self()->input->cookie($key, $default);
+}
+
+/**
  * Build url
  *
  * @param string $path
@@ -75,6 +88,16 @@ function assert_url($path, array $query = null, $full = false)
 function current_url(array $query = null, $full = false)
 {
     return Url::current($query, $full);
+}
+
+/**
+ * Get site url
+ *
+ * @return mixed
+ */
+function site_url()
+{
+    return Url::site();
 }
 
 /**
@@ -185,6 +208,19 @@ function local($key, $value = null)
 function render($path, array $data = null, array $options = array())
 {
     App::self()->render($path, $data, $options);
+}
+
+/**
+ * Compile template
+ *
+ * @param string $path
+ * @param array  $data
+ * @param array  $options
+ * @return \Pagon\View
+ */
+function compile($path, array $data = null, array $options = array())
+{
+    return App::self()->output->compile($path, $data, $options);
 }
 
 /*****************************************************
@@ -302,4 +338,69 @@ function human_size($size)
 {
     $units = array('Bytes', 'KiB', 'MiB', 'GiB', 'TiB', 'PiB', 'EiB');
     return @round($size / pow(1024, ($i = floor(log($size, 1024)))), 2) . ' ' . $units[$i];
+}
+
+
+/*****************************************************
+ * Html functions
+ *****************************************************/
+
+/**
+ * Create dom element
+ *
+ * @param string $name
+ * @param string $text
+ * @param array  $attributes
+ * @return string
+ */
+function html($name, $text, array $attributes = array())
+{
+    return Html::dom($name, $text, $attributes);
+}
+
+/**
+ * Quick function for entitles
+ *
+ * @param string $string
+ * @return string
+ */
+function e($string)
+{
+    return Html::entities($string);
+}
+
+/**
+ * Create link
+ *
+ * @param string $src
+ * @param string $text
+ * @param array  $attributes
+ * @return string
+ */
+function a($src, $text, array $attributes = array())
+{
+    return Html::a($src, $text, $attributes);
+}
+
+/**
+ * Create style link
+ *
+ * @param string $src
+ * @return string
+ */
+function style($src)
+{
+    return Html::link($src);
+}
+
+/**
+ * Create script link
+ *
+ * @param string $src
+ * @param array  $attributes
+ * @return string
+ */
+function script($src, array $attributes = array())
+{
+    return Html::script($src, $attributes);
 }
