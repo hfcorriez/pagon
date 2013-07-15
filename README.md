@@ -57,6 +57,71 @@ $app->get('/', function($req, $res){
 });
 ```
 
+### 路由
+
+标准路由
+
+```php
+$app->get('/auth/:type', function ($req, $res) {
+    // Use key to get param
+    $type = $req->params['type'];
+
+    // Use index to get param
+    $type = $req->params[0];
+
+    // Todo something...
+});
+```
+
+模糊路由
+
+```php
+$app->get('/see/*', function() {
+    // Use index to get param
+    $what = $req->params[0];
+
+    // Todo something...
+});
+```
+
+正则路由
+
+```php
+$app->get('^\/([\d]{4})\/([\d]{2})/([\d]{2})$', function ($req, $res) {
+    $year = $req->params[0];
+    $month = $req->params[1];
+    $day = $req->params[2];
+
+    // Todo something...
+});
+```
+
+命名路由
+
+```php
+$app->get('/user/:id', function ($req, $res) {
+    $my_url = Url::route('user', array('id' => $req->params['id']));
+
+    // Todo something...
+})->name('user');
+```
+
+路由参数
+
+```php
+$app->get('/abc', function () {
+    // Todo something
+})->defaults(array('name' => 'abc'));
+```
+
+路由规则
+
+```php
+$app->get('/archive/:year', function() {
+    // Todo something
+})->rules(array('year' => '[\d]{4}'));
+```
+
 ### 配置
 
 直接传递配置创建应用
