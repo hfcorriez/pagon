@@ -7,7 +7,7 @@ use Pagon\Exception\Stop;
 
 /**
  * Router
- * parse andw manage the Route
+ * parse and manage the Route
  *
  * @package Pagon
  */
