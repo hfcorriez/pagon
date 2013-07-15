@@ -40,7 +40,7 @@ class Router extends Middleware
             $path = array_shift($_args);
             $route = $_args;
         }
-        $this->app->routes[$path] = $route;
+        $this->app->routes[$path] = (array)$route;
         return $this;
     }
 
@@ -65,11 +65,34 @@ class Router extends Middleware
     public function name($name, $path = null)
     {
         if ($path === null) {
-            $path = array_keys($this->app->routes);
-            $path = end($path);
+            $path = $this->lastPath();
         }
 
         $this->app->names[$name] = $path;
+        return $this;
+    }
+
+    /**
+     * Set default parameters
+     *
+     * @param array $defaults
+     * @return $this
+     */
+    public function defaults($defaults = array())
+    {
+        $this->app->routes[$this->lastPath()]['defaults'] = $defaults;
+        return $this;
+    }
+
+    /**
+     * Set rules for parameters
+     *
+     * @param array $rules
+     * @return $this
+     */
+    public function rules($rules = array())
+    {
+        $this->app->routes[$this->lastPath()]['rules'] = $rules;
         return $this;
     }
 
@@ -101,8 +124,22 @@ class Router extends Middleware
 
         // Loop routes for parse and dispatch
         foreach ($routes as $p => $route) {
+            $rules = $defaults = array();
+
+            // Lookup rules
+            if (isset($route['rules'])) {
+                $rules = $route['rules'];
+                unset($route['rules']);
+            }
+
+            // Lookup defaults
+            if (isset($route['defaults'])) {
+                $defaults = $route['defaults'];
+                unset($route['defaults']);
+            }
+
             // Try to parse the params
-            if (($param = self::match($this->options['path'], $p)) !== false) {
+            if (($param = self::match($this->options['path'], $p, $rules, $defaults)) !== false) {
                 try {
                     $param && $this->app->param($param);
 
@@ -227,14 +264,27 @@ class Router extends Middleware
     }
 
     /**
+     * Last path of routes
+     *
+     * @return mixed
+     */
+    protected function lastPath()
+    {
+        $path = array_keys($this->app->routes);
+        return end($path);
+    }
+
+    /**
      * Parse the route
      *
      * @static
-     * @param $path
-     * @param $route
+     * @param string $path
+     * @param string $route
+     * @param array  $rules
+     * @param array  $defaults
      * @return array|bool
      */
-    protected static function match($path, $route)
+    protected static function match($path, $route, $rules = array(), $defaults = array())
     {
         $param = false;
 
@@ -245,14 +295,14 @@ class Router extends Middleware
             }
         } else {
             // Try match
-            if (preg_match(self::pathToRegex($route), $path, $matches)) {
+            if (preg_match(self::pathToRegex($route, $rules), $path, $matches)) {
                 array_shift($matches);
                 $param = $matches;
             }
         }
 
         // When complete the return
-        return $param;
+        return $param === false ? false : ($defaults + $param);
     }
 
     /**
@@ -260,9 +310,10 @@ class Router extends Middleware
      *
      * @static
      * @param string $path
+     * @param array  $rules
      * @return string
      */
-    protected static function pathToRegex($path)
+    protected static function pathToRegex($path, $rules = array())
     {
         if ($path[1] !== '^') {
             $path = str_replace(array('/'), array('\\/'), $path);
@@ -270,8 +321,14 @@ class Router extends Middleware
                 // As regex
                 $path = '/' . $path . '/';
             } elseif (strpos($path, ':')) {
-                // Need replace
-                $path = '/^' . preg_replace('/(?<!\\\\):([a-zA-Z0-9]+)/', '(?<$1>[^\/]+?)', $path) . '\/?$/';
+                if (!$rules) {
+                    // Need replace
+                    $path = '/^' . preg_replace('/(?<!\\\\):([a-zA-Z0-9]+)/', '(?<$1>[^\/]+?)', $path) . '\/?$/';
+                } else {
+                    $path = '/^' . preg_replace_callback('/(?<!\\\\):([a-zA-Z0-9]+)/', function ($match) use ($rules) {
+                            return '(?<' . $match[1] . '>' . (isset($rules[$match[1]]) ? $rules[$match[1]] : '[^\/]+') . '?)';
+                        }, $path) . '\/?$/';
+                }
             } else {
                 // Full match
                 $path = '/^' . $path . '\/?$/';
