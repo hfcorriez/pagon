@@ -2,7 +2,7 @@
 use Pagon\Cli;
 use Pagon\Debug;
 
-function console_output($text, $option, $length = 80)
+function console_output($text, $option, $length = 50)
 {
     if (is_array($text)) {
         foreach ($text as $i => $t) {
@@ -10,7 +10,12 @@ function console_output($text, $option, $length = 80)
         }
         return join(PHP_EOL, $text);
     }
-    return Cli::text('  ' . str_pad(substr($text, 0, $length), $length, ' '), $option);
+
+    if (strlen($text) <= $length) {
+        return Cli::text('  ' . str_pad($text, $length, ' ') . ' ', $option);
+    } else {
+        return console_output(str_split($text, $length), $option, $length);
+    }
 }
 
 ?>
@@ -20,7 +25,7 @@ function console_output($text, $option, $length = 80)
         array('color' => 'white', 'background' => 'red')
     ) . PHP_EOL;
 
-echo  console_output("$file [$line]", array('color' => 'purple', 'background' => 'white')) . PHP_EOL;
+echo console_output("$file [$line]", array('color' => 'purple', 'background' => 'white')) . PHP_EOL;
 $source = PHP_EOL . Debug::source($file, $line);
 $source = str_replace(array('<span class="line">', '</span>', '</code></pre>', '<pre class="source"><code>', '<span class="number">'), '', $source);
 $source = htmlspecialchars_decode($source);
