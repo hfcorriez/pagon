@@ -13,6 +13,13 @@ class View
     const _CLASS_ = __CLASS__;
 
     /**
+     * Is Rendering now?
+     *
+     * @var bool
+     */
+    public static $rendering = false;
+
+    /**
      * @var string File path
      */
     protected $path;
@@ -107,16 +114,24 @@ class View
     {
         $engine = $this->options['engine'];
 
+        // Mark rendering flag
+        self::$rendering = true;
+
         if (!$engine) {
             if ($this->data) {
                 extract((array)$this->data);
             }
             ob_start();
             include($this->options['dir'] . ($this->path{0} == '/' ? '' : '/') . $this->path);
-            return ob_get_clean();
+            $html = ob_get_clean();
+        } else {
+            $html = $engine->render($this->path, $this->data, $this->options['dir']);
         }
 
-        return $engine->render($this->path, $this->data, $this->options['dir']);
+        // Release rendering flag
+        self::$rendering = false;
+
+        return $html;
     }
 
     /**

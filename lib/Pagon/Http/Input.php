@@ -6,7 +6,8 @@ use Pagon\App;
 use Pagon\EventEmitter;
 use Pagon\Exception\Pass;
 use Pagon\Config;
-
+use Pagon\Html;
+use Pagon\View;
 
 /**
  * Http Input
@@ -508,7 +509,10 @@ class Input extends EventEmitter
      */
     public function query($key, $default = null)
     {
-        return isset($this->injectors['query'][$key]) ? $this->injectors['query'][$key] : $default;
+        if (isset($this->injectors['query'][$key])) {
+            return $this->app->enabled('html_auto_encode') && View::$rendering ? Html::entities($this->injectors['query'][$key]) : $this->injectors['query'][$key];
+        }
+        return $default;
     }
 
     /**
@@ -520,8 +524,10 @@ class Input extends EventEmitter
      */
     public function data($key, $default = null)
     {
-        return isset($this->injectors['data'][$key]) ? $this->injectors['data'][$key] : $default;
-
+        if (isset($this->injectors['data'][$key])) {
+            return $this->app->enabled('html_auto_encode') && View::$rendering ? Html::entities($this->injectors['data'][$key]) : $this->injectors['data'][$key];
+        }
+        return $default;
     }
 
     /**

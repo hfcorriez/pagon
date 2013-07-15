@@ -65,30 +65,31 @@ class App extends EventEmitter
      * @var Config
      */
     protected $injectors = array(
-        'mode'       => 'develop',
-        'debug'      => false,
-        'views'      => false,
-        'error'      => true,
-        'routes'     => array(),
-        'names'      => array(),
-        'buffer'     => true,
-        'timezone'   => 'UTC',
-        'charset'    => 'UTF-8',
-        'autoload'   => null,
-        'alias'      => array(),
-        'namespaces' => array(),
-        'engines'    => array(
+        'mode'             => 'develop',
+        'debug'            => false,
+        'views'            => false,
+        'error'            => true,
+        'routes'           => array(),
+        'names'            => array(),
+        'buffer'           => true,
+        'timezone'         => 'UTC',
+        'charset'          => 'UTF-8',
+        'autoload'         => null,
+        'alias'            => array(),
+        'namespaces'       => array(),
+        'engines'          => array(
             'jade' => 'Jade'
         ),
-        'errors'     => array(
+        'errors'           => array(
             '404'       => array(404, 'Location not found'),
             'exception' => array(500, 'Error occurred'),
             'crash'     => array(500, 'Application crash')
         ),
-        'stacks'     => array(),
-        'mounts'     => array(),
-        'bundles'    => array(),
-        'locals'     => array(),
+        'stacks'           => array(),
+        'mounts'           => array(),
+        'bundles'          => array(),
+        'locals'           => array(),
+        'html_auto_encode' => true,
     );
 
     /**
