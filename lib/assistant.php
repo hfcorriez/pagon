@@ -66,6 +66,19 @@ function url($path, array $query = null, $full = false)
 }
 
 /**
+ * Build route url
+ *
+ * @param string $name
+ * @param array  $params
+ * @param array  $query
+ * @param bool   $full
+ */
+function route_url($name, array $params, array $query = null, $full = false)
+{
+    return Url::route($name, $params, $query, $full);
+}
+
+/**
  * Get assert url
  *
  * @param string $path
