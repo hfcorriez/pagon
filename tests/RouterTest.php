@@ -22,6 +22,6 @@ class RouterTest extends AppTest
         };
         $this->router->set('/', $closure);
 
-        $this->assertEquals($closure, $this->router->get('/'));
+        $this->assertEquals(array($closure), $this->router->get('/'));
     }
 }
