@@ -23,7 +23,7 @@ function app()
  * @param string $default
  * @return mixed
  */
-function get($key, $default = null)
+function query($key, $default = null)
 {
     return App::self()->input->query($key, $default);
 }
@@ -35,7 +35,7 @@ function get($key, $default = null)
  * @param string $default
  * @return mixed
  */
-function post($key, $default = null)
+function data($key, $default = null)
 {
     return App::self()->input->data($key, $default);
 }
