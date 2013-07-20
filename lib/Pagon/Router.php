@@ -321,6 +321,8 @@ class Router extends Middleware
                 // As regex
                 $path = '/' . $path . '/';
             } elseif (strpos($path, ':')) {
+                $path = str_replace(array('(', ')'), array('(?:', ')?'), $path);
+
                 if (!$rules) {
                     // Need replace
                     $path = '/^' . preg_replace('/(?<!\\\\):([a-zA-Z0-9]+)/', '(?<$1>[^\/]+?)', $path) . '\/?$/';

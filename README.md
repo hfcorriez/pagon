@@ -106,7 +106,7 @@ $app->get('/user/:id', function ($req, $res) {
 })->name('user');
 ```
 
-路由参数
+路由参数默认值
 
 ```php
 $app->get('/abc', function () {
@@ -114,12 +114,23 @@ $app->get('/abc', function () {
 })->defaults(array('name' => 'abc'));
 ```
 
-路由规则
+路由参数规则
 
 ```php
 $app->get('/archive/:year', function() {
     // Todo something
 })->rules(array('year' => '[\d]{4}'));
+```
+
+可选参数（只适用标准路由模式）
+
+`可选参数配合默认值使用会更方便`
+
+```php
+$app->get('/auth(/:type)', function ($req, $res) {
+    // Use key to get param
+    $type = $req->params['type'];
+})->defaults(array('type' => 'weibo'));
 ```
 
 ### 配置
