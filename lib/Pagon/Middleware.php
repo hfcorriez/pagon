@@ -50,17 +50,23 @@ abstract class Middleware extends EventEmitter
      *
      * @param string|\Closure $route
      * @param array           $options
+     * @throws \InvalidArgumentException
      * @return bool|Route
      */
     public static function build($route, $options = array())
     {
-        if (is_string($route) && is_subclass_of($route, __CLASS__, true)) {
-            // Only Class name
-            return new $route($options);
-        } elseif (is_object($route)) {
-            return $route;
+        if (is_object($route)) return $route;
+
+        if (!is_string($route)) throw new \InvalidArgumentException('The parameter $route need string');
+
+        // Try to use custom parser
+        if (!is_subclass_of($class = $route, __CLASS__, true)
+            && !is_subclass_of($class = __NAMESPACE__ . "\\Middleware\\" . $route, __CLASS__, true)
+        ) {
+            throw new \InvalidArgumentException("Non-exists route class '$route'");
         }
-        return false;
+
+        return new $class($options);
     }
 
     /**
