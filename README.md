@@ -235,7 +235,6 @@ $app->add(function($req, $res, $next) {
 - HttpMethods       完整的Http方法支持
 - HttpBasicAuth     Http Basic验证支持
 - I18N              多语言支持
-- Logger            日志支持
 - PageCache         页面缓存支持
 - Session           Session支持，包括（Cookie, Redis, Memcache）
 - MethodOveride     Http方法重载
