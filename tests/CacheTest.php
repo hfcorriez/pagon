@@ -43,7 +43,7 @@ class CacheTest extends \PHPUnit_Framework_TestCase
 
         $this->assertInstanceOf('Pagon\Cache\File', $user_cache);
 
-        $try_new_cache = Cache::dispense('user');
+        $try_new_cache = Cache::dispense('cache.user');
 
         $this->assertEquals($try_new_cache, $user_cache);
     }
