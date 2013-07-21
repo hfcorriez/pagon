@@ -39,7 +39,7 @@ class CacheTest extends \PHPUnit_Framework_TestCase
 
     public function testDispense()
     {
-        $user_cache = Cache::dispense('user');
+        $user_cache = Cache::dispense('cache.user');
 
         $this->assertInstanceOf('Pagon\Cache\File', $user_cache);
 
@@ -51,6 +51,6 @@ class CacheTest extends \PHPUnit_Framework_TestCase
     public function testDispenseNonExists()
     {
         $this->setExpectedException('InvalidArgumentException');
-        $user_cache = Cache::dispense('user1');
+        $user_cache = Cache::dispense('cache.user1');
     }
 }
