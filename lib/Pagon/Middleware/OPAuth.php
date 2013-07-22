@@ -9,20 +9,24 @@ class OPAuth extends Middleware
 {
     // Some options
     protected $options = array(
-        'login'              => '/login',
-        'callback'           => '/login/callback',
+        'login_url'          => '/login',
+        'callback_url'       => '/login/callback',
         'callback_transport' => 'post'
     );
 
     /**
      * @param array $options
+     * @throws \InvalidArgumentException
      */
     public function __construct(array $options = array())
     {
+        if (!isset($options['callback'])) {
+            throw new \InvalidArgumentException('OPAuth middleware need "callback" option');
+        }
+
         parent::__construct($options);
 
-        $this->options['path'] = $this->options['login'] . '/';
-        $this->options['callback_url'] = $this->options['callback'];
+        $this->options['path'] = $this->options['login_url'] . '/';
     }
 
     /**
@@ -44,18 +48,17 @@ class OPAuth extends Middleware
             $failureReason = null;
 
             if (isset($response['error'])) {
-                $that->emit('error', $response['error'], $response);
+                $failureReason = $response['error'];
             } else {
                 if (empty($response['auth']) || empty($response['timestamp']) || empty($response['signature']) || empty($response['auth']['provider']) || empty($response['auth']['uid'])) {
-                    $that->emit('error', 'Missing key auth response components', $response);
+                    $failureReason = 'Missing key auth response components';
                 } elseif (!$opauth->validate(sha1(print_r($response['auth'], true)), $response['timestamp'], $response['signature'], $failureReason)) {
-                    $that->emit('error', $failureReason, $response);
-                } else {
-                    $that->emit('success', $response);
                 }
             }
 
-            $req->opauth = $response;
+            $req->auth = $response;
+            $req->auth_success = !!$failureReason;
+            $req->auth_error_message = $failureReason;
             $next();
         };
 
@@ -63,9 +66,9 @@ class OPAuth extends Middleware
             new OPAuthService($options);
         };
 
-        $app->post($options['callback'], $callback, $options['route']);
-        $app->get($options['login'] . '/:strategy', $init);
-        $app->all($options['login'] . '/:strategy/:return', $init);
+        $app->post($options['callback_url'], $callback, $options['callback']);
+        $app->get($options['login_url'] . '/:strategy', $init);
+        $app->all($options['login_url'] . '/:strategy/:return', $init);
 
         $this->next();
     }
