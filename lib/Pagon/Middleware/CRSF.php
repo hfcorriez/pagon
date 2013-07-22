@@ -17,8 +17,6 @@ class CRSF extends Middleware
 
     /**
      * Call
-     *
-     * @return bool|void
      */
     public function call()
     {
@@ -58,22 +56,24 @@ class CRSF extends Middleware
 
         $this->next();
 
-        if ($this->options['form']) {
+        if ($this->options['form'] && strpos($this->output->contentType(), 'html')) {
             // Check if buffer start
-            if ($this->app->buffer) {
-                $body = ob_get_clean();
-            } else {
-                $body = $this->output->body;
+            if ($this->app->enabled('buffer')) {
+                $this->output->write(ob_get_clean());
             }
 
-            if (strpos($body, '</form>')) {
-                $this->output->body = preg_replace('/.*?<\/form>/', '<input type="hidden" name="' . $this->options['name'] . '" value="' . $this->encodeToken() . '" /></form>', $body);
-            } else {
-                $this->output->body = $body;
+            if (strpos($this->output->body, '</form>')) {
+                $this->output->body = preg_replace('/.*?<\/form>/', '<input type="hidden" name="' . $this->options['name'] . '" value="' . $this->encodeToken() . '" /></form>', $this->output->body);
             }
         }
     }
 
+    /**
+     * Decode token
+     *
+     * @param $token
+     * @return array|bool
+     */
     protected function decodeToken($token)
     {
         if ($value = $this->app->cryptor->decrypt($token)) {
@@ -82,18 +82,26 @@ class CRSF extends Middleware
         return false;
     }
 
+    /**
+     * Encode token
+     *
+     * @return string
+     */
     protected function encodeToken()
     {
         return $this->app->cryptor->encrypt($this->options['sign'] . '||' . time());
     }
 
+    /**
+     * Callback the route or response the html
+     */
     protected function callback()
     {
         if (isset($this->options['callback'])) {
             $this->options['callback']($this->input, $this->output);
         } else {
             $this->output->status = 403;
-            $this->output->end('<html><head><title></title></head><body><h2>Security Check Forbidden!</h2></body></html>');
+            $this->output->end('<html><head><title></title></head><body><h2>Security Check Fail!</h2></body></html>');
         }
     }
 }
