@@ -81,9 +81,9 @@ class App extends EventEmitter
             'jade' => 'Jade'
         ),
         'errors'     => array(
-            '404'       => array(404, 'Location not found'),
+            '404'       => array(404, 'Request path not found'),
             'exception' => array(500, 'Error occurred'),
-            'crash'     => array(500, 'Application crash')
+            'crash'     => array(500, 'Application crashed')
         ),
         'stacks'     => array(),
         'mounts'     => array(),
