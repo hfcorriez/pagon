@@ -8,12 +8,11 @@ class CRSF extends Middleware
 {
     // Some options
     protected $options = array(
-        'form'        => true,
-        'refer'       => true,
-        'form_name'   => '__ct',
-        'cookie_name' => '__st',
-        'sign'        => 'fu*kCrSF',
-        'expires'     => 3600
+        'form'    => true,
+        'refer'   => true,
+        'name'    => '__ct',
+        'sign'    => 'fu*kCrSF',
+        'expires' => 3600
     );
 
     /**
@@ -24,7 +23,7 @@ class CRSF extends Middleware
     public function call()
     {
         if ($this->input->isPost()) {
-            $token = $this->input->data($this->options['form_name']);
+            $token = $this->input->data($this->options['name']);
             if (!$token
                 || !($value = $this->decodeToken($token))
                 || $value[0] != $this->options['sign']
@@ -50,7 +49,7 @@ class CRSF extends Middleware
         }
 
         if (strpos($body, '</form>')) {
-            $this->output->body = preg_replace('/.*?<\/form>/', '<input type="hidden" name="' . $this->options['form_name'] . '" value="' . $this->encodeToken() . '" /></form>', $body);
+            $this->output->body = preg_replace('/.*?<\/form>/', '<input type="hidden" name="' . $this->options['name'] . '" value="' . $this->encodeToken() . '" /></form>', $body);
         } else {
             $this->output->body = $body;
         }
