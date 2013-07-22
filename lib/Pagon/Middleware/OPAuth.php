@@ -57,7 +57,7 @@ class OPAuth extends Middleware
             }
 
             $req->auth = $response;
-            $req->auth_success = !!$failureReason;
+            $req->auth_success = !$failureReason;
             $req->auth_error_message = $failureReason;
             $next();
         };
