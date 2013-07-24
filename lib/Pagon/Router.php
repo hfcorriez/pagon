@@ -21,6 +21,11 @@ class Router extends Middleware
     public $app;
 
     /**
+     * @var string Auto prefix for route
+     */
+    public $auto_prefix = '';
+
+    /**
      * @var \Closure
      */
     protected $automatic;
@@ -176,8 +181,9 @@ class Router extends Middleware
      */
     public function run($route)
     {
-        return $this->pass($route, function ($r) {
-            return Route::build($r);
+        $auto_prefix = $this->auto_prefix;
+        return $this->pass($route, function ($r) use ($auto_prefix) {
+            return Route::build(is_string($r) ? $auto_prefix . $r : $r);
         });
     }
 
