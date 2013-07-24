@@ -341,7 +341,7 @@ class App extends EventEmitter
      */
     public function add($path, $middleware = null, $options = array())
     {
-        if ($path instanceof Middleware || is_string($path) && $path{0} != '/') {
+        if ($path instanceof Middleware || is_string($path) && $path{0} != '/' || $path instanceof \Closure) {
             // If not path
             $options = (array)$middleware;
             $middleware = $path;
