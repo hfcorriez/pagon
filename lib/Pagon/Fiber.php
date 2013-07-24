@@ -220,10 +220,12 @@ class Fiber implements \ArrayAccess
      * Append the multiple injectors
      *
      * @param array $injectors
+     * @return $this
      */
     public function append(array $injectors)
     {
         $this->injectors = $injectors + $this->injectors;
+        return $this;
     }
 
     /**

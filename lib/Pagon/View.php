@@ -8,7 +8,7 @@ namespace Pagon;
  *
  * @package Pagon
  */
-class View
+class View extends EventEmitter
 {
     const _CLASS_ = __CLASS__;
 
@@ -23,11 +23,6 @@ class View
      * @var string File path
      */
     protected $path;
-
-    /**
-     * @var array The data for view
-     */
-    protected $data = array();
 
     /**
      * @var array
@@ -66,7 +61,7 @@ class View
         }
 
         // Set data
-        $this->data = $data;
+        parent::__construct($data);
     }
 
     /**
@@ -101,8 +96,7 @@ class View
      */
     public function set(array $array = array())
     {
-        $this->data = $array + $this->data;
-        return $this;
+        return $this->append($array);
     }
 
     /**
@@ -117,64 +111,25 @@ class View
         // Mark rendering flag
         self::$rendering = true;
 
+        $this->emit('render');
+
         if (!$engine) {
-            if ($this->data) {
-                extract((array)$this->data);
+            if ($this->injectors) {
+                extract((array)$this->injectors);
             }
             ob_start();
             include($this->options['dir'] . ($this->path{0} == '/' ? '' : '/') . $this->path);
             $html = ob_get_clean();
         } else {
-            $html = $engine->render($this->path, $this->data, $this->options['dir']);
+            $html = $engine->render($this->path, $this->injectors, $this->options['dir']);
         }
+
+        $this->emit('rendered');
 
         // Release rendering flag
         self::$rendering = false;
 
         return $html;
-    }
-
-    /**
-     * Assign value for view
-     *
-     * @param $key
-     * @param $value
-     */
-    public function __set($key, $value)
-    {
-        $this->data[$key] = $value;
-    }
-
-    /**
-     * Get assign value for view
-     *
-     * @param $key
-     * @return mixed
-     */
-    public function __get($key)
-    {
-        return isset($this->data[$key]) ? $this->data[$key] : null;
-    }
-
-    /**
-     * Is-set data?
-     *
-     * @param $key
-     * @return bool
-     */
-    public function __isset($key)
-    {
-        return isset($this->data[$key]);
-    }
-
-    /**
-     * Un-set data
-     *
-     * @param $key
-     */
-    public function __unset($key)
-    {
-        unset($this->data[$key]);
     }
 
     /**
