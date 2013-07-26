@@ -131,6 +131,28 @@ class Html
     }
 
     /**
+     * Select options
+     *
+     * @param string $name
+     * @param array  $options
+     * @param string $selected
+     * @param array  $attributes
+     * @return string
+     */
+    public static function select($name, array $options, $selected = null, array $attributes = array())
+    {
+        $options_html = array();
+        foreach ($options as $key => $value) {
+            $attr = array('value' => $key);
+            if ($key == $selected) {
+                $attr['selected'] = 'true';
+            }
+            $options_html[] = self::element('option', $value, $attr);
+        }
+        return self::element('select', join('', $options_html), $attributes + array('name' => $name));
+    }
+
+    /**
      * Build a element
      *
      * @param string $name

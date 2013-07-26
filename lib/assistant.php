@@ -417,3 +417,17 @@ function script($src, array $attributes = array())
 {
     return Html::script($src, $attributes);
 }
+
+/**
+ * Create select options
+ *
+ * @param string $name
+ * @param array  $options
+ * @param string $selected
+ * @param array  $attributes
+ * @return mixed
+ */
+function select($name, array $options, $selected = null, array $attributes = array())
+{
+    return Html::select($name, $options, $selected, $attributes);
+}
