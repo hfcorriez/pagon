@@ -136,8 +136,6 @@ class App extends EventEmitter
      */
     public function __construct($config = array())
     {
-        $app = & $this;
-
         // Is cli
         $this->_cli = PHP_SAPI == 'cli';
 
@@ -147,7 +145,7 @@ class App extends EventEmitter
         // Register autoload
         spl_autoload_register(array($this, '__autoload'));
 
-        // Set io depends on SAPI
+        // Set IO depends the run mode
         if (!$this->_cli) {
             $this->input = new Http\Input($this);
             $this->output = new Http\Output($this);
@@ -169,23 +167,6 @@ class App extends EventEmitter
             (!is_array($config) ? Parser::load((string)$config) : $config)
             + ($this->_cli ? array('buffer' => false) : array())
             + $this->injectors;
-
-        // Register some initialize
-        $this->on('run', function () use ($app) {
-            // configure timezone
-            if ($app->timezone) date_default_timezone_set($app->timezone);
-
-            // configure debug
-            if ($app->debug) $app->add(new Middleware\PrettyException());
-
-            // Share the cryptor for the app
-            $app->share('cryptor', function ($app) {
-                if (empty($app->crypt)) {
-                    throw new \RuntimeException('Encrypt cookie need configure config["crypt"]');
-                }
-                return new Utility\Cryptor($app->crypt);
-            });
-        });
 
         // Set default locals
         $this->injectors['locals']['config'] = & $this->injectors;
