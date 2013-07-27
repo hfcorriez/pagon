@@ -958,7 +958,7 @@ class App extends EventEmitter
                     // Check if match prefix
                     if (($_pos = strpos($class, $_prefix)) === 0) {
                         // Set ordered path
-                        $available_path[strlen($_prefix)] = $_path;
+                        $available_path[strlen($_prefix) . $_prefix] = $_path;
                     }
                 }
                 // Sort by order
