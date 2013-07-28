@@ -11,29 +11,29 @@ class Booster extends Middleware
     public function call()
     {
         $app = $this->app;
-        // Register some initialize
-        $this->on('run', function () use ($app) {
-            // configure timezone
-            if ($app->timezone) date_default_timezone_set($app->timezone);
 
-            // configure debug
-            if ($app->debug) $app->add(new Middleware\PrettyException());
+        // configure timezone
+        if (isset($app->timezone)) date_default_timezone_set($app->timezone);
 
-            // Share the cryptor for the app
-            $app->share('cryptor', function ($app) {
-                if (empty($app->crypt)) {
-                    throw new \RuntimeException('Cryptor booster config["crypt"]');
-                }
-                return new Cryptor($app->crypt);
-            });
+        // configure debug
+        if ($app->enabled('debug')) $app->add(new Middleware\PrettyException());
 
-            // Share the logger for the app
-            $app->share('logger', function ($app) {
-                if (empty($app->log)) {
-                    throw new \RuntimeException('Logger booster need config["log"]');
-                }
-                return new Logger($app->log);
-            });
+        // Share the cryptor for the app
+        $app->share('cryptor', function ($app) {
+            if (empty($app->crypt)) {
+                throw new \RuntimeException('Cryptor booster config["crypt"]');
+            }
+            return new Cryptor($app->crypt);
         });
+
+        // Share the logger for the app
+        $app->share('logger', function ($app) {
+            if (empty($app->log)) {
+                throw new \RuntimeException('Logger booster need config["log"]');
+            }
+            return Logger::dispense('log');
+        });
+
+        $this->next();
     }
 }
