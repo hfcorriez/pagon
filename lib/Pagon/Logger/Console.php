@@ -12,6 +12,6 @@ class Console extends LoggerInterface
     {
         if (empty($this->messages)) return;
 
-        print join("\n", $this->buildAll()) . "\n";
+        print join(PHP_EOL, $this->buildAll()) . PHP_EOL;
     }
 }
