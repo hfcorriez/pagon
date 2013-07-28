@@ -3,6 +3,7 @@
 use Pagon\App;
 use Pagon\Cache;
 use Pagon\Html;
+use Pagon\Logger;
 use Pagon\Paginator;
 use Pagon\Url;
 
@@ -234,6 +235,17 @@ function render($path, array $data = null, array $options = array())
 function compile($path, array $data = null, array $options = array())
 {
     return App::self()->output->compile($path, $data, $options);
+}
+
+/**
+ * Dispense logger
+ *
+ * @param string $name
+ * @return mixed
+ */
+function logger($name = 'log')
+{
+    return Logger::dispense($name);
 }
 
 /*****************************************************

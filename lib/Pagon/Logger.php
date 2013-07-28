@@ -217,6 +217,29 @@ class Logger extends Logger\LoggerInterface
     }
 
     /**
+     *
+     * Call static
+     *
+     * @param string $method
+     * @param array  $arguments
+     * @return mixed
+     * @throws \RuntimeException
+     * @throws \BadMethodCallException
+     */
+    public static function __callStatic($method, $arguments)
+    {
+        if (!isset(self::$levels[$method])) {
+            throw new \BadMethodCallException('Call to undefined method ' . __CLASS__ . '::' . $method);
+        }
+
+        if (!isset(App::self()->logger)) {
+            throw new \RuntimeException('App has no logger found.');
+        }
+
+        return call_user_func_array(array(App::self()->logger, $method), $arguments);
+    }
+
+    /**
      * Write log to file
      */
     public function write()
