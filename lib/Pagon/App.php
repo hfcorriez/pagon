@@ -255,7 +255,7 @@ class App extends EventEmitter
      */
     public function enabled($key)
     {
-        return $this->get($key) === true;
+        return $this->get($key);
     }
 
     /**
@@ -266,7 +266,7 @@ class App extends EventEmitter
      */
     public function disabled($key)
     {
-        return $this->get($key) === false;
+        return !$this->get($key);
     }
 
     /**
