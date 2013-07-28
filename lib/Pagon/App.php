@@ -471,6 +471,23 @@ class App extends EventEmitter
     }
 
     /**
+     * Map cli route
+     *
+     * @param string          $path
+     * @param \Closure|string $route
+     * @param \Closure|string $more
+     * @return Router|mixed
+     */
+    public function cli($path, $route = null, $more = null)
+    {
+        if ($more !== null) {
+            return call_user_func_array(array($this->router, 'set'), func_get_args())->via('CLI');
+        } else {
+            return $this->router->set($path, $route)->via('CLI');
+        }
+    }
+
+    /**
      * Use auto route
      *
      * @param callable|bool $closure
@@ -495,23 +512,6 @@ class App extends EventEmitter
 
                 return ($closure === true ? '' : $closure . '\\') . join('\\', $splits);
             });
-        }
-    }
-
-    /**
-     * Map cli route
-     *
-     * @param string          $path
-     * @param \Closure|string $route
-     * @param \Closure|string $more
-     * @return Router|mixed
-     */
-    public function cli($path, $route = null, $more = null)
-    {
-        if ($more !== null) {
-            return call_user_func_array(array($this->router, 'set'), func_get_args())->via('CLI');
-        } else {
-            return $this->router->set($path, $route)->via('CLI');
         }
     }
 
