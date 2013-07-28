@@ -131,7 +131,6 @@ class Input extends EventEmitter
     /**
      * Get method
      *
-     *
      * @return string
      */
     public function method()

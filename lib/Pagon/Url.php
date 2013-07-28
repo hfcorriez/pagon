@@ -37,17 +37,19 @@ class Url
      * @param bool   $full
      * @return string
      */
-    public static function route($name, array $params, array $query = null, $full = false)
+    public static function route($name, array $params = null, array $query = null, $full = false)
     {
         $app = App::self();
 
         $path = $app->router->path($name);
 
-        foreach ($params as $param => $value) {
-            if (is_string($param)) {
-                $path = preg_replace('/\(:' . $param . '\)/', $value, $path, 1);
-            } else {
-                $path = preg_replace('/\(.+?\)|\*/', $value, $path, 1);
+        if ($params) {
+            foreach ($params as $param => $value) {
+                if (is_string($param)) {
+                    $path = preg_replace('/:' . $param . '/', $value, $path, 1);
+                } else {
+                    $path = preg_replace('/\(.+?\)|\*/', $value, $path, 1);
+                }
             }
         }
 

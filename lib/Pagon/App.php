@@ -395,12 +395,10 @@ class App extends EventEmitter
             return $tmp;
         }
 
-        if ($this->_cli || !$this->input->isGet()) return $this->router;
-
         if ($more !== null) {
-            return call_user_func_array(array($this->router, 'set'), func_get_args());
+            return call_user_func_array(array($this->router, 'set'), func_get_args())->via('GET');
         } else {
-            return $this->router->set($path, $route);
+            return $this->router->set($path, $route)->via('GET');
         }
     }
 
@@ -414,12 +412,10 @@ class App extends EventEmitter
      */
     public function post($path, $route, $more = null)
     {
-        if ($this->_cli || !$this->input->isPost()) return $this->router;
-
         if ($more !== null) {
-            return call_user_func_array(array($this->router, 'set'), func_get_args());
+            return call_user_func_array(array($this->router, 'set'), func_get_args())->via('POST');
         } else {
-            return $this->router->set($path, $route);
+            return $this->router->set($path, $route)->via('POST');
         }
     }
 
@@ -433,12 +429,10 @@ class App extends EventEmitter
      */
     public function put($path, $route, $more = null)
     {
-        if ($this->_cli || !$this->input->isPut()) return $this->router;
-
         if ($more !== null) {
-            return call_user_func_array(array($this->router, 'set'), func_get_args());
+            return call_user_func_array(array($this->router, 'set'), func_get_args())->via('PUT');
         } else {
-            return $this->router->set($path, $route);
+            return $this->router->set($path, $route)->via('PUT');
         }
     }
 
@@ -452,12 +446,10 @@ class App extends EventEmitter
      */
     public function delete($path, $route, $more = null)
     {
-        if ($this->_cli || !$this->input->isDelete()) return $this->router;
-
         if ($more !== null) {
-            return call_user_func_array(array($this->router, 'set'), func_get_args());
+            return call_user_func_array(array($this->router, 'set'), func_get_args())->via('DELETE');
         } else {
-            return $this->router->set($path, $route);
+            return $this->router->set($path, $route)->via('DELETE');
         }
     }
 
@@ -471,12 +463,10 @@ class App extends EventEmitter
      */
     public function all($path, $route = null, $more = null)
     {
-        if ($this->_cli) return $this->router;
-
         if ($more !== null) {
-            return call_user_func_array(array($this->router, 'set'), func_get_args());
+            return call_user_func_array(array($this->router, 'set'), func_get_args())->via('*');
         } else {
-            return $this->router->set($path, $route);
+            return $this->router->set($path, $route)->via('*');
         }
     }
 
@@ -518,12 +508,10 @@ class App extends EventEmitter
      */
     public function cli($path, $route = null, $more = null)
     {
-        if (!$this->_cli) return $this->router;
-
         if ($more !== null) {
-            return call_user_func_array(array($this->router, 'set'), func_get_args());
+            return call_user_func_array(array($this->router, 'set'), func_get_args())->via('CLI');
         } else {
-            return $this->router->set($path, $route);
+            return $this->router->set($path, $route)->via('CLI');
         }
     }
 
