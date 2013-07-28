@@ -2,9 +2,9 @@
 
 namespace Pagon\Logger;
 
-use Pagon\Fiber;
+use Pagon\EventEmitter;
 
-abstract class LoggerInterface extends Fiber
+abstract class LoggerInterface extends EventEmitter
 {
     /**
      * @var array Options of logger
