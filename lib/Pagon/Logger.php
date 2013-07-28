@@ -161,9 +161,9 @@ class Logger extends Logger\LoggerInterface
 
             foreach ($streams as &$stream) {
                 if (is_array($stream)) {
-                    $trys = array(__NAMESPACE__ . '\\Logger\\' . $stream[0], $stream[0]);
+                    $tries = array(__NAMESPACE__ . '\\Logger\\' . $stream[0], $stream[0]);
 
-                    foreach ($trys as $try) {
+                    foreach ($tries as $try) {
                         if (!class_exists($try)) {
                             continue;
                         }
