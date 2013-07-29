@@ -248,6 +248,61 @@ function logger($name = 'log')
     return Logger::dispense($name);
 }
 
+/**
+ * Log debug
+ *
+ * @param string $message
+ * @param mixed  $context
+ */
+function log_debug($message, $context = null)
+{
+    call_user_func_array(array('Pagon\Logger', 'debug'), func_get_args());
+}
+
+/**
+ * Log info
+ *
+ * @param string $message
+ * @param mixed  $context
+ */
+function log_info($message, $context = null)
+{
+    call_user_func_array(array('Pagon\Logger', 'info'), func_get_args());
+}
+
+/**
+ * Log warn
+ *
+ * @param string $message
+ * @param mixed  $context
+ */
+function log_warn($message, $context = null)
+{
+    call_user_func_array(array('Pagon\Logger', 'warn'), func_get_args());
+}
+
+/**
+ * Log error
+ *
+ * @param string $message
+ * @param mixed  $context
+ */
+function log_error($message, $context = null)
+{
+    call_user_func_array(array('Pagon\Logger', 'error'), func_get_args());
+}
+
+/**
+ * Log critical
+ *
+ * @param string $message
+ * @param mixed  $context
+ */
+function log_critical($message, $context = null)
+{
+    call_user_func_array(array('Pagon\Logger', 'critical'), func_get_args());
+}
+
 /*****************************************************
  * Utils functions
  *****************************************************/
@@ -364,7 +419,6 @@ function human_size($size)
     $units = array('Bytes', 'KiB', 'MiB', 'GiB', 'TiB', 'PiB', 'EiB');
     return @round($size / pow(1024, ($i = floor(log($size, 1024)))), 2) . ' ' . $units[$i];
 }
-
 
 /*****************************************************
  * Html functions
