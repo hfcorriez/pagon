@@ -12,8 +12,12 @@ class Booster extends Middleware
     {
         $app = $this->app;
 
-        // configure timezone
-        if (isset($app->timezone)) date_default_timezone_set($app->timezone);
+        // Set encoding
+        iconv_set_encoding("internal_encoding", $app->charset);
+        mb_internal_encoding($app->charset);
+
+        // Configure timezone
+        date_default_timezone_set($app->timezone);
 
         // configure debug
         if ($app->enabled('debug')) $app->add(new Middleware\PrettyException());
