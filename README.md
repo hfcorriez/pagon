@@ -230,8 +230,11 @@ $app->add(function($req, $res, $next) {
 使用框架内置的中间件
 
 ```
-- PrettyException   异常和错误输出，Debug模式下默认开启。
-- Flash             信息闪存，用于验证提示等。
+- Booster           助推器，根据配置文件为App做一些绑定工作，比如logger和crptor
+- CRSF              CRSF自动防御中间件
+- OPAuth            OPAuth的中间件，用来做第三方验证
+- PrettyException   异常和错误输出，Debug模式下默认开启
+- Flash             信息闪存，用于验证提示等
 - HttpMethods       完整的Http方法支持
 - HttpBasicAuth     Http Basic验证支持
 - I18N              多语言支持
