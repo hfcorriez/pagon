@@ -98,7 +98,7 @@ class Logger extends Logger\LoggerInterface
 
         // The time injector
         $this->time = function () {
-            return date('Y-m-d H:i:s') . ',' . substr(microtime(true), 11, 3);
+            return date('Y-m-d H:i:s') . ',' . substr(microtime(true) * 1000, 10, 3);
         };
 
         // Injector the token with share instance
