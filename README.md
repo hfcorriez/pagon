@@ -135,6 +135,30 @@ $app->get('/auth(/:type)', function ($req, $res) {
 
 ### 配置
 
+配置说明
+
+```
+mode        运行模式，一般无需配置，根据PAGON_ENV自动生成
+debug       是否开启调试模式
+views       模板目录
+buffer      是否开启缓冲区
+timezone    时区，默认UTC
+charset     编码，默认UTF-8,
+autoload    自动加载主目录
+error       是否Handle PHP抛出的错误
+routes      路由列表
+names       路由命名，一般自动生成
+alias       类的别名，简化很长的类名
+namespaces  注册命名空间地址，根据命名空间查找
+engines     模板引擎，根据扩展名渲染引擎
+errors      默认错误信息
+stacks      中间件
+mounts      应用加载的路径列表
+bundles     包应用
+locals      默认的模板变量
+safe_query  在模板渲染时自动预防XSS
+```
+
 直接传递配置创建应用
 
 ```php
