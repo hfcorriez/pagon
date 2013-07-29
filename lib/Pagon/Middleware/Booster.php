@@ -19,20 +19,14 @@ class Booster extends Middleware
         if ($app->enabled('debug')) $app->add(new Middleware\PrettyException());
 
         // Share the cryptor for the app
-        $app->share('cryptor', function ($app) {
-            if (empty($app->crypt)) {
-                throw new \RuntimeException('Cryptor booster config["crypt"]');
-            }
-            return new Cryptor($app->crypt);
-        });
+        if (!empty($app->crypt)) {
+            $app->cryptor = new Cryptor($app->crypt);
+        }
 
         // Share the logger for the app
-        $app->share('logger', function ($app) {
-            if (empty($app->log)) {
-                throw new \RuntimeException('Logger booster need config["log"]');
-            }
-            return Logger::dispense('log');
-        });
+        if (!empty($app->log)) {
+            $app->logger = Logger::dispense();
+        }
 
         $this->next();
     }
