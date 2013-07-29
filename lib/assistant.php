@@ -497,3 +497,37 @@ function select($name, array $options, $selected = null, array $attributes = arr
 {
     return Html::select($name, $options, $selected, $attributes);
 }
+
+/*****************************************************
+ * Util functions
+ *****************************************************/
+
+/**
+ * Or
+ *
+ * @return bool
+ */
+function __or()
+{
+    $last = false;
+    foreach (func_get_args() as $arg) {
+        if ($arg) return $arg;
+        $last = $arg;
+    }
+    return $last;
+}
+
+/**
+ * And
+ *
+ * @return bool
+ */
+function __and()
+{
+    $last = false;
+    foreach (func_get_args() as $arg) {
+        if (!$arg) return $arg;
+        $last = $arg;
+    }
+    return $last;
+}
