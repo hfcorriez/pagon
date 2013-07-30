@@ -174,6 +174,9 @@ class App extends EventEmitter
         // Set mode
         $this->injectors['mode'] = ($_mode = getenv('PAGON_ENV')) ? $_mode : $this->injectors['mode'];
 
+        // Configure debug
+        if ($this->injectors['debug']) $this->add(new Middleware\PrettyException());
+
         // Set pagon root directory
         $this->injectors['mounts']['pagon'] = dirname(dirname(__DIR__));
 

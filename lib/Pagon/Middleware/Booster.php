@@ -19,9 +19,6 @@ class Booster extends Middleware
         // Configure timezone
         date_default_timezone_set($app->timezone);
 
-        // configure debug
-        if ($app->enabled('debug')) $app->add(new Middleware\PrettyException());
-
         // Share the cryptor for the app
         if (!empty($app->crypt)) {
             $app->cryptor = new Cryptor($app->crypt);
