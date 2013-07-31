@@ -504,6 +504,27 @@ class Output extends EventEmitter
     }
 
     /**
+     * Download file
+     *
+     * @param string $file
+     * @param string $name
+     */
+    public function download($file, $name = null)
+    {
+        $this->header('Content-Description', 'File Transfer');
+        $this->header('Content-Type', 'application/octet-stream');
+        $this->header('Content-Disposition', 'attachment; filename=' . ($name ? $name : basename($file)));
+        $this->header('Content-Transfer-Encoding', 'binary');
+        $this->header('Expires', '0');
+        $this->header('Cache-Control', 'must-revalidate');
+        $this->header('Pragma', 'public');
+        $this->injectors['length'] = filesize($file);
+        ob_clean();
+        readfile($file);
+        $this->end('');
+    }
+
+    /**
      * Redirect url
      *
      * @param string $url
