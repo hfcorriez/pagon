@@ -46,14 +46,14 @@ abstract class Middleware extends EventEmitter
     }
 
     /**
-     * Create new controller
+     * Create new middleware or route
      *
      * @param string|\Closure $route
      * @param array           $options
      * @throws \InvalidArgumentException
      * @return bool|Route
      */
-    public static function build($route, $options = array())
+    public static function build($route, array $options = array())
     {
         if (is_object($route)) return $route;
 
@@ -67,6 +67,25 @@ abstract class Middleware extends EventEmitter
         }
 
         return new $class($options);
+    }
+
+    /**
+     * Graft the route inner
+     *
+     * @param \Closure|string $route
+     * @param array           $option
+     * @throws \RuntimeException
+     * @return mixed
+     */
+    public function graft($route, array $option = array())
+    {
+        if (!$route = self::build($route, $option)) {
+            throw new \RuntimeException("Graft \"$route\" fail");
+        }
+
+        return call_user_func_array($route, array(
+            $this->input, $this->output, $this->next
+        ));
     }
 
     /**
