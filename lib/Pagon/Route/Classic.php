@@ -54,12 +54,8 @@ abstract class Classic extends Route
         $method = 'action' . $action;
 
         // Check method
-        if (method_exists($this, $method)) {
-            $this->before();
-            $this->$method($this->input, $this->output);
-            $this->after();
-        } else {
-            $this->next();
-        }
+        $this->before();
+        $this->$method($this->input, $this->output);
+        $this->after();
     }
 }
