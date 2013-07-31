@@ -374,6 +374,7 @@ class Output extends EventEmitter
                 $this->injectors['headers']['Content-Type'] = $this->injectors['content_type'] . '; charset=' . $this->injectors['charset'];
             }
 
+            // Content length check and set
             if (!isset($this->injectors['headers']['Content-Length'])
                 && is_numeric($this->injectors['length'])
             ) {
