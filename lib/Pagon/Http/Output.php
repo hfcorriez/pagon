@@ -6,6 +6,7 @@ use Pagon\App;
 use Pagon\Config;
 use Pagon\EventEmitter;
 use Pagon\Exception\Stop;
+use Pagon\Parser\Xml;
 use Pagon\View;
 
 /**
@@ -492,14 +493,13 @@ class Output extends EventEmitter
      * To xml
      *
      * @param object|array $data
-     * @param string       $root
-     * @param string       $item
+     * @param array        $option
      * @return Output
      */
-    public function xml($data, $root = 'root', $item = 'item')
+    public function xml($data, array $option = array())
     {
         $this->contentType('application/xml');
-        $this->body(\Pagon\Xml::fromArray($data, $root, $item));
+        $this->body(Xml::dump($data, $option));
         return $this;
     }
 
