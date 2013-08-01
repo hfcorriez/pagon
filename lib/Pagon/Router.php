@@ -21,11 +21,6 @@ class Router extends Middleware
     public $app;
 
     /**
-     * @var string Auto prefix for route
-     */
-    public $auto_prefix = '';
-
-    /**
      * @var \Closure
      */
     protected $automatic;
@@ -45,7 +40,35 @@ class Router extends Middleware
             $path = array_shift($_args);
             $route = $_args;
         }
+
+        // Set route
         $this->app->routes[$path] = (array)$route;
+
+        return $this;
+    }
+
+    /**
+     * Add router for path
+     *
+     * @param string               $path
+     * @param \Closure|string      $route
+     * @param \Closure|string|null $more
+     * @return $this
+     */
+    public function add($path, $route, $more = null)
+    {
+        if ($more) {
+            $_args = func_get_args();
+            $path = array_shift($_args);
+            $route = $_args;
+        }
+
+        // Init route node
+        if (!isset($this->app->routes[$path])) $this->app->routes[$path] = array();
+
+        // Append
+        $this->app->routes[$path] = array_merge($this->app->routes[$path], (array)$route);
+
         return $this;
     }
 
@@ -195,14 +218,23 @@ class Router extends Middleware
     /**
      * Run the routes
      *
-     * @param $route
+     * @param $routes
      * @return array|string
      */
-    public function run($route)
+    public function run($routes)
     {
-        $auto_prefix = $this->auto_prefix;
-        return $this->pass($route, function ($r) use ($auto_prefix) {
-            return Route::build(is_string($r) ? $auto_prefix . $r : $r);
+        $prefixes = array();
+        // Prefixes Lookup
+        if ($this->app->prefixes) {
+            foreach ($this->app->prefixes as $path => $namespace) {
+                if (strpos($this->options['path'], $path) === 0) {
+                    $prefixes[99 - strlen($path)] = $namespace;
+                }
+            }
+            ksort($prefixes);
+        }
+        return $this->pass($routes, function ($route) use ($prefixes) {
+            return Route::build($route, array(), $prefixes);
         });
     }
 

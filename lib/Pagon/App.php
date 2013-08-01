@@ -70,6 +70,7 @@ class App extends EventEmitter
         'views'      => false,
         'error'      => true,
         'routes'     => array(),
+        'prefixes'   => array(),
         'names'      => array(),
         'buffer'     => true,
         'timezone'   => 'UTC',
@@ -401,7 +402,7 @@ class App extends EventEmitter
         if ($more !== null) {
             return call_user_func_array(array($this->router, 'set'), func_get_args())->via('GET');
         } else {
-            return $this->router->set($path, $route)->via('GET');
+            return $this->router->add($path, $route)->via('GET');
         }
     }
 
@@ -418,7 +419,7 @@ class App extends EventEmitter
         if ($more !== null) {
             return call_user_func_array(array($this->router, 'set'), func_get_args())->via('POST');
         } else {
-            return $this->router->set($path, $route)->via('POST');
+            return $this->router->add($path, $route)->via('POST');
         }
     }
 
@@ -435,7 +436,7 @@ class App extends EventEmitter
         if ($more !== null) {
             return call_user_func_array(array($this->router, 'set'), func_get_args())->via('PUT');
         } else {
-            return $this->router->set($path, $route)->via('PUT');
+            return $this->router->add($path, $route)->via('PUT');
         }
     }
 
@@ -452,7 +453,7 @@ class App extends EventEmitter
         if ($more !== null) {
             return call_user_func_array(array($this->router, 'set'), func_get_args())->via('DELETE');
         } else {
-            return $this->router->set($path, $route)->via('DELETE');
+            return $this->router->add($path, $route)->via('DELETE');
         }
     }
 
@@ -469,7 +470,7 @@ class App extends EventEmitter
         if ($more !== null) {
             return call_user_func_array(array($this->router, 'set'), func_get_args())->via('*');
         } else {
-            return $this->router->set($path, $route)->via('*');
+            return $this->router->add($path, $route)->via('*');
         }
     }
 
@@ -486,7 +487,7 @@ class App extends EventEmitter
         if ($more !== null) {
             return call_user_func_array(array($this->router, 'set'), func_get_args())->via('CLI');
         } else {
-            return $this->router->set($path, $route)->via('CLI');
+            return $this->router->add($path, $route)->via('CLI');
         }
     }
 
