@@ -162,22 +162,15 @@ class Router extends Middleware
 
         // Get routes
         $routes = (array)$this->app->routes;
+        $dispatched = false;
 
         // Loop routes for parse and dispatch
         foreach ($routes as $p => $route) {
-            $rules = $defaults = array();
-
             // Lookup rules
-            if (isset($route['rules'])) {
-                $rules = $route['rules'];
-                unset($route['rules']);
-            }
+            $rules = isset($route['rules']) ? $route['rules'] : array();
 
             // Lookup defaults
-            if (isset($route['defaults'])) {
-                $defaults = $route['defaults'];
-                unset($route['defaults']);
-            }
+            $defaults = isset($route['defaults']) ? $route['defaults'] : array();
 
             // Set via
             $via = isset($route['via']) ? $route['via'] : array('*');
@@ -190,8 +183,11 @@ class Router extends Middleware
                 try {
                     $param && $this->app->param($param);
 
-                    return $this->run($route);
+                    $dispatched = true;
 
+                    $this->run($route);
+
+                    return $dispatched;
                     // If multiple controller
                 } catch (Pass $e) {
                     // When catch Next, continue next route
@@ -212,7 +208,7 @@ class Router extends Middleware
             }
         }
 
-        return false;
+        return $dispatched;
     }
 
     /**
@@ -253,10 +249,12 @@ class Router extends Middleware
 
         $routes = (array)$routes;
         $param = null;
+        $run = false;
 
-        $pass = function ($route) use ($build, &$param) {
+        $pass = function ($route) use ($build, &$param, &$run) {
             $runner = $route instanceof \Closure ? $route : $build($route);
             if (is_callable($runner)) {
+                $run = true;
                 call_user_func_array($runner, $param);
                 return true;
             } else {
@@ -268,15 +266,19 @@ class Router extends Middleware
             $this->app->input,
             $this->app->output,
             function () use (&$routes, $pass) {
-                if (!$route = next($routes)) {
-                    throw new Pass;
-                }
+                do {
+                    $route = next($routes);
+                } while ($route && !is_numeric(key($routes)));
+
+                if (!$route) throw new Pass;
 
                 $pass($route);
             }
         );
 
-        return $pass(current($routes));
+        $pass(current($routes));
+
+        return $run;
     }
 
     /**
