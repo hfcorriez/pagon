@@ -942,9 +942,9 @@ class App extends EventEmitter
                 // Loop namespaces as autoload
                 foreach ($this->injectors['namespaces'] as $_prefix => $_path) {
                     // Check if match prefix
-                    if (($_pos = strpos($class, $_prefix)) === 0) {
+                    if (strpos($class, $_prefix) === 0) {
                         // Set ordered path
-                        $available_path[strlen($_prefix) . $_prefix] = $_path;
+                        $available_path[(99 - strlen($_prefix)) . $_prefix] = $_path;
                     }
                 }
                 // Sort by order
