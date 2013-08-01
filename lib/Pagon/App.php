@@ -34,6 +34,7 @@ if (!class_exists('EventEmitter')) {
  * @property string timezone     Current timezone
  * @property string charset      The application charset
  * @property array  routes       Store the routes for run
+ * @property array  prefixes     The prefixes to mapping the route namespace
  * @property array  names        Routes names
  * @property string autoload     The path to autoload
  * @property array  namespaces   The namespaces to load with directory path
