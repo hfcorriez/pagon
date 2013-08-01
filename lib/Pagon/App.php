@@ -624,7 +624,7 @@ class App extends EventEmitter
      */
     public function render($path, array $data = null, array $options = array())
     {
-        echo $this->compile($path, $data, $options);
+        $this->output->body($this->compile($path, $data, $options));
     }
 
     /**
@@ -790,13 +790,8 @@ class App extends EventEmitter
         // Send start
         $this->emit('flush');
 
-        // Send headers
-        if (!$this->_cli) {
-            $this->output->sendHeader();
-        }
-
-        // Send
-        echo $this->output->body();
+        // Flush
+        $this->flush();
 
         // Send end
         $this->emit('end');
@@ -988,6 +983,20 @@ class App extends EventEmitter
     }
 
     /**
+     * Flush output
+     */
+    public function flush()
+    {
+        // Send headers
+        if (!$this->_cli) {
+            $this->output->sendHeader();
+        }
+
+        // Send
+        echo $this->output->body();
+    }
+
+    /**
      * Error handler for app
      *
      * @param int    $type
@@ -1016,13 +1025,7 @@ class App extends EventEmitter
                 try {
                     $this->handleError('crash');
                 } catch (Exception\Stop $e) {
-                    // Send headers
-                    if (!$this->_cli) {
-                        $this->output->sendHeader();
-                    }
-
-                    // Send
-                    echo $this->output->body();
+                    $this->flush();
                 }
             }
             $this->emit('crash', $error);
