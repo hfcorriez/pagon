@@ -196,12 +196,19 @@ class Router extends Middleware
         }
 
         // Try to check automatic route parser
-        if ($this->automatic instanceof \Closure) {
-            $route = call_user_func($this->automatic, $this->options['path']);
+        if (is_callable($this->automatic)) {
+            $routes = (array)call_user_func($this->automatic, $this->options['path']);
 
-            if ($route && class_exists($route)) {
+            foreach ($routes as $route) {
+                // Try to check the class is route
+                if (!is_subclass_of($route, Middleware::_CLASS_, true)) continue;
+
                 try {
-                    return $this->run($route);
+                    $dispatched = true;
+
+                    $this->run($route);
+
+                    return $dispatched;
                 } catch (Pass $e) {
                     // When catch Next, continue next route
                 }

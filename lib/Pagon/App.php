@@ -495,26 +495,37 @@ class App extends EventEmitter
      * Use auto route
      *
      * @param callable|bool $closure
+     * @param string        $index
      * @return Router|mixed
      */
-    public function autoRoute($closure)
+    public function autoRoute($closure, $index = 'Index')
     {
         if ($closure instanceof \Closure) {
             return $this->router->automatic($closure);
         } elseif ($closure === true || is_string($closure)) {
             $_cli = $this->_cli;
             // Set route use default automatic
-            return $this->router->automatic(function ($path) use ($closure, $_cli) {
+            return $this->router->automatic(function ($path) use ($closure, $_cli, $index) {
+                $splits = array();
+
+                // Split rule
                 if (!$_cli && $path !== '/' || $_cli && $path !== '') {
                     $splits = array_map(function ($split) {
                         return ucfirst(strtolower($split));
                     }, $_cli ? explode(':', $path) : explode('/', ltrim($path, '/')));
-                } else {
-                    // If path is root or is not found
-                    $splits = array('Index');
                 }
 
-                return ($closure === true ? '' : $closure . '\\') . join('\\', $splits);
+                // Set default namespace
+                if ($closure !== true) array_unshift($splits, $closure);
+
+                // Index
+                if (!$splits) return $index;
+
+                // Generate class name
+                $class = join('\\', $splits);
+
+                // Try to lookup class and with it's index
+                return array($class, $class . '\\' . $index);
             });
         }
     }
