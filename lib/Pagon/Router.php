@@ -10,6 +10,8 @@ use Pagon\Exception\Stop;
  * parse and manage the Route
  *
  * @package Pagon
+ * @property string   path      The current path
+ * @property \Closure automatic Automatic closure for auto route
  */
 class Router extends Middleware
 {
@@ -281,18 +283,6 @@ class Router extends Middleware
         $pass(current($routes));
 
         return $run;
-    }
-
-    /**
-     * Set auto route closure
-     *
-     * @param callable $closure
-     * @return $this
-     */
-    public function automatic(\Closure $closure)
-    {
-        $this->injectors['automatic'] = $closure;
-        return $this;
     }
 
     /**

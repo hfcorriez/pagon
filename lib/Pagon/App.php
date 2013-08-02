@@ -502,11 +502,11 @@ class App extends EventEmitter
     public function autoRoute($closure, $index = 'Index')
     {
         if ($closure instanceof \Closure) {
-            return $this->router->automatic($closure);
+            return $this->router->automatic = $closure;
         } elseif ($closure === true || is_string($closure)) {
             $_cli = $this->_cli;
             // Set route use default automatic
-            return $this->router->automatic(function ($path) use ($closure, $_cli, $index) {
+            return $this->router->automatic = function ($path) use ($closure, $_cli, $index) {
                 $splits = array();
 
                 // Split rule
@@ -527,7 +527,7 @@ class App extends EventEmitter
 
                 // Try to lookup class and with it's index
                 return array($class, $class . '\\' . $index);
-            });
+            };
         }
     }
 
