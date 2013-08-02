@@ -853,40 +853,6 @@ class App extends EventEmitter
     }
 
     /**
-     * Output the response
-     *
-     * @param int    $status
-     * @param string $body
-     * @throws Exception\Stop
-     */
-    public function halt($status, $body = '')
-    {
-        $this->output->status($status)->body($body);
-        throw new Exception\Stop;
-    }
-
-    /**
-     * Stop
-     *
-     * @throws Exception\Stop
-     */
-    public function stop()
-    {
-        throw new Exception\Stop();
-    }
-
-    /**
-     * Pass
-     *
-     * @throws Exception\Pass
-     */
-    public function pass()
-    {
-        ob_get_level() && ob_clean();
-        throw new Exception\Pass();
-    }
-
-    /**
      * Get or set param
      *
      * @param string|null $param
@@ -912,6 +878,65 @@ class App extends EventEmitter
     public function assisting()
     {
         $this->load(dirname(__DIR__) . '/assistant.php');
+    }
+
+    /**
+     * Output the response
+     *
+     * @param int    $status
+     * @param string $body
+     * @throws Exception\Stop
+     */
+    public function halt($status, $body = '')
+    {
+        $this->output->status($status)->body($body);
+        throw new Exception\Stop;
+    }
+
+    /**
+     * Flush output
+     */
+    public function flush()
+    {
+        // Send headers
+        if (!$this->_cli) {
+            $this->output->sendHeader();
+        }
+
+        // Send
+        echo $this->output->body();
+    }
+
+    /**
+     *
+     * Defer execution
+     *
+     * @param \Closure $closure
+     */
+    public function defer(\Closure $closure)
+    {
+        $this->on('exit', $closure);
+    }
+
+    /**
+     * Stop
+     *
+     * @throws Exception\Stop
+     */
+    public function stop()
+    {
+        throw new Exception\Stop();
+    }
+
+    /**
+     * Pass
+     *
+     * @throws Exception\Pass
+     */
+    public function pass()
+    {
+        ob_get_level() && ob_clean();
+        throw new Exception\Pass();
     }
 
     /**
@@ -1008,31 +1033,6 @@ class App extends EventEmitter
         }
 
         return false;
-    }
-
-    /**
-     * Flush output
-     */
-    public function flush()
-    {
-        // Send headers
-        if (!$this->_cli) {
-            $this->output->sendHeader();
-        }
-
-        // Send
-        echo $this->output->body();
-    }
-
-    /**
-     *
-     * Defer execution
-     *
-     * @param \Closure $closure
-     */
-    public function defer(\Closure $closure)
-    {
-        $this->on('exit', $closure);
     }
 
     /**
