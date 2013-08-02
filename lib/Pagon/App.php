@@ -825,20 +825,29 @@ class App extends EventEmitter
             throw new \InvalidArgumentException('Unknown error type "' . $type . '" to call');
         }
 
-        if ($route && !$route instanceof \Exception) {
+        if (is_string($route) && is_subclass_of($route, Route::_CLASS_, true)
+            || $route instanceof \Closure
+        ) {
             $this->router->set('_' . $type, $route);
         } else {
             ob_get_level() && ob_clean();
             ob_start();
             if (!$this->router->handle('_' . $type,
                 array('error' => array(
-                    'type'      => $type,
-                    'exception' => $route,
-                    'message'   => $this->injectors['errors'][$type])
+                    'type'    => $type,
+                    'error'   => $route,
+                    'message' => $this->injectors['errors'][$type])
                 ))
             ) {
-                echo $this->injectors['errors'][$type][1];
-                $this->halt($this->injectors['errors'][$type][0], ob_get_clean());
+                if ($this->_cli) {
+                    $this->halt($this->injectors['errors'][$type][0], $this->injectors['errors'][$type][1]);
+                } else {
+                    $this->render($this->path('pagon/views/error.php'), array(
+                        'title'   => $this->injectors['errors'][$type][1],
+                        'message' => 'Could not ' . $this->input->method() . ' ' . $this->input->path()
+                    ));
+                    $this->stop();
+                }
             }
         }
     }
@@ -1042,10 +1051,10 @@ class App extends EventEmitter
         ) {
             if (!$this->injectors['debug']) {
                 try {
-                    $this->handleError('crash');
+                    $this->handleError('crash', $error);
                 } catch (Exception\Stop $e) {
-                    $this->flush();
                 }
+                $this->flush();
             }
             $this->emit('crash', $error);
         }
