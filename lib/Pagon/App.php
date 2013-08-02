@@ -830,10 +830,16 @@ class App extends EventEmitter
         } else {
             ob_get_level() && ob_clean();
             ob_start();
-            if (!$this->router->handle('_' . $type, array($route))) {
+            if (!$this->router->handle('_' . $type,
+                array('error' => array(
+                    'type'      => $type,
+                    'exception' => $route,
+                    'message'   => $this->injectors['errors'][$type])
+                ))
+            ) {
                 echo $this->injectors['errors'][$type][1];
+                $this->halt($this->injectors['errors'][$type][0], ob_get_clean());
             }
-            $this->halt($this->injectors['errors'][$type][0], ob_get_clean());
         }
     }
 
