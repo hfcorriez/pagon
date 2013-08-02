@@ -240,6 +240,8 @@ class Logger extends Logger\LoggerInterface
      */
     public function write()
     {
-        file_put_contents($this->options['file'], join(PHP_EOL, $this->buildAll()) . PHP_EOL, FILE_APPEND);
+        if ($messages = $this->buildAll()) {
+            file_put_contents($this->options['file'], join(PHP_EOL, $messages) . PHP_EOL, FILE_APPEND);
+        }
     }
 }
