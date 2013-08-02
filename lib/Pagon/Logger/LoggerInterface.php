@@ -10,7 +10,7 @@ abstract class LoggerInterface extends EventEmitter
      * @var array Options of logger
      */
     protected $options = array(
-        'auto_write' => false,
+        'auto_write' => false
     );
 
     /**

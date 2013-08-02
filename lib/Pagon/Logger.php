@@ -21,17 +21,13 @@ class Logger extends Logger\LoggerInterface
         'auto_write' => false,
         'level'      => 'debug',
         'default'    => true,
+        'streams '   => array()
     );
 
     /**
      * @var array Levels
      */
     protected static $levels = array('debug' => 0, 'info' => 1, 'warn' => 2, 'error' => 3, 'critical' => 4);
-
-    /**
-     * @var array The log messages
-     */
-    protected $streams = array();
 
     /**
      * @var array Instances has dispensed
@@ -131,8 +127,8 @@ class Logger extends Logger\LoggerInterface
             throw new \InvalidArgumentException('Given level "' . $level . '" is not acceptable');
         }
 
-        if (!isset($this->streams[$level])) {
-            $this->streams[$level] = array();
+        if (!isset($this->options['streams'][$level])) {
+            $this->options['streams'][$level] = array();
         }
 
         if ($stream instanceof Logger\LoggerInterface) {
@@ -142,7 +138,7 @@ class Logger extends Logger\LoggerInterface
             });
         }
 
-        $this->streams[$level][] = is_string($stream) ? array($stream, $options) : $stream;
+        $this->options['streams'][$level][] = is_string($stream) ? array($stream, $options) : $stream;
     }
 
     /**
@@ -177,7 +173,7 @@ class Logger extends Logger\LoggerInterface
         /**
          * Loop the streams to send message
          */
-        foreach ($this->streams as $stream_level => &$streams) {
+        foreach ($this->options['streams'] as $stream_level => &$streams) {
             if (self::$levels[$stream_level] > self::$levels[$level]) {
                 continue;
             }
