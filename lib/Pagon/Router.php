@@ -21,11 +21,6 @@ class Router extends Middleware
     public $app;
 
     /**
-     * @var \Closure
-     */
-    protected $automatic;
-
-    /**
      * Register a route for path
      *
      * @param string               $path
@@ -196,8 +191,8 @@ class Router extends Middleware
         }
 
         // Try to check automatic route parser
-        if (is_callable($this->automatic)) {
-            $routes = (array)call_user_func($this->automatic, $this->options['path']);
+        if (is_callable($this->injectors['automatic'])) {
+            $routes = (array)call_user_func($this->injectors['automatic'], $this->options['path']);
 
             foreach ($routes as $route) {
                 // Try to check the class is route
@@ -296,7 +291,7 @@ class Router extends Middleware
      */
     public function automatic(\Closure $closure)
     {
-        $this->automatic = $closure;
+        $this->injectors['automatic'] = $closure;
         return $this;
     }
 
