@@ -289,13 +289,13 @@ class Router extends Middleware
      * Run the route
      *
      * @param string $route
-     * @param array  $args
+     * @param array  $params
      * @return bool
      */
-    public function handle($route, $args = array())
+    public function handle($route, $params = array())
     {
         if (isset($this->app->routes[$route])) {
-            $args && $this->app->param($args);
+            $params && $this->app->param($params);
             return $this->run($this->app->routes[$route]);
         }
         return false;
