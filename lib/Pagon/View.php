@@ -70,10 +70,14 @@ class View extends EventEmitter
      * @param $engine
      * @return \Pagon\View
      */
-    public function setEngine($engine)
+    public function engine($engine = null)
     {
-        $this->options['engine'] = $engine;
-        return $this;
+        if (!$engine) {
+            return $this->options['engine'];
+        } else {
+            $this->options['engine'] = $engine;
+            return $this;
+        }
     }
 
     /**
@@ -82,10 +86,14 @@ class View extends EventEmitter
      * @param string $dir
      * @return View
      */
-    public function setDir($dir)
+    public function dir($dir = null)
     {
-        $this->options['dir'] = $dir;
-        return $this;
+        if (!$dir) {
+            return $this->options['dir'];
+        } else {
+            $this->options['dir'] = $dir;
+            return $this;
+        }
     }
 
     /**
