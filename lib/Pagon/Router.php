@@ -193,7 +193,7 @@ class Router extends Middleware
         }
 
         // Try to check automatic route parser
-        if (is_callable($this->injectors['automatic'])) {
+        if (isset($this->injectors['automatic']) && is_callable($this->injectors['automatic'])) {
             $routes = (array)call_user_func($this->injectors['automatic'], $this->options['path']);
 
             foreach ($routes as $route) {
