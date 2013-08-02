@@ -1025,6 +1025,17 @@ class App extends EventEmitter
     }
 
     /**
+     *
+     * Defer execution
+     *
+     * @param \Closure $closure
+     */
+    public function defer(\Closure $closure)
+    {
+        $this->on('exit', $closure);
+    }
+
+    /**
      * Error handler for app
      *
      * @param int    $type
