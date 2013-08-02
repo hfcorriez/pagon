@@ -160,10 +160,6 @@ class App extends EventEmitter
         $this->router = new Router(array('path' => $this->input->path()));
         $this->router->app = $this;
 
-        // Force use UTF-8 encoding
-        iconv_set_encoding("internal_encoding", "UTF-8");
-        mb_internal_encoding('UTF-8');
-
         // Set config
         $this->injectors =
             (!is_array($config) ? Parser::load((string)$config) : $config)
@@ -328,7 +324,10 @@ class App extends EventEmitter
      */
     public function add($path, $middleware = null, $options = array())
     {
-        if ($path instanceof Middleware || is_string($path) && $path{0} != '/' || $path instanceof \Closure) {
+        if ($path instanceof Middleware
+            || is_string($path) && $path{0} != '/'
+            || $path instanceof \Closure
+        ) {
             // If not path
             $options = (array)$middleware;
             $middleware = $path;
@@ -413,7 +412,7 @@ class App extends EventEmitter
      * @param string          $path
      * @param \Closure|string $route
      * @param \Closure|string $more
-     * @return Router|mixed
+     * @return Router
      */
     public function post($path, $route, $more = null)
     {
@@ -430,7 +429,7 @@ class App extends EventEmitter
      * @param string          $path
      * @param \Closure|string $route
      * @param \Closure|string $more
-     * @return Router|mixed
+     * @return Router
      */
     public function put($path, $route, $more = null)
     {
@@ -447,7 +446,7 @@ class App extends EventEmitter
      * @param string          $path
      * @param \Closure|string $route
      * @param \Closure|string $more
-     * @return Router|mixed
+     * @return Router
      */
     public function delete($path, $route, $more = null)
     {
@@ -464,7 +463,7 @@ class App extends EventEmitter
      * @param string          $path
      * @param \Closure|string $route
      * @param \Closure|string $more
-     * @return Router|mixed
+     * @return Router
      */
     public function all($path, $route = null, $more = null)
     {
@@ -481,7 +480,7 @@ class App extends EventEmitter
      * @param string          $path
      * @param \Closure|string $route
      * @param \Closure|string $more
-     * @return Router|mixed
+     * @return Router
      */
     public function cli($path, $route = null, $more = null)
     {
@@ -660,11 +659,9 @@ class App extends EventEmitter
             if ($ext && isset($this->injectors['engines'][$ext])) {
                 // If engine exists
                 if (is_string($this->injectors['engines'][$ext])) {
-                    if (class_exists($this->injectors['engines'][$ext])) {
-                        $class = $this->injectors['engines'][$ext];
-                    } else if (class_exists(__NAMESPACE__ . '\\Engine\\' . $this->injectors['engines'][$ext])) {
-                        $class = __NAMESPACE__ . '\\Engine\\' . $this->injectors['engines'][$ext];
-                    } else {
+                    if (!class_exists($class = $this->injectors['engines'][$ext])
+                        && !class_exists($class = __NAMESPACE__ . '\\Engine\\' . $this->injectors['engines'][$ext])
+                    ) {
                         throw new \RuntimeException("Unavailable view engine '{$this->injectors['engines'][$ext]}'");
                     }
                     // Create new engine
@@ -677,15 +674,16 @@ class App extends EventEmitter
         }
 
         // Set default data
-        if ($data === null) $data = array();
+        $data = (array)$data;
 
         // Default set app
         $data['_'] = $this;
 
         // Create view
-        $view = new View($path, $data + $this->injectors['locals'], $options + array(
-                'dir' => $this->injectors['views']
-            ));
+        $view = new View($path,
+            $data + $this->injectors['locals'],
+            $options + array('dir' => $this->injectors['views'])
+        );
 
         // Return view
         return $view;
