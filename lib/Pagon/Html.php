@@ -67,7 +67,7 @@ class Html
      */
     public static function a($src, $text, array $attributes = array())
     {
-        return self::dom('a', $text, array('src' => Url::to($src)) + $attributes);
+        return self::dom('a', $text, array('href' => Url::to($src)) + $attributes);
     }
 
     /**
@@ -149,7 +149,7 @@ class Html
             }
             $options_html[] = self::dom('option', $value, $attr);
         }
-        return self::dom('select', join('', $options_html), $attributes + array('name' => $name));
+        return self::dom('select', join('', $options_html), array('name' => $name) + $attributes);
     }
 
     /**
@@ -162,6 +162,16 @@ class Html
      */
     public static function dom($name, $text = '', array $attributes = array())
     {
+        $self_close = false;
+        if (in_array($name, self::$self_close_tags)) {
+            $self_close = true;
+        }
+
+        if ($self_close && is_array($text)) {
+            $attributes = $text;
+            $text = '';
+        }
+
         $attr = '';
         foreach ($attributes as $k => $v) {
             if (is_numeric($k)) $k = $v;
@@ -169,11 +179,6 @@ class Html
             if (!is_null($v)) {
                 $attr .= ' ' . $k . '="' . static::entities($v) . '"';
             }
-        }
-
-        $self_close = false;
-        if (in_array($name, self::$self_close_tags)) {
-            $self_close = true;
         }
 
         return '<' . $name . $attr .

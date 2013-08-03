@@ -23,8 +23,9 @@ class Url
     public static function to($path, array $query = null, $full = false)
     {
         return
-            ($full ? self::site() : self::base()) .
-            '/' . ltrim($path, '/') .
+            (!strpos($path, '://') ?
+                ($full ? self::site() : self::base()) . '/' . ltrim($path, '/')
+                : $path) .
             ($query ? '?' . http_build_query($query) : '');
     }
 
@@ -66,6 +67,8 @@ class Url
      */
     public static function asset($path, array $query = null, $full = false)
     {
+        if (strpos($path, '://')) return self::to($path, $query, $full);
+
         $asset_url = App::self()->get('asset_url');
 
         return
