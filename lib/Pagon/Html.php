@@ -52,7 +52,7 @@ class Html
      * @param  string $value
      * @return string
      */
-    public static function specialChars($value)
+    public static function encode($value)
     {
         return htmlspecialchars($value, ENT_QUOTES, static::charset(), false);
     }
