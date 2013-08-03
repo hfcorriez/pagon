@@ -30,7 +30,7 @@ class Html
      * @param string $value
      * @return string
      */
-    public static function entities($value)
+    public static function encode($value)
     {
         return htmlentities($value, ENT_QUOTES, static::charset(), false);
     }
@@ -52,7 +52,7 @@ class Html
      * @param  string $value
      * @return string
      */
-    public static function encode($value)
+    public static function specialChars($value)
     {
         return htmlspecialchars($value, ENT_QUOTES, static::charset(), false);
     }
@@ -177,7 +177,7 @@ class Html
             if (is_numeric($k)) $k = $v;
 
             if (!is_null($v)) {
-                $attr .= ' ' . $k . '="' . static::entities($v) . '"';
+                $attr .= ' ' . $k . '="' . static::encode($v) . '"';
             }
         }
 
