@@ -147,9 +147,9 @@ class Html
             if ($key == $selected) {
                 $attr['selected'] = 'true';
             }
-            $options_html[] = self::element('option', $value, $attr);
+            $options_html[] = self::dom('option', $value, $attr);
         }
-        return self::element('select', join('', $options_html), $attributes + array('name' => $name));
+        return self::dom('select', join('', $options_html), $attributes + array('name' => $name));
     }
 
     /**
@@ -160,7 +160,7 @@ class Html
      * @param array  $attributes
      * @return string
      */
-    public static function dom($name, $text, array $attributes = array())
+    public static function dom($name, $text = '', array $attributes = array())
     {
         $attr = '';
         foreach ($attributes as $k => $v) {
