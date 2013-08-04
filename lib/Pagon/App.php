@@ -1063,9 +1063,9 @@ class App extends EventEmitter
                     $this->handleError('crash', $error);
                 } catch (Exception\Stop $e) {
                 }
-                $this->flush();
             }
             $this->emit('crash', $error);
+            $this->flush();
         }
     }
 }
