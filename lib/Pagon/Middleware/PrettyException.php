@@ -63,6 +63,6 @@ class PrettyException extends Middleware
         }
 
         // Render the error
-        $this->input->app->render(__DIR__ . '/PrettyException/' . ($this->app->isCli() ? 'cli' : 'web') . '.php', $vars);
+        $this->input->app->render($this->app->path('pagon/views/exception/' . ($this->app->isCli() ? 'cli' : 'web') . '.php'), $vars);
     }
 }

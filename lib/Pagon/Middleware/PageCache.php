@@ -41,6 +41,7 @@ class PageCache extends Middleware
 
         $key = $this->options['prefix'] . $key;
 
+        /** @var $cache \Pagon\Cache */
         $cache = $this->options['cache'];
 
         if ($page = $cache->get($key)) {
