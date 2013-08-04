@@ -180,14 +180,9 @@ class Router extends Middleware
                 try {
                     $param && $this->app->param($param);
 
-                    $dispatched = true;
-
-                    $this->run($route);
-
-                    return $dispatched;
+                    return $this->run($route);
                     // If multiple controller
                 } catch (Pass $e) {
-                    // When catch Next, continue next route
                 }
             }
         }
@@ -201,18 +196,13 @@ class Router extends Middleware
                 if (!is_subclass_of($route, Middleware::_CLASS_, true)) continue;
 
                 try {
-                    $dispatched = true;
-
-                    $this->run($route);
-
-                    return $dispatched;
+                    return $this->run($route);
                 } catch (Pass $e) {
-                    // When catch Next, continue next route
                 }
             }
         }
 
-        return $dispatched;
+        return false;
     }
 
     /**
