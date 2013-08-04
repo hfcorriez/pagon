@@ -287,33 +287,6 @@ class App extends EventEmitter
     }
 
     /**
-     * Configure mode
-     *
-     * @param string|\Closure $mode
-     * @param \Closure        $closure
-     */
-    public function configure($mode, \Closure $closure = null)
-    {
-        if ($closure === null) {
-            $closure = $mode instanceof \Closure ? $mode : null;
-            $mode = null;
-        } elseif ($mode == 'all') {
-            // All mode
-            $mode = null;
-        }
-
-        // Not exists closure?
-        if (!$closure) return;
-
-        // Allow set mode get method when mode is closure
-        if (!$mode) {
-            $closure($this->injectors['mode']);
-        } elseif ($mode == $this->injectors['mode']) {
-            $closure();
-        }
-    }
-
-    /**
      * Add middleware
      *
      * @param Middleware|\Closure|string $path
