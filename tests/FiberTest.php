@@ -54,6 +54,16 @@ class FiberTest extends PHPUnit_Framework_TestCase
         $this->assertEquals($first, $this->di->s);
     }
 
+    public function testShareWithoutKey()
+    {
+        $rand = $this->di->share(function () {
+            rand();
+        });
+
+        $second = $rand();
+        $this->assertEquals($rand(), $second);
+    }
+
     public function testExtend()
     {
         $this->di->share('e', function () {
@@ -67,6 +77,20 @@ class FiberTest extends PHPUnit_Framework_TestCase
         $this->assertEquals(array('extend'), $this->di->e);
     }
 
+    public function testExtendNonExists()
+    {
+        $this->setExpectedException('InvalidArgumentException');
+        $this->di->extend('b', function () {
+        });
+    }
+
+    public function testExtendBad()
+    {
+        $this->setExpectedException('InvalidArgumentException');
+        $this->di->extend('a', function () {
+        });
+    }
+
     public function testProtect()
     {
         $this->di->protect('md5', function ($key) {
@@ -74,16 +98,37 @@ class FiberTest extends PHPUnit_Framework_TestCase
         });
 
         $this->assertEquals(md5('a'), $this->di->md5('a'));
+    }
 
+    public function testProtectBadCall()
+    {
         $this->di->md6 = 'md6';
 
         $this->setExpectedException('BadMethodCallException');
         $this->di->md6('a');
     }
 
+    public function testProtectWithoutKey()
+    {
+        $closure = function ($key) {
+            return $key . '$';
+        };
+
+        $protected = $this->di->protect($closure);
+
+        $this->assertEquals($protected(), $closure);
+    }
+
     public function testRaw()
     {
         $this->assertEquals('a', $this->di->raw('a'));
+
+        $closure = function () {
+        };
+
+        $this->di->raw('b', $closure);
+
+        $this->assertEquals($closure, $this->di->raw('b'));
     }
 
     public function testKeys()
@@ -96,5 +141,22 @@ class FiberTest extends PHPUnit_Framework_TestCase
         $this->di->append(array('b' => 'b'));
 
         $this->assertEquals(array('b', 'a'), $this->di->keys());
+    }
+
+    public function testGetWithSub()
+    {
+        $this->assertTrue(isset($this->di['a']));
+        $this->assertEquals('a', $this->di['a']);
+        unset($this->di['a']);
+        $this->assertFalse(isset($this->di['a']));
+
+        $this->setExpectedException('InvalidArgumentException');
+        $this->di['b'];
+    }
+
+    public function testSetWithSub()
+    {
+        $this->di['b'] = 'b';
+        $this->assertEquals('b', $this->di['b']);
     }
 }

@@ -6,8 +6,8 @@
 邮件列表: [https://groups.google.com/d/forum/pagonframework](https://groups.google.com/d/forum/pagonframework)
 
 ```
-Test cases		: 73
-Code coverage	: 38%
+Test cases		: 80
+Code coverage	: 40%
 ```
 
 > ;) 单元测试还在努力ing...
