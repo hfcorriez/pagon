@@ -13,6 +13,11 @@ class EventEmitterTest extends \PHPUnit_Framework_TestCase
         $this->event = new EventEmitter();
     }
 
+    public function tearDown()
+    {
+        $GLOBALS = array();
+    }
+
     public function testSimple()
     {
         $closure = function () {
@@ -155,5 +160,66 @@ class EventEmitterTest extends \PHPUnit_Framework_TestCase
         $this->event->removeAllListeners();
 
         $this->assertEquals(array(), $this->event->listeners('test1'));
+    }
+
+    public function testOnceMulti()
+    {
+        $GLOBALS['emit_result'] = 0;
+        $closure = function () {
+            $GLOBALS['emit_result']++;
+        };
+
+        $this->event->once(array('a', 'b'), $closure);
+
+        $this->assertEquals(0, $GLOBALS['emit_result']);
+        $this->event->emit('a');
+        $this->assertEquals(1, $GLOBALS['emit_result']);
+        $this->event->emit('a');
+        $this->assertEquals(1, $GLOBALS['emit_result']);
+        $this->event->emit('b');
+        $this->assertEquals(2, $GLOBALS['emit_result']);
+        $this->event->emit('b');
+        $this->assertEquals(2, $GLOBALS['emit_result']);
+    }
+
+    public function testManyMulti()
+    {
+        $GLOBALS['emit_result'] = 0;
+        $closure = function () {
+            $GLOBALS['emit_result']++;
+        };
+
+        $this->event->many(array('a', 'b'), 2, $closure);
+
+        $this->assertEquals(0, $GLOBALS['emit_result']);
+        $this->event->emit('a');
+        $this->assertEquals(1, $GLOBALS['emit_result']);
+        $this->event->emit('a');
+        $this->assertEquals(2, $GLOBALS['emit_result']);
+        $this->event->emit('a');
+        $this->assertEquals(2, $GLOBALS['emit_result']);
+        $this->event->emit('b');
+        $this->assertEquals(3, $GLOBALS['emit_result']);
+        $this->event->emit('b');
+        $this->assertEquals(4, $GLOBALS['emit_result']);
+    }
+
+    public function testOffMulti()
+    {
+        $closure = function () {
+        };
+        $closure1 = function () {
+        };
+
+        $this->event->on(array('a', 'b'), $closure);
+        $this->event->addListener(array('a', 'b'), $closure1);
+
+        $this->assertEquals(array($closure, $closure1), $this->event->listeners('a'));
+        $this->assertEquals(array($closure, $closure1), $this->event->listeners('b'));
+
+        $this->event->off(array('a', 'b'), $closure);
+
+        $this->assertEquals(array(1 => $closure1), $this->event->listeners('a'));
+        $this->assertEquals(array(1 => $closure1), $this->event->listeners('b'));
     }
 }
