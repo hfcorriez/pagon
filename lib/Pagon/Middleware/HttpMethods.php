@@ -37,20 +37,11 @@ class HttpMethods extends Middleware
 
             // Register route
             $this->app->protect($method, function ($path, $route, $more = null) use ($app, $method) {
-                if ($app->isCli() || !$app->input->is($method)) return;
-
                 if ($more !== null) {
-                    call_user_func_array(array($app->router, 'set'), func_get_args());
+                    call_user_func_array(array($app->router, 'set'), func_get_args())->via(strtoupper($method));
                 } else {
-                    $app->router->set($path, $route);
+                    $app->router->set($path, $route)->via(strtoupper($method));
                 }
-            });
-
-            // Register method check
-            $input = $this->input;
-
-            $this->input->protect('is' . ucfirst($method), function () use ($input, $method) {
-                return $input->is($method);
             });
         }
 
