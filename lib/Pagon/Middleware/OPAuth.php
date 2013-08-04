@@ -45,20 +45,20 @@ class OPAuth extends Middleware
 
             $response = unserialize(base64_decode($app->input->data('opauth')));
 
-            $failureReason = null;
+            $reason = null;
 
             if (isset($response['error'])) {
-                $failureReason = $response['error'];
+                $reason = $response['error'];
             } else {
                 if (empty($response['auth']) || empty($response['timestamp']) || empty($response['signature']) || empty($response['auth']['provider']) || empty($response['auth']['uid'])) {
-                    $failureReason = 'Missing key auth response components';
-                } elseif (!$opauth->validate(sha1(print_r($response['auth'], true)), $response['timestamp'], $response['signature'], $failureReason)) {
+                    $reason = 'Missing key auth response components';
+                } elseif (!$opauth->validate(sha1(print_r($response['auth'], true)), $response['timestamp'], $response['signature'], $reason)) {
                 }
             }
 
             $req->auth = $response;
-            $req->auth_success = !$failureReason;
-            $req->auth_error_message = $failureReason;
+            $req->auth_success = !$reason;
+            $req->auth_message = $reason;
             $next();
         };
 
