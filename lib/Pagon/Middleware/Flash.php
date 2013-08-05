@@ -24,8 +24,8 @@ class Flash extends Middleware
     /**
      * Set message with type
      *
-     * @param string $type
-     * @param string $message
+     * @param string       $type
+     * @param string|array $message
      * @return Flash
      */
     public function set($type, $message)
@@ -34,7 +34,12 @@ class Flash extends Middleware
             $this->flash[$type] = array();
         }
 
-        $this->flash[$type][] = $message;
+
+        if (!is_array($message)) {
+            $this->flash[$type][] = $message;
+        } else {
+            $this->flash[$type] = array_merge($this->flash[$type], $message);
+        }
         return $this;
     }
 
@@ -52,13 +57,29 @@ class Flash extends Middleware
     }
 
     /**
+     * Get flash message at now
+     */
+    public function flashNow()
+    {
+        $this->current = $this->input->flash = $this->flash;
+    }
+
+    /**
+     * Keep flash message
+     */
+    public function flashKeep()
+    {
+        $this->flash = array_merge_recursive($this->flash, $this->current);
+    }
+
+    /**
      * Call
      *
      * @return bool|void
      */
     public function call()
     {
-        $this->current = (array)$this->input->session($this->options['key']);
+        $this->current = $this->input->flash = (array)$this->input->session($this->options['key']);
 
         $self = & $this;
 
@@ -69,6 +90,14 @@ class Flash extends Middleware
                 return $self->get($type);
             }
             return $self;
+        });
+
+        $this->output->protect('flashNow', function () use ($self) {
+            $self->flashNow();
+        });
+
+        $this->output->protect('flashKeep', function () use ($self) {
+            $self->flashKeep();
         });
 
         $this->next();
