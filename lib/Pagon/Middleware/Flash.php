@@ -19,7 +19,7 @@ class Flash extends Middleware
     /**
      * @var array Next messages to save
      */
-    protected $next = array();
+    protected $flash = array();
 
     /**
      * Set message with type
@@ -30,11 +30,11 @@ class Flash extends Middleware
      */
     public function set($type, $message)
     {
-        if (!isset($this->next[$type])) {
-            $this->next[$type] = array();
+        if (!isset($this->flash[$type])) {
+            $this->flash[$type] = array();
         }
 
-        $this->next[$type][] = $message;
+        $this->flash[$type][] = $message;
         return $this;
     }
 
@@ -62,7 +62,6 @@ class Flash extends Middleware
 
         $self = & $this;
 
-        /** @noinspection PhpUndefinedFieldInspection */
         $this->output->protect('flash', function ($type = null, $message = null) use ($self) {
             if ($type && $message) {
                 return $self->set($type, $message);
@@ -75,6 +74,6 @@ class Flash extends Middleware
         $this->next();
 
         // Save to session
-        $this->input->session($this->options['key'], $this->next);
+        $this->input->session($this->options['key'], $this->flash);
     }
 }
