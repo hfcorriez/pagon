@@ -204,9 +204,9 @@ class Output extends EventEmitter
                 } else {
                     $this->injectors['headers'][$name] = $value;
                 }
-                return $this;
             }
         }
+        return $this;
     }
 
     /**
