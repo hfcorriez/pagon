@@ -54,6 +54,18 @@ function cookie($key, $default = null)
 }
 
 /**
+ * Read or write sessions
+ *
+ * @param string $key
+ * @param mixed  $value
+ * @return mixed
+ */
+function session($key, $value = null)
+{
+    return App::self()->input->session($key, $value);
+}
+
+/**
  * Build url
  *
  * @param string $path
@@ -140,7 +152,7 @@ function config($key, $value = null)
     if ($value === null) {
         return App::self()->get($key);
     }
-    App::self()->set($key, $value);
+    return App::self()->set($key, $value);
 }
 
 /**
@@ -445,7 +457,7 @@ function html($name, $text, array $attributes = array())
  */
 function e($string)
 {
-    return Html::entities($string);
+    return Html::encode($string);
 }
 
 /**
