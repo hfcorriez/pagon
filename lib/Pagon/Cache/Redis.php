@@ -22,11 +22,11 @@ class Redis extends Cache
      */
     public function __construct(array $options = array())
     {
-        $this->options = $options + $this->options;
-
-        if (!extension_loaded('redis')) {
-            throw new \RuntimeException('Redis extension is not install!');
+        if (!class_exists('\Redis')) {
+            throw new \RuntimeException("Use Cache\Redis need redis extension installed.");
         }
+
+        $this->options = $options + $this->options;
 
         $this->cache = new \Redis();
         $this->cache->connect($this->options['host'], $this->options['port'], $this->options['timeout']);

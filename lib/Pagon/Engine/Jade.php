@@ -22,9 +22,14 @@ class Jade
      * Init the engine
      *
      * @param array $options
+     * @throws \RuntimeException
      */
     public function __construct(array $options = array())
     {
+        if (!class_exists('\Everzet\Jade\Jade')) {
+            throw new \RuntimeException("Use Jade engine need `composer update` to install or include manually.");
+        }
+
         $this->options = $options + $this->options;
 
         $dumper = new PHPDumper();
