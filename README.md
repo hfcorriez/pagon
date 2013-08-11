@@ -35,7 +35,7 @@ Code coverage	: 41%
 已有项目
 
 ```
-composer.phar require pagon/pagon=0.7.0
+composer.phar require pagon/pagon=0.7.1
 ```
 
 新项目（使用[`pagon/app`](https://github.com/pagon/app)skelton创建应用）
