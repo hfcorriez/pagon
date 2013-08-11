@@ -203,8 +203,8 @@ config.json
     "debug": true,
     "cookie": {
         "secret": "very secret",
-        "domain": 'app.com',
-        "path": '/'
+        "domain": "app.com",
+        "path": "/"
     }
 }
 ```
