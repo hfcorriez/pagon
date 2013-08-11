@@ -6,8 +6,8 @@
 邮件列表: [https://groups.google.com/d/forum/pagonframework](https://groups.google.com/d/forum/pagonframework)
 
 ```
-Test cases		: 42
-Code coverage	: 38%
+Test cases		: 83
+Code coverage	: 41%
 ```
 
 > ;) 单元测试还在努力ing...
@@ -27,7 +27,7 @@ Code coverage	: 38%
 - 扩展，使用中间件方式随意扩展自己想要的
 - 标准，基于[PSR规范](https://github.com/hfcorriez/fig-standards)开发
 - 性能，效率上优于目前所有主流框架
-- 事件，基于事件打造，随时随地用事件驱动
+- 事件，所有类基于事件，随时随地用事件驱动
 - 现代，支持主流的现代应用开发：Web/Cli, Restful, Xml/Yaml/Json/Ini, Jade/Twig?, Dependency Injector
 
 ## 安装
@@ -35,7 +35,7 @@ Code coverage	: 38%
 已有项目
 
 ```
-composer.phar require pagon/pagon=0.6.2
+composer.phar require pagon/pagon=0.6.3
 ```
 
 新项目（使用[`pagon/app`](https://github.com/pagon/app)skelton创建应用）
@@ -57,7 +57,107 @@ $app->get('/', function($req, $res){
 });
 ```
 
+### 路由
+
+标准路由
+
+```php
+$app->get('/auth/:type', function ($req, $res) {
+    // Use key to get param
+    $type = $req->params['type'];
+
+    // Use index to get param
+    $type = $req->params[0];
+
+    // Todo something...
+});
+```
+
+模糊路由
+
+```php
+$app->get('/see/*', function() {
+    // Use index to get param
+    $what = $req->params[0];
+
+    // Todo something...
+});
+```
+
+正则路由
+
+```php
+$app->get('^\/([\d]{4})\/([\d]{2})/([\d]{2})$', function ($req, $res) {
+    $year = $req->params[0];
+    $month = $req->params[1];
+    $day = $req->params[2];
+
+    // Todo something...
+});
+```
+
+命名路由
+
+```php
+$app->get('/user/:id', function ($req, $res) {
+    $my_url = Url::route('user', array('id' => $req->params['id']));
+
+    // Todo something...
+})->name('user');
+```
+
+路由参数默认值
+
+```php
+$app->get('/abc', function () {
+    // Todo something
+})->defaults(array('name' => 'abc'));
+```
+
+路由参数规则
+
+```php
+$app->get('/archive/:year', function() {
+    // Todo something
+})->rules(array('year' => '[\d]{4}'));
+```
+
+可选参数（只适用标准路由模式）
+
+`可选参数配合默认值使用会更方便`
+
+```php
+$app->get('/auth(/:type)', function ($req, $res) {
+    // Use key to get param
+    $type = $req->params['type'];
+})->defaults(array('type' => 'weibo'));
+```
+
 ### 配置
+
+配置说明
+
+```
+mode        运行模式，一般无需配置，根据PAGON_ENV自动生成
+debug       是否开启调试模式
+views       模板目录
+buffer      是否开启缓冲区
+timezone    时区，默认UTC
+charset     编码，默认UTF-8,
+autoload    自动加载主目录
+error       是否Handle PHP抛出的错误
+routes      路由列表
+names       路由命名，一般自动生成
+alias       类的别名，简化很长的类名
+namespaces  注册命名空间地址，根据命名空间查找
+engines     模板引擎，根据扩展名渲染引擎
+errors      默认错误信息
+stacks      中间件
+mounts      应用加载的路径列表
+bundles     包应用
+locals      默认的模板变量
+safe_query  在模板渲染时自动预防XSS
+```
 
 直接传递配置创建应用
 
@@ -79,11 +179,13 @@ $app->set('cookie.domain', 'abc.com');
 $app->get('cookie.domain');
 ```
 
-通过文件加载配置，支持`json`, `yaml`, `ini`和`php`(`xml`也会尽快支持)，例子：
+通过文件加载配置，支持`json`, `yaml`, `ini`和`php`(`xml`后续也会支持)，例子：
 
 config.php
 
 ```php
+<?php
+
 return array(
     'timezone' => 'Asia/Shanghai',
     'debug' =>  true,
@@ -95,18 +197,6 @@ return array(
 );
 ```
 
-config.ini
-
-```ini
-timezone = 'Asia/Shanghai'
-debug = true
-
-[cookie]
-cookie.secret = 'very secret'
-cookie.domain = 'app.com'
-cookie.path = '/'
-```
-
 config.json
 
 ```json
@@ -115,27 +205,18 @@ config.json
     "debug": true,
     "cookie": {
         "secret": "very secret",
-        "domain": 'app.com',
-        "path": '/'
+        "domain": "app.com",
+        "path": "/"
     }
 }
 ```
 
-config.yaml
+`ini`和`yaml`支持在此不再敖述！后续文档会详细的介绍。
 
-```yaml
-timezone: Asia/Shanghai
-debug: true
-cookie:
-    secret: "very secret"
-    domian: "app.com"
-    path: "/"
-```
-
-使用配置
+注入配置
 
 ```
-$app = new App('文件名');
+$app = new App('config.json');
 ```
 
 ### 中间件
@@ -154,12 +235,14 @@ $app->add(function($req, $res, $next) {
 使用框架内置的中间件
 
 ```
-- PrettyException   异常和错误输出，Debug模式下默认开启。
-- Flash             信息闪存，用于验证提示等。
+- Booster           助推器，根据配置文件为App做一些绑定工作，比如logger和cryptor
+- CRSF              CRSF自动防御中间件
+- OPAuth            OPAuth的中间件，用来做第三方验证
+- PrettyException   异常和错误输出，Debug模式下默认开启
+- Flash             信息闪存，用于验证提示等
 - HttpMethods       完整的Http方法支持
 - HttpBasicAuth     Http Basic验证支持
 - I18N              多语言支持
-- Logger            日志支持
 - PageCache         页面缓存支持
 - Session           Session支持，包括（Cookie, Redis, Memcache）
 - MethodOveride     Http方法重载
@@ -187,22 +270,13 @@ $app->add('/monitor', 'HttpBasicAuth', array('username' => 'test', 'password' =>
 ```php
 $app = new App();
 
-// 配置development
-$app->configure('develop', function(){
-    $app->set('debug', true);
-});
+// 获取当前环境
+$app->mode();
 
-// 配置所有环境
-$app->configure(function($mode) use ($app){
-	switch ($mode) {
-		case 'develop':
-			$app->set('debug', true);
-			break;
-		case 'product':
-			$app->add('PageCache', array('cache' => Cache::dispense('redis')));
-			break;
-	}
-})
+// 自定义环境模式
+$app->mode(function() {
+    return getenv("PHP_ENV");
+});
 ```
 
 ### 控制器
@@ -215,18 +289,39 @@ $app->get('/api/ping', function($req, $res) {
 });
 ```
 
-也可以使用类继承的方式来创造一个控制器
+也可以通过内置的基础控制器来派生出自己的控制器
+
+- Restful控制器
 
 ```php
 use Pagon\Rest
 
 class Ping extend Rest {
+
+    // GET /ping
     public function get($req, $res) {
         $res->end('pong');
     }
 }
 
-$app->get('/api/ping', 'Ping');
+
+$app->get('/ping', 'Ping');
+```
+
+- Classic控制器
+
+```php
+use Pagon\Classic
+
+class Service extend Classic {
+
+    // GET/POST/... /service/echo
+    public function actionEcho($req, $res) {
+        $res->end('echo');
+    }
+}
+
+$app->all('/service/:action', 'Service');
 ```
 
 ### 事件
@@ -235,15 +330,15 @@ $app->get('/api/ping', 'Ping');
 
 ```
 - App
-  - run       应用运行前
-  - bundle    Bundle加载前
-  - bundle.x  x Bundle加载前
-  - middlware 中间件加载前
-  - flush     输出前
-  - end       输出后
-  - exit      退出时（错误也会触发）
-  - crash     程序异常无法运行
-  - error     未捕获错误
+  - run        应用运行前
+  - bundle     Bundle加载前
+  - bundle.x   x Bundle加载前
+  - middleware 中间件加载前
+  - flush      输出前
+  - end        输出后
+  - exit       退出时（错误也会触发）
+  - crash      程序异常无法运行
+  - error      未捕获错误
 ```
 
 所有对象都基于事件实现，可以轻松在任何对象上绑定事件
@@ -261,7 +356,7 @@ $app->on('exit', function(){
 });
 ```
 
-### 依赖容器(Denpendency Injector Container)
+### 依赖容器(Dependency Injector Container)
 
 所有对象都基于依赖容器，都可以实现依赖注入。
 

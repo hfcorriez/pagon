@@ -22,6 +22,10 @@ class Memcached extends Cache
      */
     public function __construct(array $options = array())
     {
+        if (!class_exists('\Memcached')) {
+            throw new \RuntimeException("Use Cache\Memcached need memcached extension installed.");
+        }
+
         if (isset($options[0]) && is_array($options[0])) {
             $this->options = $options + $this->options;
         } else {

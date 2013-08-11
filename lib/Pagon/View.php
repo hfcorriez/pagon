@@ -8,19 +8,21 @@ namespace Pagon;
  *
  * @package Pagon
  */
-class View
+class View extends EventEmitter
 {
     const _CLASS_ = __CLASS__;
+
+    /**
+     * Is Rendering now?
+     *
+     * @var bool
+     */
+    public static $rendering = false;
 
     /**
      * @var string File path
      */
     protected $path;
-
-    /**
-     * @var array The data for view
-     */
-    protected $data = array();
 
     /**
      * @var array
@@ -59,7 +61,7 @@ class View
         }
 
         // Set data
-        $this->data = $data;
+        parent::__construct($data);
     }
 
     /**
@@ -68,10 +70,14 @@ class View
      * @param $engine
      * @return \Pagon\View
      */
-    public function setEngine($engine)
+    public function engine($engine = null)
     {
-        $this->options['engine'] = $engine;
-        return $this;
+        if (!$engine) {
+            return $this->options['engine'];
+        } else {
+            $this->options['engine'] = $engine;
+            return $this;
+        }
     }
 
     /**
@@ -80,10 +86,14 @@ class View
      * @param string $dir
      * @return View
      */
-    public function setDir($dir)
+    public function dir($dir = null)
     {
-        $this->options['dir'] = $dir;
-        return $this;
+        if (!$dir) {
+            return $this->options['dir'];
+        } else {
+            $this->options['dir'] = $dir;
+            return $this;
+        }
     }
 
     /**
@@ -94,8 +104,7 @@ class View
      */
     public function set(array $array = array())
     {
-        $this->data = $array + $this->data;
-        return $this;
+        return $this->append($array);
     }
 
     /**
@@ -107,59 +116,28 @@ class View
     {
         $engine = $this->options['engine'];
 
+        // Mark rendering flag
+        self::$rendering = true;
+
+        $this->emit('render');
+
         if (!$engine) {
-            if ($this->data) {
-                extract((array)$this->data);
+            if ($this->injectors) {
+                extract((array)$this->injectors);
             }
             ob_start();
             include($this->options['dir'] . ($this->path{0} == '/' ? '' : '/') . $this->path);
-            return ob_get_clean();
+            $html = ob_get_clean();
+        } else {
+            $html = $engine->render($this->path, $this->injectors, $this->options['dir']);
         }
 
-        return $engine->render($this->path, $this->data, $this->options['dir']);
-    }
+        $this->emit('rendered');
 
-    /**
-     * Assign value for view
-     *
-     * @param $key
-     * @param $value
-     */
-    public function __set($key, $value)
-    {
-        $this->data[$key] = $value;
-    }
+        // Release rendering flag
+        self::$rendering = false;
 
-    /**
-     * Get assign value for view
-     *
-     * @param $key
-     * @return mixed
-     */
-    public function __get($key)
-    {
-        return isset($this->data[$key]) ? $this->data[$key] : null;
-    }
-
-    /**
-     * Is-set data?
-     *
-     * @param $key
-     * @return bool
-     */
-    public function __isset($key)
-    {
-        return isset($this->data[$key]);
-    }
-
-    /**
-     * Un-set data
-     *
-     * @param $key
-     */
-    public function __unset($key)
-    {
-        unset($this->data[$key]);
+        return $html;
     }
 
     /**

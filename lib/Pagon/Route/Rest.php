@@ -39,17 +39,8 @@ abstract class Rest extends Route
         $this->params = $this->input->params;
         $method = strtolower($this->input->method());
 
-        /**
-         * Check if exists `$method` of implements Route
-         *
-         * If not exists
-         */
-        if (method_exists($this, $method)) {
-            $this->before();
-            $this->$method($this->input, $this->output);
-            $this->after();
-        } else {
-            $this->next();
-        }
+        $this->before();
+        $this->$method($this->input, $this->output);
+        $this->after();
     }
 }

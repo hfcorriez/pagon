@@ -23,8 +23,9 @@ class Url
     public static function to($path, array $query = null, $full = false)
     {
         return
-            ($full ? self::site() : self::base()) .
-            '/' . ltrim($path, '/') .
+            (!strpos($path, '://') ?
+                ($full ? self::site() : self::base()) . '/' . ltrim($path, '/')
+                : $path) .
             ($query ? '?' . http_build_query($query) : '');
     }
 
@@ -37,17 +38,19 @@ class Url
      * @param bool   $full
      * @return string
      */
-    public static function route($name, array $params, array $query = null, $full = false)
+    public static function route($name, array $params = null, array $query = null, $full = false)
     {
         $app = App::self();
 
         $path = $app->router->path($name);
 
-        foreach ($params as $param => $value) {
-            if (is_string($param)) {
-                $path = preg_replace('/\(:' . $param . '\)/', $value, $path, 1);
-            } else {
-                $path = preg_replace('/\(.+?\)|\*/', $value, $path, 1);
+        if ($params) {
+            foreach ($params as $param => $value) {
+                if (is_string($param)) {
+                    $path = preg_replace('/:' . $param . '/', $value, $path, 1);
+                } else {
+                    $path = preg_replace('/\(.+?\)|\*/', $value, $path, 1);
+                }
             }
         }
 
@@ -64,6 +67,8 @@ class Url
      */
     public static function asset($path, array $query = null, $full = false)
     {
+        if (strpos($path, '://')) return self::to($path, $query, $full);
+
         $asset_url = App::self()->get('asset_url');
 
         return

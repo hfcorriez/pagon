@@ -2,6 +2,8 @@
 
 use Pagon\App;
 use Pagon\Cache;
+use Pagon\Html;
+use Pagon\Logger;
 use Pagon\Paginator;
 use Pagon\Url;
 
@@ -22,7 +24,7 @@ function app()
  * @param string $default
  * @return mixed
  */
-function get($key, $default = null)
+function query($key, $default = null)
 {
     return App::self()->input->query($key, $default);
 }
@@ -34,9 +36,33 @@ function get($key, $default = null)
  * @param string $default
  * @return mixed
  */
-function post($key, $default = null)
+function data($key, $default = null)
 {
     return App::self()->input->data($key, $default);
+}
+
+/**
+ * Get cookie
+ *
+ * @param string $key
+ * @param mixed  $default
+ * @return mixed
+ */
+function cookie($key, $default = null)
+{
+    return App::self()->input->cookie($key, $default);
+}
+
+/**
+ * Read or write sessions
+ *
+ * @param string $key
+ * @param mixed  $value
+ * @return mixed
+ */
+function session($key, $value = null)
+{
+    return App::self()->input->session($key, $value);
 }
 
 /**
@@ -50,6 +76,19 @@ function post($key, $default = null)
 function url($path, array $query = null, $full = false)
 {
     return Url::to($path, $query, $full);
+}
+
+/**
+ * Build route url
+ *
+ * @param string $name
+ * @param array  $params
+ * @param array  $query
+ * @param bool   $full
+ */
+function route_url($name, array $params, array $query = null, $full = false)
+{
+    return Url::route($name, $params, $query, $full);
 }
 
 /**
@@ -78,6 +117,16 @@ function current_url(array $query = null, $full = false)
 }
 
 /**
+ * Get site url
+ *
+ * @return mixed
+ */
+function site_url()
+{
+    return Url::site();
+}
+
+/**
  * Build page
  *
  * @param string $pattern
@@ -103,7 +152,7 @@ function config($key, $value = null)
     if ($value === null) {
         return App::self()->get($key);
     }
-    App::self()->set($key, $value);
+    return App::self()->set($key, $value);
 }
 
 /**
@@ -185,6 +234,85 @@ function local($key, $value = null)
 function render($path, array $data = null, array $options = array())
 {
     App::self()->render($path, $data, $options);
+}
+
+/**
+ * Compile template
+ *
+ * @param string $path
+ * @param array  $data
+ * @param array  $options
+ * @return \Pagon\View
+ */
+function compile($path, array $data = null, array $options = array())
+{
+    return App::self()->output->compile($path, $data, $options);
+}
+
+/**
+ * Dispense logger
+ *
+ * @param string $name
+ * @return mixed
+ */
+function logger($name = 'log')
+{
+    return Logger::dispense($name);
+}
+
+/**
+ * Log debug
+ *
+ * @param string $message
+ * @param mixed  $context
+ */
+function log_debug($message, $context = null)
+{
+    call_user_func_array(array('Pagon\Logger', 'debug'), func_get_args());
+}
+
+/**
+ * Log info
+ *
+ * @param string $message
+ * @param mixed  $context
+ */
+function log_info($message, $context = null)
+{
+    call_user_func_array(array('Pagon\Logger', 'info'), func_get_args());
+}
+
+/**
+ * Log warn
+ *
+ * @param string $message
+ * @param mixed  $context
+ */
+function log_warn($message, $context = null)
+{
+    call_user_func_array(array('Pagon\Logger', 'warn'), func_get_args());
+}
+
+/**
+ * Log error
+ *
+ * @param string $message
+ * @param mixed  $context
+ */
+function log_error($message, $context = null)
+{
+    call_user_func_array(array('Pagon\Logger', 'error'), func_get_args());
+}
+
+/**
+ * Log critical
+ *
+ * @param string $message
+ * @param mixed  $context
+ */
+function log_critical($message, $context = null)
+{
+    call_user_func_array(array('Pagon\Logger', 'critical'), func_get_args());
 }
 
 /*****************************************************
@@ -302,4 +430,127 @@ function human_size($size)
 {
     $units = array('Bytes', 'KiB', 'MiB', 'GiB', 'TiB', 'PiB', 'EiB');
     return @round($size / pow(1024, ($i = floor(log($size, 1024)))), 2) . ' ' . $units[$i];
+}
+
+/*****************************************************
+ * Html functions
+ *****************************************************/
+
+/**
+ * Create dom element
+ *
+ * @param string $name
+ * @param string $text
+ * @param array  $attributes
+ * @return string
+ */
+function html($name, $text, array $attributes = array())
+{
+    return Html::dom($name, $text, $attributes);
+}
+
+/**
+ * Quick function for entitles
+ *
+ * @param string $string
+ * @return string
+ */
+function e($string)
+{
+    return Html::encode($string);
+}
+
+/**
+ * Create link
+ *
+ * @param string $src
+ * @param string $text
+ * @param array  $attributes
+ * @return string
+ */
+function a($src, $text, array $attributes = array())
+{
+    return Html::a($src, $text, $attributes);
+}
+
+/**
+ * Create style link
+ *
+ * @param string $src
+ * @return string
+ */
+function style($src)
+{
+    return Html::link($src);
+}
+
+/**
+ * Create script link
+ *
+ * @param string $src
+ * @param array  $attributes
+ * @return string
+ */
+function script($src, array $attributes = array())
+{
+    return Html::script($src, $attributes);
+}
+
+/**
+ * Create select options
+ *
+ * @param string $name
+ * @param array  $options
+ * @param string $selected
+ * @param array  $attributes
+ * @return mixed
+ */
+function select($name, array $options, $selected = null, array $attributes = array())
+{
+    return Html::select($name, $options, $selected, $attributes);
+}
+
+/*****************************************************
+ * Util functions
+ *****************************************************/
+
+/**
+ *
+ * Defer execution
+ *
+ * @param Closure $closure
+ */
+function defer(Closure $closure)
+{
+    App::self()->defer($closure);
+}
+
+/**
+ * Or
+ *
+ * @return bool
+ */
+function __or()
+{
+    $last = false;
+    foreach (func_get_args() as $arg) {
+        if ($arg) return $arg;
+        $last = $arg;
+    }
+    return $last;
+}
+
+/**
+ * And
+ *
+ * @return bool
+ */
+function __and()
+{
+    $last = false;
+    foreach (func_get_args() as $arg) {
+        if (!$arg) return $arg;
+        $last = $arg;
+    }
+    return $last;
 }

@@ -46,6 +46,16 @@ class Input extends EventEmitter
     }
 
     /**
+     * Get method
+     *
+     * @return string
+     */
+    public function method()
+    {
+        return 'CLI';
+    }
+
+    /**
      * Get root of application
      *
      * @return string

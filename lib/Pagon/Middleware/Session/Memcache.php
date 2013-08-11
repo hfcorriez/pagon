@@ -24,6 +24,10 @@ class Memcache extends Session
 
     public function open($path, $name)
     {
+        if (!class_exists('\Memcache')) {
+            throw new \RuntimeException("Use Session\Memcache need memcache extension installed.");
+        }
+
         $this->memcache = new \Memcache();
         $this->memcache->connect($this->options['host'], $this->options['port'], $this->options['timeout']);
 

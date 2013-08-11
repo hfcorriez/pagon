@@ -5,8 +5,10 @@ namespace Pagon\Http;
 use Pagon\App;
 use Pagon\EventEmitter;
 use Pagon\Exception\Pass;
+use Pagon\Exception\Stop;
 use Pagon\Config;
-
+use Pagon\Html;
+use Pagon\View;
 
 /**
  * Http Input
@@ -130,7 +132,6 @@ class Input extends EventEmitter
     /**
      * Get method
      *
-     *
      * @return string
      */
     public function method()
@@ -147,46 +148,6 @@ class Input extends EventEmitter
     public function is($method)
     {
         return $this->method() == strtoupper($method);
-    }
-
-    /**
-     * Is get method?
-     *
-     * @return bool
-     */
-    public function isGet()
-    {
-        return $this->method() === 'GET';
-    }
-
-    /**
-     * Is post method?
-     *
-     * @return bool
-     */
-    public function isPost()
-    {
-        return $this->method() === 'POST';
-    }
-
-    /**
-     * Is put method?
-     *
-     * @return bool
-     */
-    public function isPut()
-    {
-        return $this->method() === 'PUT';
-    }
-
-    /**
-     * Is delete method?
-     *
-     * @return bool
-     */
-    public function isDelete()
-    {
-        return $this->method() === 'DELETE';
     }
 
     /**
@@ -508,7 +469,10 @@ class Input extends EventEmitter
      */
     public function query($key, $default = null)
     {
-        return isset($this->injectors['query'][$key]) ? $this->injectors['query'][$key] : $default;
+        if (isset($this->injectors['query'][$key])) {
+            return $this->app->enabled('safe_query') && View::$rendering ? Html::encode($this->injectors['query'][$key]) : $this->injectors['query'][$key];
+        }
+        return $default;
     }
 
     /**
@@ -520,8 +484,10 @@ class Input extends EventEmitter
      */
     public function data($key, $default = null)
     {
-        return isset($this->injectors['data'][$key]) ? $this->injectors['data'][$key] : $default;
-
+        if (isset($this->injectors['data'][$key])) {
+            return $this->app->enabled('safe_query') && View::$rendering ? Html::encode($this->injectors['data'][$key]) : $this->injectors['data'][$key];
+        }
+        return $default;
     }
 
     /**
@@ -657,8 +623,17 @@ class Input extends EventEmitter
      */
     public function pass()
     {
-        ob_get_level() && ob_clean();
-        throw new Pass();
+        $this->app->pass();
+    }
+
+    /**
+     * Stop
+     *
+     * @throws Stop
+     */
+    public function stop()
+    {
+        $this->app->stop();
     }
 
     /**

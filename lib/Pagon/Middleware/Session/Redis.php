@@ -2,10 +2,6 @@
 
 namespace Pagon\Middleware\Session;
 
-if (!class_exists('\Redis')) {
-    throw new \RuntimeException("Use Session\Redis middleware need Redis installed");
-}
-
 use Pagon\Middleware\Session;
 
 class Redis extends Session
@@ -28,6 +24,10 @@ class Redis extends Session
 
     public function open($path, $name)
     {
+        if (!class_exists('\Redis')) {
+            throw new \RuntimeException("Use Session\Redis need redis extension installed.");
+        }
+
         $this->redis = new \Redis();
         $this->redis->connect($this->options['host'], $this->options['port'], $this->options['timeout']);
 
