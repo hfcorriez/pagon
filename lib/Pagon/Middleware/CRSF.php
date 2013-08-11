@@ -20,7 +20,11 @@ class CRSF extends Middleware
      */
     public function call()
     {
-        if ($this->input->isPost()) {
+        // Inject the error type
+        $this->app->errors['unsafe'] = array(403, 'Security Check Fail!');
+
+        // Check if post?
+        if ($this->input->is("post")) {
             if ($this->options['form']) {
                 $token = $this->input->data($this->options['name']);
                 if (!$token
@@ -46,7 +50,9 @@ class CRSF extends Middleware
              *
              */
             if ($this->options['refer']) {
+                // Parse url
                 $url = parse_url($this->input->refer());
+                // Check host and domain
                 if ($this->input->domain() != $url['host']) {
                     $this->callback();
                     return;
@@ -54,16 +60,28 @@ class CRSF extends Middleware
             }
         }
 
+        // Add crsf_token to request
+        $token = $this->input->crsf_token = $this->encodeToken();
+        // Add crsf_token to locals variables
+        $this->output->locals['crsf_token'] = $token;
+
+        // Next
         $this->next();
 
-        if ($this->options['form'] && strpos($this->output->contentType(), 'html')) {
+        if (
+            // If enable form injection
+            $this->options['form']
+            // And the page is html content type
+            && strpos($this->output->contentType(), 'html')
+        ) {
             // Check if buffer start
             if ($this->app->enabled('buffer')) {
                 $this->output->write(ob_get_clean());
             }
 
+            // Check form if exists?
             if (strpos($this->output->body, '</form>')) {
-                $this->output->body = preg_replace('/.*?<\/form>/', '<input type="hidden" name="' . $this->options['name'] . '" value="' . $this->encodeToken() . '" /></form>', $this->output->body);
+                $this->output->body = str_replace('</form>', '<input type="hidden" name="' . $this->options['name'] . '" value="' . 'd' . '" /></form>', $this->output->body);
             }
         }
     }
@@ -100,8 +118,7 @@ class CRSF extends Middleware
         if (isset($this->options['callback'])) {
             $this->options['callback']($this->input, $this->output);
         } else {
-            $this->output->status = 403;
-            $this->output->end('<html><head><title></title></head><body><h2>Security Check Fail!</h2></body></html>');
+            $this->app->handleError('unsafe');
         }
     }
 }
