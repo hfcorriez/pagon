@@ -268,22 +268,13 @@ $app->add('/monitor', 'HttpBasicAuth', array('username' => 'test', 'password' =>
 ```php
 $app = new App();
 
-// 配置development
-$app->configure('develop', function(){
-    $app->set('debug', true);
-});
+// 获取当前环境
+$app->mode();
 
-// 配置所有环境
-$app->configure(function($mode) use ($app){
-	switch ($mode) {
-		case 'develop':
-			$app->set('debug', true);
-			break;
-		case 'product':
-			$app->add('PageCache', array('cache' => Cache::dispense('redis')));
-			break;
-	}
-})
+// 自定义环境模式
+$app->mode(function() {
+    return getenv("PHP_ENV");
+});
 ```
 
 ### 控制器
@@ -298,16 +289,37 @@ $app->get('/api/ping', function($req, $res) {
 
 也可以使用类继承的方式来创造一个控制器
 
+Restful控制器
+
 ```php
 use Pagon\Rest
 
 class Ping extend Rest {
+
+    // GET /ping
     public function get($req, $res) {
         $res->end('pong');
     }
 }
 
-$app->get('/api/ping', 'Ping');
+
+$app->get('/ping', 'Ping');
+```
+
+Classic控制器
+
+```
+use Pagon\Classic
+
+class Service extend Classic {
+
+    // GET/POST/... /service/echo
+    public function actionEcho($req, $res) {
+        $res->end('echo');
+    }
+}
+
+$app->all('/service/:action', 'Service');
 ```
 
 ### 事件
