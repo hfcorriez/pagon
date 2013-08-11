@@ -4,7 +4,7 @@ namespace Pagon\Middleware;
 
 use Pagon\Middleware;
 
-class CRSF extends Middleware
+class CSRF extends Middleware
 {
     // Some options
     protected $options = array(
@@ -60,10 +60,10 @@ class CRSF extends Middleware
             }
         }
 
-        // Add crsf_token to request
-        $token = $this->input->crsf_token = $this->encodeToken();
-        // Add crsf_token to locals variables
-        $this->output->locals['crsf_token'] = $token;
+        // Add csrf_token to request
+        $token = $this->input->csrf_token = $this->encodeToken();
+        // Add csrf_token to locals variables
+        $this->output->locals['csrf_token'] = $token;
 
         // Next
         $this->next();

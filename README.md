@@ -236,7 +236,7 @@ $app->add(function($req, $res, $next) {
 
 ```
 - Booster           助推器，根据配置文件为App做一些绑定工作，比如logger和cryptor
-- CRSF              CRSF自动防御中间件
+- CSRF              CSRF自动防御中间件
 - OPAuth            OPAuth的中间件，用来做第三方验证
 - PrettyException   异常和错误输出，Debug模式下默认开启
 - Flash             信息闪存，用于验证提示等
