@@ -27,7 +27,7 @@ Code coverage	: 41%
 - 扩展，使用中间件方式随意扩展自己想要的
 - 标准，基于[PSR规范](https://github.com/hfcorriez/fig-standards)开发
 - 性能，效率上优于目前所有主流框架
-- 事件，基于事件打造，随时随地用事件驱动
+- 事件，所有类基于事件，随时随地用事件驱动
 - 现代，支持主流的现代应用开发：Web/Cli, Restful, Xml/Yaml/Json/Ini, Jade/Twig?, Dependency Injector
 
 ## 安装
@@ -179,7 +179,7 @@ $app->set('cookie.domain', 'abc.com');
 $app->get('cookie.domain');
 ```
 
-通过文件加载配置，支持`json`, `yaml`, `ini`和`php`(`xml`也会尽快支持)，例子：
+通过文件加载配置，支持`json`, `yaml`, `ini`和`php`(`xml`后续也会支持)，例子：
 
 config.php
 
@@ -193,18 +193,6 @@ return array(
         'path' => '/'
     )
 );
-```
-
-config.ini
-
-```ini
-timezone = 'Asia/Shanghai'
-debug = true
-
-[cookie]
-cookie.secret = 'very secret'
-cookie.domain = 'app.com'
-cookie.path = '/'
 ```
 
 config.json
@@ -221,21 +209,12 @@ config.json
 }
 ```
 
-config.yaml
+`ini`和`yaml`支持在此不再敖述！后续文档会详细的介绍。
 
-```yaml
-timezone: Asia/Shanghai
-debug: true
-cookie:
-    secret: "very secret"
-    domian: "app.com"
-    path: "/"
-```
-
-使用配置
+注入配置
 
 ```
-$app = new App('文件名');
+$app = new App('config.json');
 ```
 
 ### 中间件
@@ -254,7 +233,7 @@ $app->add(function($req, $res, $next) {
 使用框架内置的中间件
 
 ```
-- Booster           助推器，根据配置文件为App做一些绑定工作，比如logger和crptor
+- Booster           助推器，根据配置文件为App做一些绑定工作，比如logger和cryptor
 - CRSF              CRSF自动防御中间件
 - OPAuth            OPAuth的中间件，用来做第三方验证
 - PrettyException   异常和错误输出，Debug模式下默认开启
@@ -337,15 +316,15 @@ $app->get('/api/ping', 'Ping');
 
 ```
 - App
-  - run       应用运行前
-  - bundle    Bundle加载前
-  - bundle.x  x Bundle加载前
-  - middlware 中间件加载前
-  - flush     输出前
-  - end       输出后
-  - exit      退出时（错误也会触发）
-  - crash     程序异常无法运行
-  - error     未捕获错误
+  - run        应用运行前
+  - bundle     Bundle加载前
+  - bundle.x   x Bundle加载前
+  - middleware 中间件加载前
+  - flush      输出前
+  - end        输出后
+  - exit       退出时（错误也会触发）
+  - crash      程序异常无法运行
+  - error      未捕获错误
 ```
 
 所有对象都基于事件实现，可以轻松在任何对象上绑定事件
@@ -363,7 +342,7 @@ $app->on('exit', function(){
 });
 ```
 
-### 依赖容器(Denpendency Injector Container)
+### 依赖容器(Dependency Injector Container)
 
 所有对象都基于依赖容器，都可以实现依赖注入。
 

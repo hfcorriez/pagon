@@ -16,13 +16,14 @@ class OPAuth extends Middleware
 
     /**
      * @param array $options
+     * @throws \RuntimeException
      * @throws \InvalidArgumentException
      */
     public function __construct(array $options = array())
     {
-        if (!isset($options['callback'])) {
-            throw new \InvalidArgumentException('OPAuth middleware need "callback" option');
-        }
+        if (!class_exists('\Opauth')) throw new \RuntimeException("OPAuth middleware need \Opauth class, plz use composer to install, or add it manually!");
+
+        if (!isset($options['callback'])) throw new \InvalidArgumentException('OPAuth middleware need "callback" option');
 
         parent::__construct($options);
 
