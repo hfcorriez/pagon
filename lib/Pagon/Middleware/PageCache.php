@@ -18,7 +18,7 @@ class PageCache extends Middleware
 
     public function call()
     {
-        if (!$this->options['cache']) {
+        if (!$this->options['cache'] || !$this->input->is("get")) {
             $this->next();
             return;
         }
