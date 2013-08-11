@@ -289,9 +289,9 @@ $app->get('/api/ping', function($req, $res) {
 });
 ```
 
-也可以使用类继承的方式来创造一个控制器
+也可以通过内置的基础控制器来派生出自己的控制器
 
-Restful控制器
+- Restful控制器
 
 ```php
 use Pagon\Rest
@@ -308,7 +308,7 @@ class Ping extend Rest {
 $app->get('/ping', 'Ping');
 ```
 
-Classic控制器
+- Classic控制器
 
 ```
 use Pagon\Classic
