@@ -22,11 +22,11 @@ class Memcache extends Cache
      */
     public function __construct(array $options = array())
     {
-        $this->options = $options + $this->options;
-
-        if (!extension_loaded('memcache')) {
-            throw new \RuntimeException('Memcache extension is not install!');
+        if (!class_exists('\Memcache')) {
+            throw new \RuntimeException("Use Cache\Memcache need memcache extension installed.");
         }
+
+        $this->options = $options + $this->options;
 
         $this->cache = new \Memcache();
         $this->cache->connect($this->options['host'], $this->options['port'], $this->options['timeout']);

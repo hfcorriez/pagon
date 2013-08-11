@@ -36,14 +36,14 @@ class Fiber implements \ArrayAccess
     /**
      * @var array Injectors
      */
-    protected $injectors;
+    protected $injectors = array();
 
     /**
      * @param array $injectors
      */
     public function __construct(array $injectors = array())
     {
-        $this->injectors = $injectors;
+        $this->injectors = $injectors + $this->injectors;
     }
 
     /**
@@ -220,10 +220,12 @@ class Fiber implements \ArrayAccess
      * Append the multiple injectors
      *
      * @param array $injectors
+     * @return $this
      */
     public function append(array $injectors)
     {
         $this->injectors = $injectors + $this->injectors;
+        return $this;
     }
 
     /**

@@ -5,11 +5,6 @@ namespace Pagon;
 abstract class Cache
 {
     /**
-     * @var string The prefix for cache config
-     */
-    public static $prefix = 'cache.';
-
-    /**
      * @var array Instances has dispensed
      */
     protected static $instances = array();
@@ -40,13 +35,10 @@ abstract class Cache
      * @return Cache
      * @throws \InvalidArgumentException
      */
-    public static function dispense($name = 'default')
+    public static function dispense($name = 'cache')
     {
         if (empty(self::$instances[$name])) {
-            $app = App::self();
-            if (!$config = $app->get(self::$prefix . $name)) {
-                throw new \InvalidArgumentException('Can not find "' . self::$prefix . $name . '" config');
-            }
+            $config = App::self()->get($name);
 
             self::$instances[$name] = self::factory($config['type'], $config);
         }

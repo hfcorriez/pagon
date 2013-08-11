@@ -5,7 +5,6 @@
 
 namespace Pagon;
 
-
 class ConfigTest extends \PHPUnit_Framework_TestCase
 {
     public function testExportDefaults()
@@ -47,6 +46,15 @@ class ConfigTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals(array('test' => 'abc'), $config->raw());
 
         unlink('/tmp/test.json');
+    }
+
+    public function testNonExistsFile()
+    {
+        Config::import('test', '/tmp/' . uniqid());
+
+        $this->setExpectedException('InvalidArgumentException');
+
+        Config::export('test');
     }
 
     public function testDump()

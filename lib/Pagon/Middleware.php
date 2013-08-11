@@ -46,21 +46,49 @@ abstract class Middleware extends EventEmitter
     }
 
     /**
-     * Create new controller
+     * Create new middleware or route
      *
      * @param string|\Closure $route
      * @param array           $options
+     * @param array           $prefixes
+     * @throws \InvalidArgumentException
      * @return bool|Route
      */
-    public static function build($route, $options = array())
+    public static function build($route, array $options = array(), array $prefixes = array())
     {
-        if (is_string($route) && is_subclass_of($route, __CLASS__, true)) {
-            // Only Class name
-            return new $route($options);
-        } elseif (is_object($route)) {
-            return $route;
+        if (is_object($route)) return $route;
+
+        if (!is_string($route)) throw new \InvalidArgumentException('The parameter $route need string');
+
+        $prefixes[] = '';
+        $prefixes[] = __NAMESPACE__ . "\\Middleware";
+
+        foreach ($prefixes as $namespace) {
+            if (!is_subclass_of($class = $namespace . '\\' . $route, __CLASS__, true)) continue;
+
+            return new $class($options);
         }
-        return false;
+
+        throw new \InvalidArgumentException("Non-exists route class '$route'");
+    }
+
+    /**
+     * Graft the route inner
+     *
+     * @param \Closure|string $route
+     * @param array           $option
+     * @throws \RuntimeException
+     * @return mixed
+     */
+    public function graft($route, array $option = array())
+    {
+        if (!$route = self::build($route, $option)) {
+            throw new \RuntimeException("Graft \"$route\" fail");
+        }
+
+        return call_user_func_array($route, array(
+            $this->input, $this->output, $this->next
+        ));
     }
 
     /**

@@ -30,7 +30,7 @@ class Html
      * @param string $value
      * @return string
      */
-    public static function entities($value)
+    public static function encode($value)
     {
         return htmlentities($value, ENT_QUOTES, static::charset(), false);
     }
@@ -67,7 +67,7 @@ class Html
      */
     public static function a($src, $text, array $attributes = array())
     {
-        return self::element('a', $text, array('src' => Url::to($src)) + $attributes);
+        return self::dom('a', $text, array('href' => Url::to($src)) + $attributes);
     }
 
     /**
@@ -79,7 +79,7 @@ class Html
      */
     public static function script($src, array $attributes = array())
     {
-        return self::element('script', '', ($src ? array('src' => Url::asset($src)) : array()) + $attributes + array('type' => 'text/javascript'));
+        return self::dom('script', '', ($src ? array('src' => Url::asset($src)) : array()) + $attributes + array('type' => 'text/javascript'));
     }
 
     /**
@@ -92,7 +92,7 @@ class Html
      */
     public static function link($src, $rel = 'stylesheet', array $attributes = array())
     {
-        return self::element('link', array('rel' => $rel, 'href' => Url::asset($src)) + $attributes);
+        return self::dom('link', array('rel' => $rel, 'href' => Url::asset($src)) + $attributes);
     }
 
     /**
@@ -116,7 +116,7 @@ class Html
      */
     public static function img($src, array $attributes = array())
     {
-        return self::element('img', array('src' => Url::asset($src)) + $attributes);
+        return self::dom('img', array('src' => Url::asset($src)) + $attributes);
     }
 
     /**
@@ -131,6 +131,28 @@ class Html
     }
 
     /**
+     * Select options
+     *
+     * @param string $name
+     * @param array  $options
+     * @param string $selected
+     * @param array  $attributes
+     * @return string
+     */
+    public static function select($name, array $options, $selected = null, array $attributes = array())
+    {
+        $options_html = array();
+        foreach ($options as $key => $value) {
+            $attr = array('value' => $key);
+            if ($key == $selected) {
+                $attr['selected'] = 'true';
+            }
+            $options_html[] = self::dom('option', $value, $attr);
+        }
+        return self::dom('select', join('', $options_html), array('name' => $name) + $attributes);
+    }
+
+    /**
      * Build a element
      *
      * @param string $name
@@ -138,20 +160,25 @@ class Html
      * @param array  $attributes
      * @return string
      */
-    public static function element($name, $text, array $attributes = array())
+    public static function dom($name, $text = '', array $attributes = array())
     {
+        $self_close = false;
+        if (in_array($name, self::$self_close_tags)) {
+            $self_close = true;
+        }
+
+        if ($self_close && is_array($text)) {
+            $attributes = $text;
+            $text = '';
+        }
+
         $attr = '';
         foreach ($attributes as $k => $v) {
             if (is_numeric($k)) $k = $v;
 
             if (!is_null($v)) {
-                $attr .= ' ' . $k . '="' . static::entities($v) . '"';
+                $attr .= ' ' . $k . '="' . static::encode($v) . '"';
             }
-        }
-
-        $self_close = false;
-        if (in_array($name, self::$self_close_tags)) {
-            $self_close = true;
         }
 
         return '<' . $name . $attr .

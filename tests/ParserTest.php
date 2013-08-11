@@ -28,6 +28,15 @@ class ParserTest extends \PHPUnit_Framework_TestCase
         unlink('/tmp/test.abc');
     }
 
+    public function testParsePHP()
+    {
+        file_put_contents('/tmp/test.php', '<?php return array("test" => "abc"); ?>');
+
+        $config = Parser::load('/tmp/test.php');
+
+        $this->assertEquals(array('test' => 'abc'), $config);
+    }
+
     public function testParseUnknownType()
     {
         file_put_contents('/tmp/test.abc', '{"test":"abc"}');

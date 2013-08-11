@@ -6,6 +6,7 @@ use Pagon\App;
 use Pagon\Config;
 use Pagon\EventEmitter;
 use Pagon\Exception\Stop;
+use Pagon\Parser\Xml;
 use Pagon\View;
 
 /**
@@ -129,9 +130,9 @@ class Output extends EventEmitter
      * @param string $data
      * @return string|Output
      */
-    public function write($data)
+    public function write($data = null)
     {
-        if (!$data) return $this->injectors['body'];
+        if ($data === null) return $this->injectors['body'];
 
         $this->injectors['body'] .= $data;
         $this->injectors['length'] = strlen($this->injectors['body']);
@@ -203,9 +204,9 @@ class Output extends EventEmitter
                 } else {
                     $this->injectors['headers'][$name] = $value;
                 }
-                return $this;
             }
         }
+        return $this;
     }
 
     /**
@@ -373,7 +374,10 @@ class Output extends EventEmitter
                 $this->injectors['headers']['Content-Type'] = $this->injectors['content_type'] . '; charset=' . $this->injectors['charset'];
             }
 
-            if (is_numeric($this->injectors['length'])) {
+            // Content length check and set
+            if (!isset($this->injectors['headers']['Content-Length'])
+                && is_numeric($this->injectors['length'])
+            ) {
                 // Set content length
                 $this->injectors['headers']['Content-Length'] = $this->injectors['length'];
             }
@@ -492,15 +496,35 @@ class Output extends EventEmitter
      * To xml
      *
      * @param object|array $data
-     * @param string       $root
-     * @param string       $item
+     * @param array        $option
      * @return Output
      */
-    public function xml($data, $root = 'root', $item = 'item')
+    public function xml($data, array $option = array())
     {
         $this->contentType('application/xml');
-        $this->body(\Pagon\Xml::fromArray($data, $root, $item));
+        $this->body(Xml::dump($data, $option));
         return $this;
+    }
+
+    /**
+     * Download file
+     *
+     * @param string $file
+     * @param string $name
+     */
+    public function download($file, $name = null)
+    {
+        $this->header('Content-Description', 'File Transfer');
+        $this->header('Content-Type', 'application/octet-stream');
+        $this->header('Content-Disposition', 'attachment; filename=' . ($name ? $name : basename($file)));
+        $this->header('Content-Transfer-Encoding', 'binary');
+        $this->header('Expires', '0');
+        $this->header('Cache-Control', 'must-revalidate');
+        $this->header('Pragma', 'public');
+        $this->injectors['length'] = filesize($file);
+        ob_clean();
+        readfile($file);
+        $this->end('');
     }
 
     /**

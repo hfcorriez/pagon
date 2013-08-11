@@ -2,6 +2,10 @@
 
 namespace Pagon\Parser;
 
+if (!class_exists('\Symfony\Component\Yaml\Yaml')) {
+    throw new \RuntimeException("Use Yaml parser need Symfony/Yaml installed, use `composer update` or include manually.");
+}
+
 use Symfony\Component\Yaml\Yaml as YamlParser;
 
 class Yaml
