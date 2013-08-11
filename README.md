@@ -310,7 +310,7 @@ $app->get('/ping', 'Ping');
 
 - Classic控制器
 
-```
+```php
 use Pagon\Classic
 
 class Service extend Classic {
