@@ -15,8 +15,8 @@
   "require-dev": {
     "opauth/opauth": "0.4.4",
     "opauth/github": "0.1.0",
-    "pagon/jade": "dev-master",
-    "symfony/yaml": "v2.2.0"
+    "pagon/jade": "1.0.0",
+    "symfony/yaml": "v2.3.3"
   },
   "suggest": {
     "opauth/opauth": "Auth with OPAuth service provider",
