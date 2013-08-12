@@ -86,7 +86,7 @@ function url($path, array $query = null, $full = false)
  * @param array  $query
  * @param bool   $full
  */
-function route_url($name, array $params, array $query = null, $full = false)
+function route_url($name, array $params = null, array $query = null, $full = false)
 {
     return Url::route($name, $params, $query, $full);
 }
@@ -444,7 +444,7 @@ function human_size($size)
  * @param array  $attributes
  * @return string
  */
-function html($name, $text, array $attributes = array())
+function html($name, $text = '', array $attributes = array())
 {
     return Html::dom($name, $text, $attributes);
 }
