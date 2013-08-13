@@ -10,8 +10,6 @@ class Console extends LoggerInterface
 
     public function write()
     {
-        if (empty($this->messages)) return;
-
-        print join(PHP_EOL, $this->buildAll()) . PHP_EOL;
+        print join(PHP_EOL, $this->formattedMessages()) . PHP_EOL;
     }
 }

@@ -133,8 +133,7 @@ class Logger extends Logger\LoggerInterface
 
         if ($stream instanceof Logger\LoggerInterface) {
             $this->on('flush', function () use ($stream) {
-                $stream->write();
-                $stream->clean();
+                $stream->tryToWrite();
             });
         }
 
@@ -187,14 +186,14 @@ class Logger extends Logger\LoggerInterface
                             continue;
                         }
 
+                        /** @var $stream Logger\LoggerInterface */
                         $stream = new $try($stream[1]);
                         $this->on('flush', function () use ($stream) {
-                            $stream->write();
-                            $stream->clean();
+                            $stream->tryToWrite();
                         });
                     }
                 } elseif ($stream instanceof \Closure) {
-                    $stream($this->build($context), $context);
+                    $stream($this->format($context), $context);
                     continue;
                 }
 
@@ -240,8 +239,6 @@ class Logger extends Logger\LoggerInterface
      */
     public function write()
     {
-        if ($messages = $this->buildAll()) {
-            file_put_contents($this->options['file'], join(PHP_EOL, $messages) . PHP_EOL, FILE_APPEND);
-        }
+        file_put_contents($this->options['file'], join(PHP_EOL, $this->formattedMessages()) . PHP_EOL, FILE_APPEND);
     }
 }

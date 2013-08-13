@@ -64,7 +64,7 @@ abstract class LoggerInterface extends EventEmitter
      * @param array $context
      * @return string
      */
-    public function build(array $context)
+    public function format(array $context)
     {
         /**
          * Prepare the variable to replace
@@ -83,12 +83,23 @@ abstract class LoggerInterface extends EventEmitter
      *
      * @return array
      */
-    public function buildAll()
+    public function formattedMessages()
     {
         $that = $this;
         return array_map(function ($message) use ($that) {
-            return $that->build($message);
+            return $that->format($message);
         }, $this->messages);
+    }
+
+    /**
+     * Try to write
+     */
+    public function tryToWrite()
+    {
+        if (empty($this->messages)) return;
+
+        $this->write();
+        $this->clean();
     }
 
     /**
