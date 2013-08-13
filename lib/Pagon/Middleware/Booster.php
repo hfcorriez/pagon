@@ -29,6 +29,7 @@ class Booster extends Middleware
             $app->logger = Logger::dispense();
         }
 
-        $this->next();
+        // Configure debug
+        if ($app->debug) self::graft('PrettyException');
     }
 }

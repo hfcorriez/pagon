@@ -81,7 +81,7 @@ class CSRF extends Middleware
 
             // Check form if exists?
             if (strpos($this->output->body, '</form>')) {
-                $this->output->body = str_replace('</form>', '<input type="hidden" name="' . $this->options['name'] . '" value="' . 'd' . '" /></form>', $this->output->body);
+                $this->output->body = str_replace('</form>', '<input type="hidden" name="' . $this->options['name'] . '" value="' . $token . '" /></form>', $this->output->body);
             }
         }
     }
