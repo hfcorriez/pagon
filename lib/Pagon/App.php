@@ -88,7 +88,7 @@ class App extends EventEmitter
             'crash'     => array(500, 'Application crashed')
         ),
         'stacks'     => array(),
-        'mounts'     => array(),
+        'mounts'     => array('/' => ''),
         'bundles'    => array(),
         'locals'     => array(),
         'safe_query' => true,
@@ -547,13 +547,9 @@ class App extends EventEmitter
     {
         foreach ($this->injectors['mounts'] as $path => $dir) {
             if ($path === '' || strpos($file, $path) === 0) {
-                if (!$path = stream_resolve_include_path($dir . '/' . ($path ? substr($file, strlen($path)) : $file))) continue;
+                if (!$path = stream_resolve_include_path(rtrim($dir, '/') . '/' . ltrim(($path ? substr($file, strlen($path)) : $file), '/'))) continue;
                 return $path;
             }
-        }
-
-        if ($path = stream_resolve_include_path($file)) {
-            return $path;
         }
 
         return false;
