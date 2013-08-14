@@ -8,6 +8,14 @@ use Pagon\Utility\Cryptor;
 
 class Booster extends Middleware
 {
+    /**
+     * @var array Default options
+     */
+    protected $options = array(
+        'logger'  => 'log',
+        'cryptor' => 'crypt'
+    );
+
     public function call()
     {
         $app = $this->app;
@@ -20,13 +28,13 @@ class Booster extends Middleware
         date_default_timezone_set($app->timezone);
 
         // Share the cryptor for the app
-        if (!empty($app->crypt)) {
-            $app->cryptor = new Cryptor($app->crypt);
+        if (!$_crypt = $app->get($this->options['cryptor'])) {
+            $app->cryptor = new Cryptor($_crypt);
         }
 
         // Share the logger for the app
-        if (!empty($app->log)) {
-            $app->logger = Logger::dispense();
+        if (!$_log = $app->get($this->options['logger'])) {
+            $app->logger = new Logger($_log);
         }
 
         // Configure debug
