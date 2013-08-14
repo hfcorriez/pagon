@@ -615,11 +615,17 @@ class App extends EventEmitter
      * @param string $path
      * @param array  $data
      * @param array  $options
-     * @return View
      * @throws \RuntimeException
+     * @throws \InvalidArgumentException
+     * @return View
      */
     public function compile($path, array $data = null, array $options = array())
     {
+        if (!$_path = $this->path($path)) {
+            throw new \InvalidArgumentException("Unknown template file \"$path\"");
+        }
+        $path = $_path;
+
         if (!isset($options['engine'])) {
             // Get ext
             $ext = pathinfo($path, PATHINFO_EXTENSION);
