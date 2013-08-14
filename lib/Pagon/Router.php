@@ -19,6 +19,20 @@ class Router extends Middleware
     const _CLASS_ = __CLASS__;
 
     /**
+     * @var array Routes pointer
+     */
+    protected $routes;
+
+    /**
+     * @param array $injectors
+     */
+    public function __construct(array $injectors = array())
+    {
+        parent::__construct($injectors);
+        $this->routes = & $this->injectors['app']->routes;
+    }
+
+    /**
      * Register a route for path
      *
      * @param string               $path
@@ -35,7 +49,7 @@ class Router extends Middleware
         }
 
         // Set route
-        $this->injectors['app']->routes[$path] = (array)$route;
+        $this->routes[$path] = (array)$route;
 
         return $this;
     }
@@ -57,10 +71,10 @@ class Router extends Middleware
         }
 
         // Init route node
-        if (!isset($this->injectors['app']->routes[$path])) $this->injectors['app']->routes[$path] = array();
+        if (!isset($this->routes[$path])) $this->routes[$path] = array();
 
         // Append
-        $this->injectors['app']->routes[$path] = array_merge($this->injectors['app']->routes[$path], (array)$route);
+        $this->routes[$path] = array_merge($this->routes[$path], (array)$route);
 
         return $this;
     }
@@ -73,7 +87,7 @@ class Router extends Middleware
      */
     public function get($path)
     {
-        return $this->injectors['app']->routes[$path];
+        return $this->routes[$path];
     }
 
     /**
@@ -104,7 +118,7 @@ class Router extends Middleware
         $_last = $this->lastPath();
 
         if (!isset($this->app->routes[$_last]['via']) || $method == '*') {
-            $this->app->routes[$_last]['via'] = array();
+        $this->routes[$this->lastPath()]['via'] = (array)$method;
         }
 
         if (!in_array($method, $this->app->routes[$_last]['via'])) {
@@ -123,7 +137,7 @@ class Router extends Middleware
      */
     public function defaults($defaults = array())
     {
-        $this->injectors['app']->routes[$this->lastPath()]['defaults'] = $defaults;
+        $this->routes[$this->lastPath()]['defaults'] = $defaults;
         return $this;
     }
 
@@ -135,7 +149,7 @@ class Router extends Middleware
      */
     public function rules($rules = array())
     {
-        $this->injectors['app']->routes[$this->lastPath()]['rules'] = $rules;
+        $this->routes[$this->lastPath()]['rules'] = $rules;
         return $this;
     }
 
@@ -163,7 +177,7 @@ class Router extends Middleware
         if ($this->injectors['path'] === null) return false;
 
         // Get routes
-        $routes = (array)$this->injectors['app']->routes;
+        $routes = (array)$this->routes;
 
         // Loop routes for parse and dispatch
         foreach ($routes as $p => $route) {
@@ -288,9 +302,9 @@ class Router extends Middleware
      */
     public function handle($route, $params = array())
     {
-        if (isset($this->injectors['app']->routes[$route])) {
+        if (isset($this->routes[$route])) {
             $params && $this->injectors['app']->param($params);
-            return $this->run($this->injectors['app']->routes[$route]);
+            return $this->run($this->routes[$route]);
         }
         return false;
     }
@@ -315,7 +329,7 @@ class Router extends Middleware
      */
     protected function lastPath()
     {
-        $path = array_keys($this->injectors['app']->routes);
+        $path = array_keys($this->routes);
         return end($path);
     }
 
