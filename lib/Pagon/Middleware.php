@@ -7,6 +7,7 @@ namespace Pagon;
  * structure of base middleware
  *
  * @package Pagon
+ * @property App app Application to service
  */
 abstract class Middleware extends EventEmitter
 {
@@ -21,11 +22,6 @@ abstract class Middleware extends EventEmitter
      * @var Http\Output|Cli\Output
      */
     protected $output;
-
-    /**
-     * @var App
-     */
-    protected $app;
 
     /**
      * @var callable
@@ -92,8 +88,8 @@ abstract class Middleware extends EventEmitter
     {
         $this->input = $input;
         $this->output = $output;
-        $this->app = $input->app;
         $this->next = $next;
+        $this->injectors['app'] = $input->app;
         $this->call();
     }
 

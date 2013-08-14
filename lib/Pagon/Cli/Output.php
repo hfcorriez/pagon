@@ -26,14 +26,11 @@ class Output extends EventEmitter
     public $app;
 
     /**
-     * @param App $app
-     * @return Output
+     * @param array $injectors
      */
-    public function __construct(App $app)
+    public function __construct(array $injectors = array())
     {
-        $this->app = $app;
-
-        parent::__construct(array(
+        parent::__construct($injectors + array(
             'status' => 0,
             'body'   => '',
         ));

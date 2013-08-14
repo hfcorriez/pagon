@@ -21,13 +21,11 @@ class Input extends EventEmitter
     public $app;
 
     /**
-     * @param \Pagon\App $app
+     * @param array $injectors
      */
-    public function __construct(App $app)
+    public function __construct(array $injectors = array())
     {
-        $this->app = $app;
-
-        parent::__construct(array('params' => array()) + $_SERVER);
+        parent::__construct($injectors + array('params' => array()) + $_SERVER);
     }
 
     /**

@@ -84,14 +84,14 @@ class App extends EventEmitter
     );
 
     /**
-     * @var bool Is cli?
-     */
-    private static $_cli = null;
-
-    /**
      * @var bool Is run?
      */
     private $_run = false;
+
+    /**
+     * @var bool Is cli?
+     */
+    private static $_cli = null;
 
     /**
      * @var App The top app
