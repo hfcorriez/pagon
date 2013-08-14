@@ -10,17 +10,13 @@ use Pagon\Exception\Stop;
  * parse and manage the Route
  *
  * @package Pagon
+ * @property App      app       Application to service
  * @property string   path      The current path
  * @property \Closure automatic Automatic closure for auto route
  */
 class Router extends Middleware
 {
     const _CLASS_ = __CLASS__;
-
-    /**
-     * @var App
-     */
-    public $app;
 
     /**
      * Register a route for path
@@ -39,7 +35,7 @@ class Router extends Middleware
         }
 
         // Set route
-        $this->app->routes[$path] = (array)$route;
+        $this->options['app']->routes[$path] = (array)$route;
 
         return $this;
     }
@@ -61,10 +57,10 @@ class Router extends Middleware
         }
 
         // Init route node
-        if (!isset($this->app->routes[$path])) $this->app->routes[$path] = array();
+        if (!isset($this->options['app']->routes[$path])) $this->options['app']->routes[$path] = array();
 
         // Append
-        $this->app->routes[$path] = array_merge($this->app->routes[$path], (array)$route);
+        $this->options['app']->routes[$path] = array_merge($this->options['app']->routes[$path], (array)$route);
 
         return $this;
     }
@@ -77,7 +73,7 @@ class Router extends Middleware
      */
     public function get($path)
     {
-        return $this->app->routes[$path];
+        return $this->options['app']->routes[$path];
     }
 
     /**
@@ -93,7 +89,7 @@ class Router extends Middleware
             $path = $this->lastPath();
         }
 
-        $this->app->names[$name] = $path;
+        $this->options['app']->names[$name] = $path;
         return $this;
     }
 
@@ -127,7 +123,7 @@ class Router extends Middleware
      */
     public function defaults($defaults = array())
     {
-        $this->app->routes[$this->lastPath()]['defaults'] = $defaults;
+        $this->options['app']->routes[$this->lastPath()]['defaults'] = $defaults;
         return $this;
     }
 
@@ -139,7 +135,7 @@ class Router extends Middleware
      */
     public function rules($rules = array())
     {
-        $this->app->routes[$this->lastPath()]['rules'] = $rules;
+        $this->options['app']->routes[$this->lastPath()]['rules'] = $rules;
         return $this;
     }
 
@@ -151,7 +147,7 @@ class Router extends Middleware
      */
     public function path($name)
     {
-        return isset($this->app->names[$name]) ? $this->app->names[$name] : false;
+        return isset($this->options['app']->names[$name]) ? $this->options['app']->names[$name] : false;
     }
 
     /**
@@ -167,7 +163,7 @@ class Router extends Middleware
         if ($this->options['path'] === null) return false;
 
         // Get routes
-        $routes = (array)$this->app->routes;
+        $routes = (array)$this->options['app']->routes;
 
         // Loop routes for parse and dispatch
         foreach ($routes as $p => $route) {
@@ -186,7 +182,7 @@ class Router extends Middleware
                 if ($via && !in_array($this->input->method(), $via)) continue;
 
                 try {
-                    $param && $this->app->param($param);
+                    $param && $this->options['app']->param($param);
 
                     return $this->run($route);
                     // If multiple controller
@@ -223,8 +219,8 @@ class Router extends Middleware
     {
         $prefixes = array();
         // Prefixes Lookup
-        if ($this->app->prefixes) {
-            foreach ($this->app->prefixes as $path => $namespace) {
+        if ($this->options['app']->prefixes) {
+            foreach ($this->options['app']->prefixes as $path => $namespace) {
                 if (strpos($this->options['path'], $path) === 0) {
                     $prefixes[99 - strlen($path)] = $namespace;
                 }
@@ -265,8 +261,8 @@ class Router extends Middleware
         };
 
         $param = array(
-            $this->app->input,
-            $this->app->output,
+            $this->options['app']->input,
+            $this->options['app']->output,
             function () use (&$routes, $pass) {
                 do {
                     $route = next($routes);
@@ -292,9 +288,9 @@ class Router extends Middleware
      */
     public function handle($route, $params = array())
     {
-        if (isset($this->app->routes[$route])) {
-            $params && $this->app->param($params);
-            return $this->run($this->app->routes[$route]);
+        if (isset($this->options['app']->routes[$route])) {
+            $params && $this->options['app']->param($params);
+            return $this->run($this->options['app']->routes[$route]);
         }
         return false;
     }
@@ -306,7 +302,7 @@ class Router extends Middleware
     {
         try {
             if (!$this->dispatch()) {
-                $this->app->handleError('404');
+                $this->options['app']->handleError('404');
             }
         } catch (Stop $e) {
         }
@@ -319,7 +315,7 @@ class Router extends Middleware
      */
     protected function lastPath()
     {
-        $path = array_keys($this->app->routes);
+        $path = array_keys($this->options['app']->routes);
         return end($path);
     }
 

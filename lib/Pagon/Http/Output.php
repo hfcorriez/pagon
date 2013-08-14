@@ -2,7 +2,6 @@
 
 namespace Pagon\Http;
 
-use Pagon\App;
 use Pagon\Config;
 use Pagon\EventEmitter;
 use Pagon\Exception\Stop;
@@ -13,12 +12,13 @@ use Pagon\View;
  * Http Output
  *
  * @package Pagon\Http
- * @property int    status
- * @property string body
- * @property int    length
- * @property string charset
- * @property array  headers
- * @property array  cookies
+ * @property \Pagon\App app     Application to service
+ * @property int        status
+ * @property string     body
+ * @property int        length
+ * @property string     charset
+ * @property array      headers
+ * @property array      cookies
  */
 class Output extends EventEmitter
 {
@@ -82,23 +82,16 @@ class Output extends EventEmitter
     public $locals = array();
 
     /**
-     * @var App
+     * @param array $injectors
      */
-    public $app;
-
-    /**
-     * @param App $app
-     */
-    public function __construct(App $app)
+    public function __construct(array $injectors = array())
     {
-        $this->app = $app;
-
-        parent::__construct(array(
+        parent::__construct($injectors + array(
             'status'       => 200,
             'body'         => '',
             'content_type' => 'text/html',
             'length'       => false,
-            'charset'      => $this->app->charset,
+            'charset'      => $injectors['app']->charset,
             'headers'      => array(),
             'cookies'      => array(),
         ));

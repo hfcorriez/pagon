@@ -2,7 +2,6 @@
 
 namespace Pagon\Http;
 
-use Pagon\App;
 use Pagon\EventEmitter;
 use Pagon\Exception\Pass;
 use Pagon\Exception\Stop;
@@ -14,25 +13,19 @@ use Pagon\View;
  * Http Input
  *
  * @package Pagon\Http
- * @property array params
- * @property array query
- * @property array data
+ * @property \Pagon\App app     Application to service
+ * @property array      params
+ * @property array      query
+ * @property array      data
  */
 class Input extends EventEmitter
 {
     /**
-     * @var \Pagon\App App
+     * @param array $injectors
      */
-    public $app;
-
-    /**
-     * @param \Pagon\App $app
-     */
-    public function __construct(App $app)
+    public function __construct(array $injectors = array())
     {
-        $this->app = $app;
-
-        parent::__construct(array(
+        parent::__construct($injectors + array(
             'params' => array(),
             'query'  => &$_GET,
             'data'   => &$_POST,

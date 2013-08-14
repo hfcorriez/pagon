@@ -26,42 +26,31 @@ if (!class_exists('EventEmitter')) {
  * The core of Pagon
  *
  * @package Pagon
- * @property string mode         Current run mode, Default is "develop"
- * @property bool   debug        Is debug mode enabled?
- * @property string views        Views dir
- * @property bool   error        Handle error
- * @property bool   buffer       Buffer enabled?
- * @property string timezone     Current timezone
- * @property string charset      The application charset
- * @property array  routes       Store the routes for run
- * @property array  prefixes     The prefixes to mapping the route namespace
- * @property array  names        Routes names
- * @property string autoload     The path to autoload
- * @property array  namespaces   The namespaces to load with directory path
- * @property array  alias        The class to alias
- * @property array  engines      The engines to render template
- * @property array  errors       Default error handles
- * @property array  stacks       The middleware stacks to load
- * @property array  bundles      The bundles to load
- * @property array  locals       The locals variables to used in template
+ *
+ * @property Http\Input|Cli\Input   input        Input of Application
+ * @property Http\Output|Cli\Output output       Output of Application
+ * @property Router                 router       Router of Application
+ * @property array                  locals       The locals variables to used in template
+ * @property string                 mode         Current run mode, Default is "develop"
+ * @property bool                   debug        Is debug mode enabled?
+ * @property string                 views        Views dir
+ * @property bool                   error        Handle error
+ * @property bool                   buffer       Buffer enabled?
+ * @property string                 timezone     Current timezone
+ * @property string                 charset      The application charset
+ * @property array                  routes       Store the routes for run
+ * @property array                  prefixes     The prefixes to mapping the route namespace
+ * @property array                  names        Routes names
+ * @property string                 autoload     The path to autoload
+ * @property array                  namespaces   The namespaces to load with directory path
+ * @property array                  alias        The class to alias
+ * @property array                  engines      The engines to render template
+ * @property array                  errors       Default error handles
+ * @property array                  stacks       The middleware stacks to load
+ * @property array                  bundles      The bundles to load
  */
 class App extends EventEmitter
 {
-    /**
-     * @var Http\Input|Cli\Input
-     */
-    public $input;
-
-    /**
-     * @var Http\Output|Cli\Output
-     */
-    public $output;
-
-    /**
-     * @var Router
-     */
-    public $router;
-
     /**
      * @var Config
      */
@@ -91,13 +80,13 @@ class App extends EventEmitter
         'mounts'     => array('/' => ''),
         'bundles'    => array(),
         'locals'     => array(),
-        'safe_query' => true,
+        'safe_query' => true
     );
 
     /**
      * @var bool Is cli?
      */
-    private $_cli = false;
+    private static $_cli = null;
 
     /**
      * @var bool Is run?
@@ -113,6 +102,34 @@ class App extends EventEmitter
      * @var array The file has loads
      */
     protected static $loads = array();
+
+    /**
+     * Create app
+     *
+     * @param array $config
+     * @return App
+     */
+    public static function create($config = array())
+    {
+        // Is cli
+        if (is_null(self::$_cli)) self::$_cli = PHP_SAPI == 'cli';
+
+        $app = new self($config);
+
+        // Set IO depends the run mode
+        if (!self::$_cli) {
+            $app->input = new Http\Input(array('app' => $app));
+            $app->output = new Http\Output(array('app' => $app));
+        } else {
+            $app->input = new Cli\Input(array('app' => $app));
+            $app->output = new Cli\Output(array('app' => $app));
+        }
+
+        // Init Route
+        $app->router = new Router(array('path' => $app->input->path(), 'app' => $app));
+
+        return $app;
+    }
 
     /**
      * Return current app
@@ -138,33 +155,20 @@ class App extends EventEmitter
      */
     public function __construct($config = array())
     {
-        // Is cli
-        $this->_cli = PHP_SAPI == 'cli';
-
         // Register shutdown
         register_shutdown_function(array($this, '__shutdown'));
 
         // Register autoload
         spl_autoload_register(array($this, '__autoload'));
 
-        // Set IO depends the run mode
-        if (!$this->_cli) {
-            $this->input = new Http\Input($this);
-            $this->output = new Http\Output($this);
-        } else {
-            $this->input = new Cli\Input($this);
-            $this->output = new Cli\Output($this);
-        }
-
-        // Init Route
-        $this->router = new Router(array('path' => $this->input->path()));
-        $this->router->app = $this;
-
         // Set config
         $this->injectors =
             (!is_array($config) ? Parser::load((string)$config) : $config)
-            + ($this->_cli ? array('buffer' => false) : array())
+            + (!empty($this->injectors['cli']) ? array('buffer' => false) : array())
             + $this->injectors;
+
+        // Set cli mode
+        if (!isset($this->injectors['cli'])) $this->injectors['cli'] = self::$_cli;
 
         // Set default locals
         $this->injectors['locals']['config'] = & $this->injectors;
@@ -174,9 +178,6 @@ class App extends EventEmitter
 
         // Set pagon root directory
         $this->injectors['mounts']['pagon'] = dirname(dirname(__DIR__));
-
-        // Save current app
-        self::$self = $this;
     }
 
     /**
@@ -186,7 +187,7 @@ class App extends EventEmitter
      */
     public function isCli()
     {
-        return $this->_cli;
+        return $this->injectors['cli'];
     }
 
     /**
@@ -473,7 +474,7 @@ class App extends EventEmitter
         if ($closure instanceof \Closure) {
             return $this->router->automatic = $closure;
         } elseif ($closure === true || is_string($closure)) {
-            $_cli = $this->_cli;
+            $_cli = $this->injectors['cli'];
             // Set route use default automatic
             return $this->router->automatic = function ($path) use ($closure, $_cli, $index) {
                 $splits = array();
@@ -672,6 +673,9 @@ class App extends EventEmitter
             throw new \RuntimeException("Application already running");
         }
 
+        // Save current app
+        self::$self = $this;
+
         // Emit run
         $this->emit('run');
 
@@ -809,7 +813,7 @@ class App extends EventEmitter
                     'message' => $this->injectors['errors'][$type])
                 ))
             ) {
-                if ($this->_cli) {
+                if ($this->injectors['cli']) {
                     $this->halt($this->injectors['errors'][$type][0], $this->injectors['errors'][$type][1]);
                 } else {
                     $this->render('pagon/views/error.php', array(
@@ -869,7 +873,7 @@ class App extends EventEmitter
     public function flush()
     {
         // Send headers
-        if (!$this->_cli) {
+        if (!$this->injectors['cli']) {
             $this->output->sendHeader();
         }
 
