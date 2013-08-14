@@ -32,7 +32,12 @@ class Input extends EventEmitter
     {
         $this->app = $app;
 
-        parent::__construct(array('params' => array(), 'query' => &$_GET, 'data' => &$_POST) + $_SERVER);
+        parent::__construct(array(
+            'params' => array(),
+            'query'  => &$_GET,
+            'data'   => &$_POST,
+            'files'  => &$_FILES
+        ) + $_SERVER);
     }
 
     /**
@@ -188,7 +193,7 @@ class Input extends EventEmitter
      */
     public function isUpload()
     {
-        return !empty($_FILES);
+        return !empty($this->injectors['files']);
     }
 
     /**
@@ -458,6 +463,17 @@ class Input extends EventEmitter
             return (int)$len;
         }
         return 0;
+    }
+
+    /**
+     * Get the file from $_FILE
+     *
+     * @param string $key
+     * @return mixed
+     */
+    public function file($key)
+    {
+        return isset($this->injectors['files'][$key]) ? $this->injectors['files'][$key] : null;
     }
 
     /**
