@@ -179,7 +179,7 @@ $app->set('cookie.domain', 'abc.com');
 $app->get('cookie.domain');
 ```
 
-通过文件加载配置，支持`json`, `yaml`, `ini`和`php`(`xml`后续也会支持)，例子：
+通过文件加载配置，支持`json`, `yaml`, `ini`, `xml`和`php`，例子：
 
 config.php
 
