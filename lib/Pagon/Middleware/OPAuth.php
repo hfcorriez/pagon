@@ -8,26 +8,26 @@ use Opauth as OPAuthService;
 class OPAuth extends Middleware
 {
     // Some options
-    protected $options = array(
+    protected $injectors = array(
         'login_url'          => '/login',
         'callback_url'       => '/login/callback',
         'callback_transport' => 'post'
     );
 
     /**
-     * @param array $options
+     * @param array $injectors
      * @throws \RuntimeException
      * @throws \InvalidArgumentException
      */
-    public function __construct(array $options = array())
+    public function __construct(array $injectors = array())
     {
         if (!class_exists('\Opauth')) throw new \RuntimeException("OPAuth middleware need \Opauth class, plz use composer to install, or add it manually!");
 
-        if (!isset($options['callback'])) throw new \InvalidArgumentException('OPAuth middleware need "callback" option');
+        if (!isset($injectors['callback'])) throw new \InvalidArgumentException('OPAuth middleware need "callback" option');
 
-        parent::__construct($options);
+        parent::__construct($injectors);
 
-        $this->options['path'] = $this->options['login_url'] . '/';
+        $this->injectors['path'] = $this->injectors['login_url'] . '/';
     }
 
     /**
@@ -37,7 +37,7 @@ class OPAuth extends Middleware
      */
     public function call()
     {
-        $options = $this->options;
+        $options = $this->injectors;
         $app = $this->app;
         $that = $this;
 

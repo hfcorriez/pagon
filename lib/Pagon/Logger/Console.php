@@ -4,7 +4,7 @@ namespace Pagon\Logger;
 
 class Console extends LoggerInterface
 {
-    protected $options = array(
+    protected $injectors = array(
         'auto_write' => true
     );
 

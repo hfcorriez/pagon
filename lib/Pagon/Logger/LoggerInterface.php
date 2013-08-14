@@ -9,7 +9,7 @@ abstract class LoggerInterface extends EventEmitter
     /**
      * @var array Options of logger
      */
-    protected $options = array(
+    protected $injectors = array(
         'auto_write' => false
     );
 
@@ -24,14 +24,14 @@ abstract class LoggerInterface extends EventEmitter
     protected $messages = array();
 
     /**
-     * @param array $options
+     * @param array $injectors
      */
-    public function __construct(array $options = array())
+    public function __construct(array $injectors = array())
     {
-        $this->options = $options + $this->options;
+        $this->injectors = $injectors + $this->injectors;
 
-        if (isset($this->options['format'])) {
-            $this->format = $this->options['format'];
+        if (isset($this->injectors['format'])) {
+            $this->format = $this->injectors['format'];
         }
     }
 
@@ -44,7 +44,7 @@ abstract class LoggerInterface extends EventEmitter
     {
         $this->messages[] = $message;
 
-        if ($this->options['auto_write']) {
+        if ($this->injectors['auto_write']) {
             $this->write();
             $this->clean();
         }

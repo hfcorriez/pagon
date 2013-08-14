@@ -6,7 +6,7 @@ use Pagon\Middleware\Session;
 
 class Memcache extends Session
 {
-    protected $options = array(
+    protected $injectors = array(
         'host'    => 'localhost',
         'port'    => '11211',
         'timeout' => 1,
@@ -29,7 +29,7 @@ class Memcache extends Session
         }
 
         $this->memcache = new \Memcache();
-        $this->memcache->connect($this->options['host'], $this->options['port'], $this->options['timeout']);
+        $this->memcache->connect($this->injectors['host'], $this->injectors['port'], $this->injectors['timeout']);
 
         return true;
     }
@@ -42,17 +42,17 @@ class Memcache extends Session
 
     public function read($id)
     {
-        return $this->memcache->get(strtr($this->options['name'], array(':id' => $id)));
+        return $this->memcache->get(strtr($this->injectors['name'], array(':id' => $id)));
     }
 
     public function write($id, $data)
     {
-        return $this->memcache->set(strtr($this->options['name'], array(':id' => $id)), $data, $this->options['lifetime']);
+        return $this->memcache->set(strtr($this->injectors['name'], array(':id' => $id)), $data, $this->injectors['lifetime']);
     }
 
     public function destroy($id)
     {
-        return $this->memcache->delete(strtr($this->options['name'], array(':id' => $id)));
+        return $this->memcache->delete(strtr($this->injectors['name'], array(':id' => $id)));
     }
 
     public function gc($lifetime)

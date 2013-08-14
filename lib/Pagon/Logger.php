@@ -16,7 +16,7 @@ class Logger extends Logger\LoggerInterface
     /**
      * @var array Options
      */
-    protected $options = array(
+    protected $injectors = array(
         'file'       => 'app.log',
         'auto_write' => false,
         'level'      => 'debug',
@@ -74,22 +74,22 @@ class Logger extends Logger\LoggerInterface
     }
 
     /**
-     * @param array $options
+     * @param array $injectors
      * @return self
      */
-    public function __construct($options = array())
+    public function __construct($injectors = array())
     {
         // Default handler
-        if (is_bool($options)) {
-            $options = array('default' => $options);
+        if (is_bool($injectors)) {
+            $injectors = array('default' => $injectors);
         }
 
         // Construct by parent
-        parent::__construct($options);
+        parent::__construct($injectors);
 
         // Auto add current file logger to streams
-        if ($this->options['level'] && $this->options['default']) {
-            $this->add($this->options['level'], $this);
+        if ($this->injectors['level'] && $this->injectors['default']) {
+            $this->add($this->injectors['level'], $this);
         }
 
         // The time injector
@@ -127,8 +127,8 @@ class Logger extends Logger\LoggerInterface
             throw new \InvalidArgumentException('Given level "' . $level . '" is not acceptable');
         }
 
-        if (!isset($this->options['streams'][$level])) {
-            $this->options['streams'][$level] = array();
+        if (!isset($this->injectors['streams'][$level])) {
+            $this->injectors['streams'][$level] = array();
         }
 
         if ($stream instanceof Logger\LoggerInterface) {
@@ -137,7 +137,7 @@ class Logger extends Logger\LoggerInterface
             });
         }
 
-        $this->options['streams'][$level][] = is_string($stream) ? array($stream, $options) : $stream;
+        $this->injectors['streams'][$level][] = is_string($stream) ? array($stream, $options) : $stream;
     }
 
     /**
@@ -172,7 +172,7 @@ class Logger extends Logger\LoggerInterface
         /**
          * Loop the streams to send message
          */
-        foreach ($this->options['streams'] as $stream_level => &$streams) {
+        foreach ($this->injectors['streams'] as $stream_level => &$streams) {
             if (self::$levels[$stream_level] > self::$levels[$level]) {
                 continue;
             }
@@ -239,6 +239,6 @@ class Logger extends Logger\LoggerInterface
      */
     public function write()
     {
-        file_put_contents($this->options['file'], join(PHP_EOL, $this->formattedMessages()) . PHP_EOL, FILE_APPEND);
+        file_put_contents($this->injectors['file'], join(PHP_EOL, $this->formattedMessages()) . PHP_EOL, FILE_APPEND);
     }
 }

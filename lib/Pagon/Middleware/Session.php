@@ -10,8 +10,8 @@ class Session extends Middleware
 
     public function call()
     {
-        if (!isset($this->options['lifetime'])) {
-            $this->options['lifetime'] = ini_get('session.gc_maxlifetime');
+        if (!isset($this->injectors['lifetime'])) {
+            $this->injectors['lifetime'] = ini_get('session.gc_maxlifetime');
         }
 
         if (get_called_class() !== __CLASS__) {

@@ -6,7 +6,7 @@ use Pagon\Middleware;
 
 class HttpMethods extends Middleware
 {
-    protected $options = array(
+    protected $injectors = array(
         'methods' => array(
             'head',
             'options',
@@ -32,7 +32,7 @@ class HttpMethods extends Middleware
 
     public function call()
     {
-        foreach ($this->options['methods'] as $method) {
+        foreach ($this->injectors['methods'] as $method) {
             $app = $this->app;
 
             // Register route

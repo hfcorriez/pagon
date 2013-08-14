@@ -11,7 +11,7 @@ namespace Pagon\Middleware {
          */
         function call()
         {
-            I18NTranslator::init($this->options);
+            I18NTranslator::init($this->injectors);
             $this->next();
         }
     }

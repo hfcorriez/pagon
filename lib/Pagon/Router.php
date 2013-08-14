@@ -35,7 +35,7 @@ class Router extends Middleware
         }
 
         // Set route
-        $this->options['app']->routes[$path] = (array)$route;
+        $this->injectors['app']->routes[$path] = (array)$route;
 
         return $this;
     }
@@ -57,10 +57,10 @@ class Router extends Middleware
         }
 
         // Init route node
-        if (!isset($this->options['app']->routes[$path])) $this->options['app']->routes[$path] = array();
+        if (!isset($this->injectors['app']->routes[$path])) $this->injectors['app']->routes[$path] = array();
 
         // Append
-        $this->options['app']->routes[$path] = array_merge($this->options['app']->routes[$path], (array)$route);
+        $this->injectors['app']->routes[$path] = array_merge($this->injectors['app']->routes[$path], (array)$route);
 
         return $this;
     }
@@ -73,7 +73,7 @@ class Router extends Middleware
      */
     public function get($path)
     {
-        return $this->options['app']->routes[$path];
+        return $this->injectors['app']->routes[$path];
     }
 
     /**
@@ -89,7 +89,7 @@ class Router extends Middleware
             $path = $this->lastPath();
         }
 
-        $this->options['app']->names[$name] = $path;
+        $this->injectors['app']->names[$name] = $path;
         return $this;
     }
 
@@ -123,7 +123,7 @@ class Router extends Middleware
      */
     public function defaults($defaults = array())
     {
-        $this->options['app']->routes[$this->lastPath()]['defaults'] = $defaults;
+        $this->injectors['app']->routes[$this->lastPath()]['defaults'] = $defaults;
         return $this;
     }
 
@@ -135,7 +135,7 @@ class Router extends Middleware
      */
     public function rules($rules = array())
     {
-        $this->options['app']->routes[$this->lastPath()]['rules'] = $rules;
+        $this->injectors['app']->routes[$this->lastPath()]['rules'] = $rules;
         return $this;
     }
 
@@ -147,7 +147,7 @@ class Router extends Middleware
      */
     public function path($name)
     {
-        return isset($this->options['app']->names[$name]) ? $this->options['app']->names[$name] : false;
+        return isset($this->injectors['app']->names[$name]) ? $this->injectors['app']->names[$name] : false;
     }
 
     /**
@@ -160,10 +160,10 @@ class Router extends Middleware
     public function dispatch()
     {
         // Check path
-        if ($this->options['path'] === null) return false;
+        if ($this->injectors['path'] === null) return false;
 
         // Get routes
-        $routes = (array)$this->options['app']->routes;
+        $routes = (array)$this->injectors['app']->routes;
 
         // Loop routes for parse and dispatch
         foreach ($routes as $p => $route) {
@@ -177,12 +177,12 @@ class Router extends Middleware
             $via = isset($route['via']) ? $route['via'] : array();
 
             // Try to parse the params
-            if (($param = self::match($this->options['path'], $p, $rules, $defaults)) !== false) {
+            if (($param = self::match($this->injectors['path'], $p, $rules, $defaults)) !== false) {
                 // Method match
                 if ($via && !in_array($this->input->method(), $via)) continue;
 
                 try {
-                    $param && $this->options['app']->param($param);
+                    $param && $this->injectors['app']->param($param);
 
                     return $this->run($route);
                     // If multiple controller
@@ -193,7 +193,7 @@ class Router extends Middleware
 
         // Try to check automatic route parser
         if (isset($this->injectors['automatic']) && is_callable($this->injectors['automatic'])) {
-            $routes = (array)call_user_func($this->injectors['automatic'], $this->options['path']);
+            $routes = (array)call_user_func($this->injectors['automatic'], $this->injectors['path']);
 
             foreach ($routes as $route) {
                 // Try to check the class is route
@@ -219,9 +219,9 @@ class Router extends Middleware
     {
         $prefixes = array();
         // Prefixes Lookup
-        if ($this->options['app']->prefixes) {
-            foreach ($this->options['app']->prefixes as $path => $namespace) {
-                if (strpos($this->options['path'], $path) === 0) {
+        if ($this->injectors['app']->prefixes) {
+            foreach ($this->injectors['app']->prefixes as $path => $namespace) {
+                if (strpos($this->injectors['path'], $path) === 0) {
                     $prefixes[99 - strlen($path)] = $namespace;
                 }
             }
@@ -261,8 +261,8 @@ class Router extends Middleware
         };
 
         $param = array(
-            $this->options['app']->input,
-            $this->options['app']->output,
+            $this->injectors['app']->input,
+            $this->injectors['app']->output,
             function () use (&$routes, $pass) {
                 do {
                     $route = next($routes);
@@ -288,9 +288,9 @@ class Router extends Middleware
      */
     public function handle($route, $params = array())
     {
-        if (isset($this->options['app']->routes[$route])) {
-            $params && $this->options['app']->param($params);
-            return $this->run($this->options['app']->routes[$route]);
+        if (isset($this->injectors['app']->routes[$route])) {
+            $params && $this->injectors['app']->param($params);
+            return $this->run($this->injectors['app']->routes[$route]);
         }
         return false;
     }
@@ -302,7 +302,7 @@ class Router extends Middleware
     {
         try {
             if (!$this->dispatch()) {
-                $this->options['app']->handleError('404');
+                $this->injectors['app']->handleError('404');
             }
         } catch (Stop $e) {
         }
@@ -315,7 +315,7 @@ class Router extends Middleware
      */
     protected function lastPath()
     {
-        $path = array_keys($this->options['app']->routes);
+        $path = array_keys($this->injectors['app']->routes);
         return end($path);
     }
 

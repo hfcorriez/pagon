@@ -7,7 +7,7 @@ use Pagon\Middleware;
 class Flash extends Middleware
 {
     // Some options
-    protected $options = array(
+    protected $injectors = array(
         'key' => 'flash'
     );
 
@@ -79,7 +79,7 @@ class Flash extends Middleware
      */
     public function call()
     {
-        $this->current = $this->input->flash = (array)$this->input->session($this->options['key']);
+        $this->current = $this->input->flash = (array)$this->input->session($this->injectors['key']);
 
         $self = & $this;
 
@@ -103,6 +103,6 @@ class Flash extends Middleware
         $this->next();
 
         // Save to session
-        $this->input->session($this->options['key'], $this->flash);
+        $this->input->session($this->injectors['key'], $this->flash);
     }
 }

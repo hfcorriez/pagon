@@ -7,7 +7,7 @@ use Pagon\Middleware;
 class CSRF extends Middleware
 {
     // Some options
-    protected $options = array(
+    protected $injectors = array(
         'form'    => true,
         'refer'   => true,
         'name'    => '__ct',
@@ -25,12 +25,12 @@ class CSRF extends Middleware
 
         // Check if post?
         if ($this->input->is("post")) {
-            if ($this->options['form']) {
-                $token = $this->input->data($this->options['name']);
+            if ($this->injectors['form']) {
+                $token = $this->input->data($this->injectors['name']);
                 if (!$token
                     || !($value = $this->decodeToken($token))
-                    || $value[0] != $this->options['sign']
-                    || ($value[1] + $this->options['expires'] < time())
+                    || $value[0] != $this->injectors['sign']
+                    || ($value[1] + $this->injectors['expires'] < time())
                 ) {
                     $this->callback();
                     return;
@@ -49,7 +49,7 @@ class CSRF extends Middleware
              * refer "http://yyy.com/submit" will fail
              *
              */
-            if ($this->options['refer']) {
+            if ($this->injectors['refer']) {
                 // Parse url
                 $url = parse_url($this->input->refer());
                 // Check host and domain
@@ -70,7 +70,7 @@ class CSRF extends Middleware
 
         if (
             // If enable form injection
-            $this->options['form']
+            $this->injectors['form']
             // And the page is html content type
             && strpos($this->output->contentType(), 'html')
         ) {
@@ -81,7 +81,7 @@ class CSRF extends Middleware
 
             // Check form if exists?
             if (strpos($this->output->body, '</form>')) {
-                $this->output->body = str_replace('</form>', '<input type="hidden" name="' . $this->options['name'] . '" value="' . $token . '" /></form>', $this->output->body);
+                $this->output->body = str_replace('</form>', '<input type="hidden" name="' . $this->injectors['name'] . '" value="' . $token . '" /></form>', $this->output->body);
             }
         }
     }
@@ -107,7 +107,7 @@ class CSRF extends Middleware
      */
     protected function encodeToken()
     {
-        return $this->app->cryptor->encrypt($this->options['sign'] . '||' . time());
+        return $this->app->cryptor->encrypt($this->injectors['sign'] . '||' . time());
     }
 
     /**
@@ -115,8 +115,8 @@ class CSRF extends Middleware
      */
     protected function callback()
     {
-        if (isset($this->options['callback'])) {
-            $this->options['callback']($this->input, $this->output);
+        if (isset($this->injectors['callback'])) {
+            $this->injectors['callback']($this->input, $this->output);
         } else {
             $this->app->handleError('unsafe');
         }

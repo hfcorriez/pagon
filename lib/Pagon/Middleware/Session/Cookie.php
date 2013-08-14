@@ -8,7 +8,7 @@ class Cookie extends Session
 {
     protected $cookie = false;
 
-    protected $options = array(
+    protected $injectors = array(
         'name' => 'session'
     );
 
@@ -32,18 +32,18 @@ class Cookie extends Session
 
     public function read($id)
     {
-        return $this->input->cookie($this->options['name']);
+        return $this->input->cookie($this->injectors['name']);
     }
 
     public function write($id, $data)
     {
-        $this->output->cookie($this->options['name'], $data, array('encrypt' => true, 'timeout' => $this->options['lifetime']));
+        $this->output->cookie($this->injectors['name'], $data, array('encrypt' => true, 'timeout' => $this->injectors['lifetime']));
         return true;
     }
 
     public function destroy($id)
     {
-        $this->output->cookie($this->options['name'], '');
+        $this->output->cookie(``->injectors['name'], '');
         return true;
     }
 

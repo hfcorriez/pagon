@@ -28,22 +28,9 @@ abstract class Middleware extends EventEmitter
     protected $app;
 
     /**
-     * @var array Default options
-     */
-    protected $options = array();
-
-    /**
      * @var callable
      */
     protected $next;
-
-    /**
-     * @param array $options
-     */
-    public function __construct(array $options = array())
-    {
-        $this->options = $options + $this->options;
-    }
 
     /**
      * Create new middleware or route

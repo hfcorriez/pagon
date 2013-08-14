@@ -11,7 +11,7 @@ class Booster extends Middleware
     /**
      * @var array Default options
      */
-    protected $options = array(
+    protected $injectors = array(
         'logger'  => 'log',
         'cryptor' => 'crypt'
     );
@@ -28,12 +28,12 @@ class Booster extends Middleware
         date_default_timezone_set($app->timezone);
 
         // Share the cryptor for the app
-        if ($_crypt = $app->get($this->options['cryptor'])) {
+        if ($_crypt = $app->get($this->injectors['cryptor'])) {
             $app->cryptor = new Cryptor($_crypt);
         }
 
         // Share the logger for the app
-        if ($_log = $app->get($this->options['logger'])) {
+        if ($_log = $app->get($this->injectors['logger'])) {
             $app->logger = new Logger($_log);
         }
 
