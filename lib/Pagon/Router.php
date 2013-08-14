@@ -105,7 +105,16 @@ class Router extends Middleware
      */
     public function via($method)
     {
-        $this->app->routes[$this->lastPath()]['via'] = (array)$method;
+        $_last = $this->lastPath();
+
+        if (!isset($this->app->routes[$_last]['via']) || $method == '*') {
+            $this->app->routes[$_last]['via'] = array();
+        }
+
+        if (!in_array($method, $this->app->routes[$_last]['via'])) {
+            $this->app->routes[$_last]['via'][] = $method;
+        }
+
         return $this;
     }
 
@@ -159,7 +168,6 @@ class Router extends Middleware
 
         // Get routes
         $routes = (array)$this->app->routes;
-        $dispatched = false;
 
         // Loop routes for parse and dispatch
         foreach ($routes as $p => $route) {
@@ -170,12 +178,12 @@ class Router extends Middleware
             $defaults = isset($route['defaults']) ? $route['defaults'] : array();
 
             // Set via
-            $via = isset($route['via']) ? $route['via'] : array('*');
+            $via = isset($route['via']) ? $route['via'] : array();
 
             // Try to parse the params
             if (($param = self::match($this->options['path'], $p, $rules, $defaults)) !== false) {
                 // Method match
-                if ($via !== array('*') && !in_array($this->input->method(), $via)) continue;
+                if ($via && !in_array($this->input->method(), $via)) continue;
 
                 try {
                     $param && $this->app->param($param);
