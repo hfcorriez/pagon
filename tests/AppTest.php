@@ -13,7 +13,7 @@ class AppTest extends PHPUnit_Framework_TestCase
 
     public function setUp()
     {
-        $this->app = new App(array(
+        $this->app = App::create(array(
             'my'     => 'test',
             'en'     => false,
             'mt'     => array(

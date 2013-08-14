@@ -15,13 +15,14 @@ class CacheTest extends \PHPUnit_Framework_TestCase
 
     public function setUp()
     {
-        $this->app = new App(array(
+        $this->app = App::create(array(
             'cache' => array(
                 'user' => array(
                     'type' => 'file',
                 )
             )
         ));
+        $this->app->run();
     }
 
     public function testFactory()

@@ -13,7 +13,7 @@ class HtmlTest extends \PHPUnit_Framework_TestCase
 
     public function setUp()
     {
-        $this->app = new App();
+        $this->app = App::create();
         $_SERVER = array(
             'HTTP_HOST'            => 'localhost',
             'HTTP_CONNECTION'      => 'keep-alive',
@@ -42,7 +42,8 @@ class HtmlTest extends \PHPUnit_Framework_TestCase
             'PHP_SELF'             => '/index.php',
             'REQUEST_TIME'         => 1375528769,
         );
-        $this->app->input = new Input($this->app);
+        $this->app->input = new Input(array('app' => $this->app));
+        $this->app->run();
     }
 
     public function testDom()
