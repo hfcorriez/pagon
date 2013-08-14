@@ -27,7 +27,7 @@ class View extends EventEmitter
     /**
      * @var array
      */
-    protected $options = array(
+    protected $injectors = array(
         'dir'    => '',
         'engine' => null,
     );
@@ -37,63 +37,31 @@ class View extends EventEmitter
      *
      * @param string $path
      * @param array  $data
-     * @param array  $options
+     * @param array  $injectors
      * @throws \Exception
      * @return View
      */
-    public function __construct($path, $data = array(), $options = array())
+    public function __construct($path, $data = array(), $injectors = array())
     {
         // Set dir for the view
-        $this->options = $options + $this->options;
+        $injectors = array('data' => $data, 'path' => $path) + $injectors + $this->injectors;
 
         // Set path
-        $this->path = ltrim($path, '/');
+        $injectors['path'] = ltrim($path, '/');
 
         // If file exists?
-        if (!is_file($options['dir'] . '/' . $this->path)) {
+        if (!is_file($injectors['dir'] . '/' . $injectors['path'])) {
             // Try to load file from absolute path
             if ($path{0} == '/' && is_file($path)) {
-                $this->path = $path;
-                $this->options['dir'] = '';
+                $injectors['path'] = $path;
+                $injectors['dir'] = '';
             } else {
-                throw new \Exception('Template file is not exist: ' . $this->path);
+                throw new \Exception('Template file is not exist: ' . $injectors['path']);
             }
         }
 
         // Set data
-        parent::__construct($data);
-    }
-
-    /**
-     * Set engine
-     *
-     * @param $engine
-     * @return \Pagon\View
-     */
-    public function engine($engine = null)
-    {
-        if (!$engine) {
-            return $this->options['engine'];
-        } else {
-            $this->options['engine'] = $engine;
-            return $this;
-        }
-    }
-
-    /**
-     * Set path
-     *
-     * @param string $dir
-     * @return View
-     */
-    public function dir($dir = null)
-    {
-        if (!$dir) {
-            return $this->options['dir'];
-        } else {
-            $this->options['dir'] = $dir;
-            return $this;
-        }
+        parent::__construct($injectors);
     }
 
     /**
@@ -104,7 +72,7 @@ class View extends EventEmitter
      */
     public function set(array $array = array())
     {
-        return $this->append($array);
+        return $this->injectors['data'] = $array + $this->injectors['data'];
     }
 
     /**
@@ -114,7 +82,7 @@ class View extends EventEmitter
      */
     public function render()
     {
-        $engine = $this->options['engine'];
+        $engine = $this->injectors['engine'];
 
         // Mark rendering flag
         self::$rendering = true;
@@ -126,10 +94,10 @@ class View extends EventEmitter
                 extract((array)$this->injectors);
             }
             ob_start();
-            include($this->options['dir'] . ($this->path{0} == '/' ? '' : '/') . $this->path);
+            include($this->injectors['dir'] . ($this->injectors['path']{0} == '/' ? '' : '/') . $this->injectors['path']);
             $html = ob_get_clean();
         } else {
-            $html = $engine->render($this->path, $this->injectors, $this->options['dir']);
+            $html = $engine->render($this->injectors, $this->injectors['data'], $this->injectors['dir']);
         }
 
         $this->emit('rendered');
