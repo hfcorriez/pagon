@@ -10,8 +10,9 @@ use Pagon\Exception\Stop;
  * Cli Output
  *
  * @package Pagon\Cli
- * @property int    status
- * @property string body
+ * @property \Pagon\App app     Application to service
+ * @property int        status
+ * @property string     body
  */
 class Output extends EventEmitter
 {
@@ -19,11 +20,6 @@ class Output extends EventEmitter
      * @var array Local variables
      */
     public $locals = array();
-
-    /**
-     * @var App App
-     */
-    public $app;
 
     /**
      * @param array $injectors

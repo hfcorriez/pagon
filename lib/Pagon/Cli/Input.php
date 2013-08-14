@@ -11,15 +11,11 @@ use Pagon\Config;
  * Cli Input
  *
  * @package Pagon\Cli
- * @property array params
+ * @property \Pagon\App app     Application to service
+ * @property array      params
  */
 class Input extends EventEmitter
 {
-    /**
-     * @var \Pagon\App App
-     */
-    public $app;
-
     /**
      * @param array $injectors
      */
