@@ -30,6 +30,7 @@ class View extends EventEmitter
     protected $injectors = array(
         'dir'    => '',
         'engine' => null,
+        'data'   => array()
     );
 
     /**
@@ -44,7 +45,7 @@ class View extends EventEmitter
     public function __construct($path, $data = array(), $injectors = array())
     {
         // Set dir for the view
-        $injectors = array('data' => $data, 'path' => $path) + $injectors + $this->injectors;
+        $injectors = array('data' => (array)$data, 'path' => $path) + $injectors + $this->injectors;
 
         // Set path
         $injectors['path'] = ltrim($path, '/');
@@ -91,7 +92,7 @@ class View extends EventEmitter
 
         if (!$engine) {
             if ($this->injectors) {
-                extract((array)$this->injectors);
+                extract((array)$this->injectors['data']);
             }
             ob_start();
             include($this->injectors['dir'] . ($this->injectors['path']{0} == '/' ? '' : '/') . $this->injectors['path']);
