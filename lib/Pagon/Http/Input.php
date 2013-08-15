@@ -234,7 +234,7 @@ class Input extends EventEmitter
      * @param string|array $type
      * @return array|null|string
      */
-    public function acceptEncoding($type = null)
+    public function encoding($type = null)
     {
         if (!isset($this->injectors['accept_encoding'])) {
             $this->injectors['accept_encoding'] = self::parseAcceptsMap($this->get('HTTP_ACCEPT_LANGUAGE'));
@@ -264,7 +264,7 @@ class Input extends EventEmitter
      * @param string|array $type
      * @return array|null|string
      */
-    public function acceptLanguage($type = null)
+    public function language($type = null)
     {
         if (!isset($this->injectors['accept_language'])) {
             $this->injectors['accept_language'] = self::parseAcceptsMap($this->get('HTTP_ACCEPT_LANGUAGE'));
