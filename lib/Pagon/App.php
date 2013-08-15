@@ -140,7 +140,7 @@ class App extends EventEmitter
     public static function self()
     {
         if (!self::$self) {
-            throw new \RuntimeException("There is no App exists");
+            throw new \RuntimeException("There is no running App exists");
         }
 
         return self::$self;
@@ -201,7 +201,7 @@ class App extends EventEmitter
     }
 
     /**
-     * Set with no event emit
+     * Set injectors
      *
      * @param string $key
      * @param mixed  $value
@@ -339,7 +339,7 @@ class App extends EventEmitter
     }
 
     /**
-     * Route get method
+     * Route get method or get injector
      *
      * @param string          $path
      * @param \Closure|string $route
