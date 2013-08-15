@@ -295,7 +295,7 @@ class Output extends EventEmitter
      * @throws \InvalidArgumentException
      * @return string|Output
      */
-    public function contentType($mime_type = null)
+    public function type($mime_type = null)
     {
         if ($mime_type) {
             if (!strpos($mime_type, '/')) {
@@ -466,7 +466,7 @@ class Output extends EventEmitter
      */
     public function json($data)
     {
-        $this->contentType('application/json');
+        $this->type('application/json');
         $this->body(json_encode($data));
         return $this;
     }
@@ -480,7 +480,7 @@ class Output extends EventEmitter
      */
     public function jsonp($data, $callback = 'callback')
     {
-        $this->contentType('application/javascript');
+        $this->type('application/javascript');
         $this->body($callback . '(' . json_encode($data) . ');');
         return $this;
     }
@@ -494,7 +494,7 @@ class Output extends EventEmitter
      */
     public function xml($data, array $option = array())
     {
-        $this->contentType('application/xml');
+        $this->type('application/xml');
         $this->body(Xml::dump($data, $option));
         return $this;
     }

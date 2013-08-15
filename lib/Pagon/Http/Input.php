@@ -198,7 +198,7 @@ class Input extends EventEmitter
     public function accept($type = null)
     {
         if (!isset($this->injectors['accept'])) {
-            $this->injectors['accept'] = self::buildAcceptMap($this->raw('HTTP_ACCEPT'));
+            $this->injectors['accept'] = self::parseAcceptsMap($this->raw('HTTP_ACCEPT'));
         }
 
         // if no parameter was passed, just return parsed data
@@ -237,7 +237,7 @@ class Input extends EventEmitter
     public function acceptEncoding($type = null)
     {
         if (!isset($this->injectors['accept_encoding'])) {
-            $this->injectors['accept_encoding'] = self::buildAcceptMap($this->raw('HTTP_ACCEPT_LANGUAGE'));
+            $this->injectors['accept_encoding'] = self::parseAcceptsMap($this->raw('HTTP_ACCEPT_LANGUAGE'));
         }
 
         // if no parameter was passed, just return parsed data
@@ -267,7 +267,7 @@ class Input extends EventEmitter
     public function acceptLanguage($type = null)
     {
         if (!isset($this->injectors['accept_language'])) {
-            $this->injectors['accept_language'] = self::buildAcceptMap($this->raw('HTTP_ACCEPT_LANGUAGE'));
+            $this->injectors['accept_language'] = self::parseAcceptsMap($this->raw('HTTP_ACCEPT_LANGUAGE'));
         }
 
         // if no parameter was passed, just return parsed data
@@ -399,10 +399,19 @@ class Input extends EventEmitter
     /**
      * Get user agent
      *
-     *
      * @return string
      */
     public function userAgent()
+    {
+        return $this->ua();
+    }
+
+    /**
+     * Get user agent
+     *
+     * @return string
+     */
+    public function ua()
     {
         return $this->raw('HTTP_USER_AGENT');
     }
@@ -412,7 +421,7 @@ class Input extends EventEmitter
      *
      * @return string
      */
-    public function contentType()
+    public function type()
     {
         return $this->raw('CONTENT_TYPE');
     }
@@ -424,7 +433,7 @@ class Input extends EventEmitter
      */
     public function mediaType()
     {
-        $contentType = $this->contentType();
+        $contentType = $this->type();
         if ($contentType) {
             $contentTypeParts = preg_split('/\s*[;,]\s*/', $contentType);
 
@@ -436,7 +445,7 @@ class Input extends EventEmitter
     /**
      * @return string
      */
-    public function contentCharset()
+    public function charset()
     {
         $mediaTypeParams = $this->mediaType();
         if (isset($mediaTypeParams['charset'])) {
@@ -450,7 +459,7 @@ class Input extends EventEmitter
      *
      * @return int
      */
-    public function contentLength()
+    public function length()
     {
         if ($len = $this->raw('CONTENT_LENGTH')) {
             return (int)$len;
@@ -651,7 +660,7 @@ class Input extends EventEmitter
      * @param $string
      * @return array
      */
-    protected static function buildAcceptMap($string)
+    protected static function parseAcceptsMap($string)
     {
         $_accept = array();
 
