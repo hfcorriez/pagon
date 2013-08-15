@@ -435,7 +435,7 @@ class App extends EventEmitter
      * @param \Closure|string $more
      * @return Router
      */
-    public function all($path, $route = null, $more = null)
+    public function any($path, $route = null, $more = null)
     {
         if ($more !== null) {
             return call_user_func_array(array($this->router, 'add'), func_get_args())->via('*');
