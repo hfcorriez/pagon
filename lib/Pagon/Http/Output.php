@@ -96,7 +96,7 @@ class Output extends EventEmitter
             'cookies'      => array(),
         ));
 
-        $this->locals = & $this->app->locals;
+        $this->locals = & $this->injectors['app']->locals;
     }
 
     /**
@@ -228,8 +228,8 @@ class Output extends EventEmitter
         if ($time !== null) {
             if (is_integer($time)) {
                 $this->header('Last-Modified', date(DATE_RFC1123, $time));
-                if ($time === strtotime($this->app->input->header('If-Modified-Since'))) {
-                    $this->app->halt(304);
+                if ($time === strtotime($this->injectors['app']->input->header('If-Modified-Since'))) {
+                    $this->injectors['app']->halt(304);
                 }
             }
 
@@ -253,10 +253,10 @@ class Output extends EventEmitter
             $this->header('Etag', $value);
 
             //Check conditional GET
-            if ($etag = $this->app->input->header('If-None-Match')) {
+            if ($etag = $this->injectors['app']->input->header('If-None-Match')) {
                 $etags = preg_split('@\s*,\s*@', $etag);
                 if (in_array($value, $etags) || in_array('*', $etags)) {
-                    $this->app->halt(304);
+                    $this->injectors['app']->halt(304);
                 }
             }
 
@@ -360,7 +360,7 @@ class Output extends EventEmitter
             $this->emit('header');
 
             // Send header
-            header(sprintf('HTTP/%s %s %s', $this->app->input->protocol(), $this->injectors['status'], $this->message()));
+            header(sprintf('HTTP/%s %s %s', $this->injectors['app']->input->protocol(), $this->injectors['status'], $this->message()));
 
             // Set content type if not exists
             if (!isset($this->injectors['headers']['Content-Type'])) {
@@ -391,7 +391,7 @@ class Output extends EventEmitter
 
             // Set cookie
             if ($this->injectors['cookies']) {
-                $_default = $this->app->cookie;
+                $_default = $this->injectors['app']->cookie;
                 if (!$_default) {
                     $_default = array(
                         'path'     => '/',
@@ -420,7 +420,7 @@ class Output extends EventEmitter
 
                     // Encrypt
                     if ($_option['encrypt']) {
-                        $value = 'c:' . $this->app->cryptor->encrypt($value);
+                        $value = 'c:' . $this->injectors['app']->cryptor->encrypt($value);
                     }
 
                     // Set cookie
@@ -441,7 +441,7 @@ class Output extends EventEmitter
      */
     public function render($template, array $data = null, array $options = array())
     {
-        $this->app->render($template, $data, $options);
+        $this->injectors['app']->render($template, $data, $options);
         return $this;
     }
 
@@ -455,7 +455,7 @@ class Output extends EventEmitter
      */
     public function compile($template, array $data = null, array $options = array())
     {
-        return $this->app->compile($template, $data, $options);
+        return $this->injectors['app']->compile($template, $data, $options);
     }
 
     /**
@@ -530,7 +530,7 @@ class Output extends EventEmitter
     public function redirect($url, $status = 302)
     {
         $this->injectors['status'] = $status;
-        $this->injectors['headers']['location'] = $url == 'back' ? $this->app->input->refer() : $url;
+        $this->injectors['headers']['location'] = $url == 'back' ? $this->injectors['app']->input->refer() : $url;
         return $this;
     }
 

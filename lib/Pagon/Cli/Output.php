@@ -31,7 +31,7 @@ class Output extends EventEmitter
             'body'   => '',
         ));
 
-        $this->locals = & $this->app->locals;
+        $this->locals = & $this->injectors['app']->locals;
     }
 
     /**

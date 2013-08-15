@@ -488,7 +488,7 @@ class Input extends EventEmitter
     public function query($key, $default = null)
     {
         if (isset($this->injectors['query'][$key])) {
-            return $this->app->enabled('safe_query') && View::$rendering ? Html::encode($this->injectors['query'][$key]) : $this->injectors['query'][$key];
+            return $this->injectors['app']->enabled('safe_query') && View::$rendering ? Html::encode($this->injectors['query'][$key]) : $this->injectors['query'][$key];
         }
         return $default;
     }
@@ -503,7 +503,7 @@ class Input extends EventEmitter
     public function data($key, $default = null)
     {
         if (isset($this->injectors['data'][$key])) {
-            return $this->app->enabled('safe_query') && View::$rendering ? Html::encode($this->injectors['data'][$key]) : $this->injectors['data'][$key];
+            return $this->injectors['app']->enabled('safe_query') && View::$rendering ? Html::encode($this->injectors['data'][$key]) : $this->injectors['data'][$key];
         }
         return $default;
     }
@@ -573,13 +573,13 @@ class Input extends EventEmitter
     {
         if (!isset($this->injectors['cookies'])) {
             $this->injectors['cookies'] = $_COOKIE;
-            $_option = $this->app->cookie;
+            $_option = $this->injectors['app']->cookie;
             foreach ($this->injectors['cookies'] as &$value) {
                 if (!$value) continue;
 
                 // Check crypt
                 if (strpos($value, 'c:') === 0) {
-                    $value = $this->app->cryptor->decrypt(substr($value, 2));
+                    $value = $this->injectors['app']->cryptor->decrypt(substr($value, 2));
                 }
 
                 // Parse signed cookie
@@ -641,7 +641,7 @@ class Input extends EventEmitter
      */
     public function pass()
     {
-        $this->app->pass();
+        $this->injectors['app']->pass();
     }
 
     /**
@@ -651,7 +651,7 @@ class Input extends EventEmitter
      */
     public function stop()
     {
-        $this->app->stop();
+        $this->injectors['app']->stop();
     }
 
     /**
