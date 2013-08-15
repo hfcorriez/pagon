@@ -39,7 +39,7 @@ class RouterTest extends AppTest
         $closure = function ($req, $res) {
         };
         $this->router->add('/', $closure)->via('*');
-        $this->assertEquals(array($closure, 'via' => array('*')), $this->app->routes['/']);
+        $this->assertEquals(array($closure, 'via' => array()), $this->app->routes['/']);
     }
 
     public function testRules()
