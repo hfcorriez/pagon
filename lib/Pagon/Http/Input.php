@@ -102,19 +102,14 @@ class Input extends EventEmitter
     /**
      * Get url
      *
+     * @param bool $full
      * @return mixed
      */
-    public function url()
+    public function url($full = true)
     {
-        if (!isset($this->injectors['url'])) {
-            $_url = $this->scheme() . '://' . $this->host();
-            if (($this->scheme() === 'https' && $this->port() !== 443) || ($this->scheme() === 'http' && $this->port() !== 80)) {
-                $_url .= sprintf(':%s', $this->port());
-            }
-            $this->injectors['url'] = $_url . $this->uri();
-        }
+        if (!$full) return $this->injectors['REQUEST_URI'];
 
-        return $this->injectors['url'];
+        return $this->site() . $this->injectors['REQUEST_URI'];
     }
 
     /**
@@ -124,7 +119,7 @@ class Input extends EventEmitter
      */
     public function site()
     {
-        return $this->scheme() . '://' . $this->domain();
+        return $this->scheme() . '://' . $this->host();
     }
 
     /**
@@ -187,105 +182,6 @@ class Input extends EventEmitter
     public function isUpload()
     {
         return !empty($this->injectors['files']);
-    }
-
-    /**
-     * Check If accept mime type?
-     *
-     * @param array|string $type
-     * @return array|null|string
-     */
-    public function accept($type = null)
-    {
-        if (!isset($this->injectors['accept'])) {
-            $this->injectors['accept'] = self::parseAcceptsMap($this->get('HTTP_ACCEPT'));
-        }
-
-        // if no parameter was passed, just return parsed data
-        if (!$type) return $this->injectors['accept'];
-        // Support get best match
-        if ($type === true) {
-            reset($this->injectors['accept']);
-            return key($this->injectors['accept']);
-        }
-
-        // If type is 'txt', 'xml' and so on, use smarty stracy
-        if (is_string($type) && !strpos($type, '/')) {
-            $type = Config::export('mimes')->{$type};
-            if (!$type) return null;
-        }
-
-        // Force to array
-        $type = (array)$type;
-
-        // let’s check our supported types:
-        foreach ($this->injectors['accept'] as $mime => $q) {
-            if ($q && in_array($mime, $type)) return $mime;
-        }
-
-        // All match
-        if (isset($this->injectors['accept']['*/*'])) return $type[0];
-        return null;
-    }
-
-    /**
-     * Check accept giving encoding?
-     *
-     * @param string|array $type
-     * @return array|null|string
-     */
-    public function encoding($type = null)
-    {
-        if (!isset($this->injectors['accept_encoding'])) {
-            $this->injectors['accept_encoding'] = self::parseAcceptsMap($this->get('HTTP_ACCEPT_LANGUAGE'));
-        }
-
-        // if no parameter was passed, just return parsed data
-        if (!$type) return $this->injectors['accept_encoding'];
-        // Support get best match
-        if ($type === true) {
-            reset($this->injectors['accept_encoding']);
-            return key($this->injectors['accept_encoding']);
-        }
-
-        // Force to array
-        $type = (array)$type;
-
-        // let’s check our supported types:
-        foreach ($this->injectors['accept_encoding'] as $lang => $q) {
-            if ($q && in_array($lang, $type)) return $lang;
-        }
-        return null;
-    }
-
-    /**
-     * Check if accept given language?
-     *
-     * @param string|array $type
-     * @return array|null|string
-     */
-    public function language($type = null)
-    {
-        if (!isset($this->injectors['accept_language'])) {
-            $this->injectors['accept_language'] = self::parseAcceptsMap($this->get('HTTP_ACCEPT_LANGUAGE'));
-        }
-
-        // if no parameter was passed, just return parsed data
-        if (!$type) return $this->injectors['accept_language'];
-        // Support get best match
-        if ($type === true) {
-            reset($this->injectors['accept_language']);
-            return key($this->injectors['accept_language']);
-        }
-
-        // Force to array
-        $type = (array)$type;
-
-        // let’s check our supported types:
-        foreach ($this->injectors['accept_language'] as $lang => $q) {
-            if ($q && in_array($lang, $type)) return $lang;
-        }
-        return null;
     }
 
     /**
@@ -613,6 +509,105 @@ class Input extends EventEmitter
             $this->injectors['body'] = @(string)file_get_contents('php://input');
         }
         return $this->injectors['body'];
+    }
+
+    /**
+     * Check If accept mime type?
+     *
+     * @param array|string $type
+     * @return array|null|string
+     */
+    public function accept($type = null)
+    {
+        if (!isset($this->injectors['accept'])) {
+            $this->injectors['accept'] = self::parseAcceptsMap($this->get('HTTP_ACCEPT'));
+        }
+
+        // if no parameter was passed, just return parsed data
+        if (!$type) return $this->injectors['accept'];
+        // Support get best match
+        if ($type === true) {
+            reset($this->injectors['accept']);
+            return key($this->injectors['accept']);
+        }
+
+        // If type is 'txt', 'xml' and so on, use smarty stracy
+        if (is_string($type) && !strpos($type, '/')) {
+            $type = Config::export('mimes')->{$type};
+            if (!$type) return null;
+        }
+
+        // Force to array
+        $type = (array)$type;
+
+        // let’s check our supported types:
+        foreach ($this->injectors['accept'] as $mime => $q) {
+            if ($q && in_array($mime, $type)) return $mime;
+        }
+
+        // All match
+        if (isset($this->injectors['accept']['*/*'])) return $type[0];
+        return null;
+    }
+
+    /**
+     * Check accept giving encoding?
+     *
+     * @param string|array $type
+     * @return array|null|string
+     */
+    public function encoding($type = null)
+    {
+        if (!isset($this->injectors['accept_encoding'])) {
+            $this->injectors['accept_encoding'] = self::parseAcceptsMap($this->get('HTTP_ACCEPT_LANGUAGE'));
+        }
+
+        // if no parameter was passed, just return parsed data
+        if (!$type) return $this->injectors['accept_encoding'];
+        // Support get best match
+        if ($type === true) {
+            reset($this->injectors['accept_encoding']);
+            return key($this->injectors['accept_encoding']);
+        }
+
+        // Force to array
+        $type = (array)$type;
+
+        // let’s check our supported types:
+        foreach ($this->injectors['accept_encoding'] as $lang => $q) {
+            if ($q && in_array($lang, $type)) return $lang;
+        }
+        return null;
+    }
+
+    /**
+     * Check if accept given language?
+     *
+     * @param string|array $type
+     * @return array|null|string
+     */
+    public function language($type = null)
+    {
+        if (!isset($this->injectors['accept_language'])) {
+            $this->injectors['accept_language'] = self::parseAcceptsMap($this->get('HTTP_ACCEPT_LANGUAGE'));
+        }
+
+        // if no parameter was passed, just return parsed data
+        if (!$type) return $this->injectors['accept_language'];
+        // Support get best match
+        if ($type === true) {
+            reset($this->injectors['accept_language']);
+            return key($this->injectors['accept_language']);
+        }
+
+        // Force to array
+        $type = (array)$type;
+
+        // let’s check our supported types:
+        foreach ($this->injectors['accept_language'] as $lang => $q) {
+            if ($q && in_array($lang, $type)) return $lang;
+        }
+        return null;
     }
 
     /**
