@@ -38,9 +38,9 @@ class HttpMethods extends Middleware
             // Register route
             $this->app->protect($method, function ($path, $route, $more = null) use ($app, $method) {
                 if ($more !== null) {
-                    call_user_func_array(array($app->router, 'set'), func_get_args())->via(strtoupper($method));
+                    call_user_func_array(array($app->router, 'add'), func_get_args())->via(strtoupper($method));
                 } else {
-                    $app->router->set($path, $route)->via(strtoupper($method));
+                    $app->router->add($path, $route)->via(strtoupper($method));
                 }
             });
         }

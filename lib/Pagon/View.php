@@ -71,7 +71,7 @@ class View extends EventEmitter
      * @param array $array
      * @return View
      */
-    public function set(array $array = array())
+    public function data(array $array = array())
     {
         return $this->injectors['data'] = $array + $this->injectors['data'];
     }

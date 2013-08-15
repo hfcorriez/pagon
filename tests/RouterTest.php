@@ -24,15 +24,6 @@ class RouterTest extends AppTest
         $this->test_router->app = $this->app;
     }
 
-    public function testSetGet()
-    {
-        $closure = function ($req, $res) {
-        };
-        $this->router->set('/', $closure);
-
-        $this->assertEquals(array($closure), $this->router->get('/'));
-    }
-
     public function testAdd()
     {
         $closure = function ($req, $res) {
@@ -40,7 +31,7 @@ class RouterTest extends AppTest
         $this->router->add('/', $closure);
         $this->router->add('/', $closure);
 
-        $this->assertEquals(array($closure, $closure), $this->router->get('/'));
+        $this->assertEquals(array($closure, $closure), $this->app->routes['/']);
     }
 
     public function testVia()
@@ -48,7 +39,7 @@ class RouterTest extends AppTest
         $closure = function ($req, $res) {
         };
         $this->router->add('/', $closure)->via('*');
-        $this->assertEquals(array($closure, 'via' => array('*')), $this->router->get('/'));
+        $this->assertEquals(array($closure, 'via' => array('*')), $this->app->routes['/']);
     }
 
     public function testRules()
@@ -56,7 +47,7 @@ class RouterTest extends AppTest
         $closure = function ($req, $res) {
         };
         $this->router->add('/:test', $closure)->rules(array('test' => '[a-z]+'));
-        $this->assertEquals(array($closure, 'rules' => array('test' => '[a-z]+')), $this->router->get('/:test'));
+        $this->assertEquals(array($closure, 'rules' => array('test' => '[a-z]+')), $this->app->routes['/:test']);
     }
 
     public function testDefaults()
@@ -64,7 +55,7 @@ class RouterTest extends AppTest
         $closure = function ($req, $res) {
         };
         $this->router->add('/:test', $closure)->defaults(array('test' => 'a'));
-        $this->assertEquals(array($closure, 'defaults' => array('test' => 'a')), $this->router->get('/:test'));
+        $this->assertEquals(array($closure, 'defaults' => array('test' => 'a')), $this->app->routes['/:test']);
     }
 
     public function testPass()

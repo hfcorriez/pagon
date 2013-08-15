@@ -33,28 +33,6 @@ class Router extends Middleware
     }
 
     /**
-     * Register a route for path
-     *
-     * @param string               $path
-     * @param \Closure|string      $route
-     * @param \Closure|string|null $more
-     * @return $this
-     */
-    public function set($path, $route, $more = null)
-    {
-        if ($more) {
-            $_args = func_get_args();
-            $path = array_shift($_args);
-            $route = $_args;
-        }
-
-        // Set route
-        $this->routes[$path] = (array)$route;
-
-        return $this;
-    }
-
-    /**
      * Add router for path
      *
      * @param string               $path
@@ -77,17 +55,6 @@ class Router extends Middleware
         $this->routes[$path] = array_merge($this->routes[$path], (array)$route);
 
         return $this;
-    }
-
-    /**
-     * Get the controllers
-     *
-     * @param $path
-     * @return mixed
-     */
-    public function get($path)
-    {
-        return $this->routes[$path];
     }
 
     /**
@@ -176,11 +143,8 @@ class Router extends Middleware
         // Check path
         if ($this->injectors['path'] === null) return false;
 
-        // Get routes
-        $routes = (array)$this->routes;
-
         // Loop routes for parse and dispatch
-        foreach ($routes as $p => $route) {
+        foreach ($this->routes as $p => $route) {
             // Lookup rules
             $rules = isset($route['rules']) ? $route['rules'] : array();
 

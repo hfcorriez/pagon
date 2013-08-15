@@ -198,7 +198,7 @@ class Input extends EventEmitter
     public function accept($type = null)
     {
         if (!isset($this->injectors['accept'])) {
-            $this->injectors['accept'] = self::parseAcceptsMap($this->raw('HTTP_ACCEPT'));
+            $this->injectors['accept'] = self::parseAcceptsMap($this->get('HTTP_ACCEPT'));
         }
 
         // if no parameter was passed, just return parsed data
@@ -237,7 +237,7 @@ class Input extends EventEmitter
     public function acceptEncoding($type = null)
     {
         if (!isset($this->injectors['accept_encoding'])) {
-            $this->injectors['accept_encoding'] = self::parseAcceptsMap($this->raw('HTTP_ACCEPT_LANGUAGE'));
+            $this->injectors['accept_encoding'] = self::parseAcceptsMap($this->get('HTTP_ACCEPT_LANGUAGE'));
         }
 
         // if no parameter was passed, just return parsed data
@@ -267,7 +267,7 @@ class Input extends EventEmitter
     public function acceptLanguage($type = null)
     {
         if (!isset($this->injectors['accept_language'])) {
-            $this->injectors['accept_language'] = self::parseAcceptsMap($this->raw('HTTP_ACCEPT_LANGUAGE'));
+            $this->injectors['accept_language'] = self::parseAcceptsMap($this->get('HTTP_ACCEPT_LANGUAGE'));
         }
 
         // if no parameter was passed, just return parsed data
@@ -308,7 +308,7 @@ class Input extends EventEmitter
      */
     public function proxy()
     {
-        if ($ips = $this->raw('HTTP_X_FORWARDED_FOR')) {
+        if ($ips = $this->get('HTTP_X_FORWARDED_FOR')) {
             return strpos($ips, ', ') ? explode(', ', $ips) : array($ips);
         }
 
@@ -334,7 +334,7 @@ class Input extends EventEmitter
      */
     public function refer()
     {
-        return $this->raw('HTTP_REFERER');
+        return $this->get('HTTP_REFERER');
     }
 
     /**
@@ -344,7 +344,7 @@ class Input extends EventEmitter
      */
     public function host()
     {
-        if ($host = $this->raw('HTTP_HOST')) {
+        if ($host = $this->get('HTTP_HOST')) {
             if (strpos($host, ':') !== false) {
                 $hostParts = explode(':', $host);
 
@@ -383,7 +383,7 @@ class Input extends EventEmitter
      */
     public function scheme()
     {
-        return !$this->raw('HTTPS') || $this->raw('HTTPS') === 'off' ? 'http' : 'https';
+        return !$this->get('HTTPS') || $this->get('HTTPS') === 'off' ? 'http' : 'https';
     }
 
     /**
@@ -393,7 +393,7 @@ class Input extends EventEmitter
      */
     public function port()
     {
-        return (int)$this->raw('SERVER_PORT');
+        return (int)$this->get('SERVER_PORT');
     }
 
     /**
@@ -413,7 +413,7 @@ class Input extends EventEmitter
      */
     public function ua()
     {
-        return $this->raw('HTTP_USER_AGENT');
+        return $this->get('HTTP_USER_AGENT');
     }
 
     /**
@@ -423,7 +423,7 @@ class Input extends EventEmitter
      */
     public function type()
     {
-        return $this->raw('CONTENT_TYPE');
+        return $this->get('CONTENT_TYPE');
     }
 
     /**
@@ -461,7 +461,7 @@ class Input extends EventEmitter
      */
     public function length()
     {
-        if ($len = $this->raw('CONTENT_LENGTH')) {
+        if ($len = $this->get('CONTENT_LENGTH')) {
             return (int)$len;
         }
         return 0;

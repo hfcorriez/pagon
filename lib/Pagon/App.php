@@ -207,7 +207,7 @@ class App extends EventEmitter
      * @param mixed  $value
      * @return void
      */
-    public function set($key, $value)
+    public function set($key, $value = null)
     {
         if (is_array($key)) {
             foreach ($key as $k => $v) {
@@ -341,20 +341,19 @@ class App extends EventEmitter
     /**
      * Route get method or get injector
      *
-     * @param string          $path
-     * @param \Closure|string $route
-     * @param \Closure|string $more
+     * @param string          $key
+     * @param \Closure|string $default
      * @return mixed|Router
      */
-    public function get($path, $route = null, $more = null)
+    public function get($key = null, $default = null)
     {
         // Get config for use
-        if ($route === null) {
-            if ($path === null) return $this->injectors;
+        if ($default === null) {
+            if ($key === null) return $this->injectors;
 
             $tmp = null;
-            if (strpos($path, '.') !== false) {
-                $ks = explode('.', $path);
+            if (strpos($key, '.') !== false) {
+                $ks = explode('.', $key);
                 $tmp = $this->injectors;
                 foreach ($ks as $k) {
                     if (!isset($tmp[$k])) return null;
@@ -362,18 +361,18 @@ class App extends EventEmitter
                     $tmp = & $tmp[$k];
                 }
             } else {
-                if (isset($this->injectors[$path])) {
-                    $tmp = & $this->injectors[$path];
+                if (isset($this->injectors[$key])) {
+                    $tmp = & $this->injectors[$key];
                 }
             }
 
             return $tmp;
         }
 
-        if ($more !== null) {
-            return call_user_func_array(array($this->router, 'set'), func_get_args())->via('GET');
+        if (func_num_args() > 2) {
+            return call_user_func_array(array($this->router, 'add'), func_get_args())->via('GET');
         } else {
-            return $this->router->add($path, $route)->via('GET');
+            return $this->router->add($key, $default)->via('GET');
         }
     }
 
@@ -388,7 +387,7 @@ class App extends EventEmitter
     public function post($path, $route, $more = null)
     {
         if ($more !== null) {
-            return call_user_func_array(array($this->router, 'set'), func_get_args())->via('POST');
+            return call_user_func_array(array($this->router, 'add'), func_get_args())->via('POST');
         } else {
             return $this->router->add($path, $route)->via('POST');
         }
@@ -405,7 +404,7 @@ class App extends EventEmitter
     public function put($path, $route, $more = null)
     {
         if ($more !== null) {
-            return call_user_func_array(array($this->router, 'set'), func_get_args())->via('PUT');
+            return call_user_func_array(array($this->router, 'add'), func_get_args())->via('PUT');
         } else {
             return $this->router->add($path, $route)->via('PUT');
         }
@@ -422,7 +421,7 @@ class App extends EventEmitter
     public function delete($path, $route, $more = null)
     {
         if ($more !== null) {
-            return call_user_func_array(array($this->router, 'set'), func_get_args())->via('DELETE');
+            return call_user_func_array(array($this->router, 'add'), func_get_args())->via('DELETE');
         } else {
             return $this->router->add($path, $route)->via('DELETE');
         }
@@ -439,7 +438,7 @@ class App extends EventEmitter
     public function all($path, $route = null, $more = null)
     {
         if ($more !== null) {
-            return call_user_func_array(array($this->router, 'set'), func_get_args())->via('*');
+            return call_user_func_array(array($this->router, 'add'), func_get_args())->via('*');
         } else {
             return $this->router->add($path, $route)->via('*');
         }
@@ -456,7 +455,7 @@ class App extends EventEmitter
     public function command($path, $route = null, $more = null)
     {
         if ($more !== null) {
-            return call_user_func_array(array($this->router, 'set'), func_get_args())->via('CLI');
+            return call_user_func_array(array($this->router, 'add'), func_get_args())->via('CLI');
         } else {
             return $this->router->add($path, $route)->via('CLI');
         }
@@ -802,7 +801,7 @@ class App extends EventEmitter
         if (is_string($route) && is_subclass_of($route, Route::_CLASS_, true)
             || $route instanceof \Closure
         ) {
-            $this->router->set('_' . $type, $route);
+            $this->injectors['routes']['_' . $type] = (array)$route;
         } else {
             ob_get_level() && ob_clean();
             ob_start();

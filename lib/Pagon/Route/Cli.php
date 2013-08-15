@@ -21,7 +21,7 @@ abstract class Cli extends Route
             throw new \RuntimeException("Daemon route can used under the CLI mode only!");
         }
 
-        $argv = $this->input->raw('argv');
+        $argv = $this->input->get('argv');
         $arg_parser = new ArgParser(array_slice($argv, 1), $this->usage);
         $arg_parser->program($argv[0] . ' ' . (isset($argv[1]) ? $argv[1] : ''));
 
