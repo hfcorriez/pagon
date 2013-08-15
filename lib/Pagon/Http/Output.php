@@ -123,12 +123,10 @@ class Output extends EventEmitter
      * @param string $data
      * @return string|Output
      */
-    public function write($data = null)
+    public function write($data)
     {
-        if ($data === null) return $this->injectors['body'];
-
         $this->injectors['body'] .= $data;
-        $this->injectors['length'] = strlen($this->injectors['body']);
+        $this->injectors['length'] += strlen($data);
 
         return $this;
     }
@@ -338,12 +336,11 @@ class Output extends EventEmitter
     /**
      * Get message by code
      *
-     * @param int $status
      * @return string
      */
-    public function message($status = null)
+    public function message()
     {
-        !$status && $status = $this->injectors['status'];
+        $status = $this->injectors['status'];
         if (isset(self::$messages[$status])) {
             return self::$messages[$status];
         }
@@ -525,23 +522,13 @@ class Output extends EventEmitter
      *
      * @param string $url
      * @param int    $status
-     * @return Output
+     * @return $this
      */
     public function redirect($url, $status = 302)
     {
         $this->injectors['status'] = $status;
         $this->injectors['headers']['location'] = $url == 'back' ? $this->injectors['app']->input->refer() : $url;
         return $this;
-    }
-
-    /**
-     * Stop
-     *
-     * @throws Stop
-     */
-    public function stop()
-    {
-        throw new Stop();
     }
 
     /**
