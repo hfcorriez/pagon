@@ -49,10 +49,12 @@ class Router extends Middleware
         }
 
         // Init route node
-        if (!isset($this->routes[$path])) $this->routes[$path] = array();
+        if (!isset($this->routes[$path])) {
+            $this->routes[$path] = (array)$route;
+        } else {
+            $this->routes[$path] = array_merge($this->routes[$path], (array)$route);
+        }
 
-        // Append
-        $this->routes[$path] = array_merge($this->routes[$path], (array)$route);
 
         return $this;
     }
