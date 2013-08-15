@@ -153,6 +153,103 @@ class Html
     }
 
     /**
+     * Checkboxes
+     *
+     * @param string         $name
+     * @param array          $values
+     * @param null|string    $checked
+     * @param array          $attributes
+     * @param array|callable $wrapper
+     * @return string
+     */
+    public static function checkboxes($name, array $values, $checked = null, $attributes = null, $wrapper = null)
+    {
+        return self::inputGroup($name, 'checkbox', $values, $checked, $attributes, $wrapper);
+    }
+
+    /**
+     * Radios
+     *
+     * @param string         $name
+     * @param array          $values
+     * @param null|string    $checked
+     * @param array          $attributes
+     * @param array|callable $wrapper
+     * @return string
+     */
+    public static function radios($name, array $values, $checked = null, $attributes = null, $wrapper = null)
+    {
+        return self::inputGroup($name, 'radio', $values, $checked, $attributes, $wrapper);
+    }
+
+    /**
+     * Input group
+     *
+     * @param string         $name
+     * @param string         $type
+     * @param array          $values
+     * @param null|string    $checked
+     * @param array          $attributes
+     * @param array|callable $wrapper
+     * @return string
+     */
+    public function inputGroup($name, $type, array $values, $checked = null, $attributes = null, $wrapper = null)
+    {
+        return self::loop($values, function ($key, $value) use (
+            $name, $type, $checked, $attributes, $wrapper
+        ) {
+            $attr = array('value' => $key, 'type' => $type, 'name' => $name) + (array)$attributes;
+            if ($checked) {
+                if (is_array($checked) && in_array($key, $checked)
+                    || $checked == $key
+                ) {
+                    $attr['checked'] = 'true';
+                }
+            }
+            if ($wrapper) {
+                if (is_array($wrapper)) {
+                    return Html::dom($wrapper[0], Html::dom('input', $value, $attr), isset($wrapper[1]) ? (array)$wrapper[1] : null);
+                } else if (is_callable($wrapper)) {
+                    return $wrapper(Html::dom('input', $value, $attr));
+                }
+            } else {
+                return Html::dom('input', $value, $attr);
+            }
+        });
+    }
+
+    /**
+     * Repeat elements
+     *
+     * @param string $dom
+     * @param array  $values
+     * @param array  $attributes
+     * @return string
+     */
+    public static function repeat($dom, array $values, array $attributes = null)
+    {
+        return self::loop($values, function ($value) use ($dom, $attributes) {
+            return Html::dom($dom, $value, $attributes);
+        });
+    }
+
+    /**
+     * Loop and join as string
+     *
+     * @param array    $values
+     * @param \Closure $mapper
+     * @return string
+     */
+    public static function loop(array $values, \Closure $mapper)
+    {
+        $html = array();
+        foreach ($values as $key => $value) {
+            $html[] = $mapper($value, $key);
+        }
+        return join('', $html);
+    }
+
+    /**
      * Build a element
      *
      * @param string $name
@@ -160,7 +257,7 @@ class Html
      * @param array  $attributes
      * @return string
      */
-    public static function dom($name, $text = '', array $attributes = array())
+    public static function dom($name, $text = '', array $attributes = null)
     {
         $self_close = false;
         if (in_array($name, self::$self_close_tags)) {
@@ -173,6 +270,7 @@ class Html
         }
 
         $attr = '';
+        $attributes = (array)$attributes;
         foreach ($attributes as $k => $v) {
             if (is_numeric($k)) $k = $v;
 
@@ -182,7 +280,7 @@ class Html
         }
 
         return '<' . $name . $attr .
-        ($self_close ? ' />' : '>' . $text) .
+        ($self_close ? ' />' : '>') . $text .
         ((!$self_close) ? '</' . $name . '>' : '');
     }
 
