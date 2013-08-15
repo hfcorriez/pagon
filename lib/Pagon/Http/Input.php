@@ -340,11 +340,14 @@ class Input extends EventEmitter
     /**
      * Get host
      *
+     * @param bool $port
      * @return string
      */
-    public function host()
+    public function host($port = false)
     {
         if ($host = $this->get('HTTP_HOST')) {
+            if ($port) return $host;
+
             if (strpos($host, ':') !== false) {
                 $hostParts = explode(':', $host);
 
@@ -354,16 +357,6 @@ class Input extends EventEmitter
             return $host;
         }
         return $this->injectors['SERVER_NAME'];
-    }
-
-    /**
-     * Host with port
-     *
-     * @return string
-     */
-    public function hostPort()
-    {
-        return $this->host() . ':' . $this->port();
     }
 
     /**
@@ -417,29 +410,17 @@ class Input extends EventEmitter
     }
 
     /**
-     * Get content type
-     *
-     * @return string
-     */
-    public function type()
-    {
-        return $this->get('CONTENT_TYPE');
-    }
-
-    /**
      * Get media type
      *
      * @return null|string
      */
-    public function mediaType()
+    public function type()
     {
-        $contentType = $this->type();
-        if ($contentType) {
-            $contentTypeParts = preg_split('/\s*[;,]\s*/', $contentType);
+        if (!$type = $this->get('CONTENT_TYPE')) return null;
 
-            return strtolower($contentTypeParts[0]);
-        }
-        return null;
+        $parts = preg_split('/\s*[;,]\s*/', $type);
+
+        return strtolower($parts[0]);
     }
 
     /**
@@ -447,11 +428,11 @@ class Input extends EventEmitter
      */
     public function charset()
     {
-        $mediaTypeParams = $this->mediaType();
-        if (isset($mediaTypeParams['charset'])) {
-            return $mediaTypeParams['charset'];
-        }
-        return null;
+        if (!($type = $this->get('CONTENT_TYPE'))
+            || !preg_match('/charset=([a-z0-9\-]+)/', $type, $match)
+        ) return null;
+
+        return strtolower($match[1]);
     }
 
     /**
