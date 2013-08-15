@@ -453,7 +453,7 @@ class App extends EventEmitter
      * @param \Closure|string $more
      * @return Router
      */
-    public function cli($path, $route = null, $more = null)
+    public function command($path, $route = null, $more = null)
     {
         if ($more !== null) {
             return call_user_func_array(array($this->router, 'set'), func_get_args())->via('CLI');
