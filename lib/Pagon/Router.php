@@ -86,12 +86,10 @@ class Router extends Middleware
     {
         $_last = $this->lastPath();
 
-        if (!isset($this->app->routes[$_last]['via']) || $method == '*') {
-        $this->routes[$this->lastPath()]['via'] = (array)$method;
-        }
-
-        if (!in_array($method, $this->app->routes[$_last]['via'])) {
-            $this->app->routes[$_last]['via'][] = $method;
+        if (!isset($this->routes[$_last]['via']) || $method == '*') {
+            $this->routes[$_last]['via'] = $method == '*' ? array() : (array)$method;
+        } else if (!in_array($method, $this->routes[$_last]['via'])) {
+            $this->routes[$_last]['via'][] = $method;
         }
 
         return $this;
