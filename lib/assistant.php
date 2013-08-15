@@ -526,6 +526,17 @@ function defer(Closure $closure)
 }
 
 /**
+ * With
+ *
+ * @param mixed $obj
+ * @return mixed
+ */
+function with($obj)
+{
+    return $obj;
+}
+
+/**
  * Or
  *
  * @return bool
