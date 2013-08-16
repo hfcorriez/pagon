@@ -25,6 +25,20 @@ class Input extends EventEmitter
     }
 
     /**
+     * Get or set id
+     *
+     * @param string|\Closure $id
+     * @return mixed
+     */
+    public function id($id = null)
+    {
+        if (!isset($this->injectors['id'])) {
+            $this->injectors['id'] = $id ? ($id instanceof \Closure ? $id() : (string)$id) : sha1(uniqid());
+        }
+        return $this->injectors['id'];
+    }
+
+    /**
      * Get path
      *
      *

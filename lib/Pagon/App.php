@@ -181,6 +181,17 @@ class App extends EventEmitter
     }
 
     /**
+     * Get or set id
+     *
+     * @param string|\Closure $id
+     * @return mixed
+     */
+    public function id($id = null)
+    {
+        return $this->injectors['input']->id($id);
+    }
+
+    /**
      * Check if cli
      *
      * @return bool
