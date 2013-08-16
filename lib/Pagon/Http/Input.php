@@ -134,65 +134,14 @@ class Input extends EventEmitter
     }
 
     /**
-     * Is given method?
-     *
-     * @param string $method
-     * @return bool
-     */
-    public function is($method)
-    {
-        return $this->method() == strtoupper($method);
-    }
-
-    /**
-     * Is ajax
-     *
-     *
-     * @return bool
-     */
-    public function isAjax()
-    {
-        return !$this->header('x-requested-with') && 'XMLHttpRequest' == $this->header('x-requested-with');
-    }
-
-    /**
-     * Is Ajax?
-     *
-     * @return bool
-     */
-    public function isXhr()
-    {
-        return $this->isAjax();
-    }
-
-    /**
-     * Is secure connection?
-     *
-     * @return bool
-     */
-    public function isSecure()
-    {
-        return $this->scheme() === 'https';
-    }
-
-    /**
-     * Is upload request?
-     *
-     * @return bool
-     */
-    public function isUpload()
-    {
-        return !empty($this->injectors['files']);
-    }
-
-    /**
      * Get IP
      *
+     * @param bool $proxy   Use proxy ip?
      * @return string
      */
-    public function ip()
+    public function ip($proxy = true)
     {
-        if ($ips = $this->proxy()) {
+        if ($proxy && ($ips = $this->proxy())) {
             return $ips[0];
         }
         return $this->injectors['server']['REMOTE_ADDR'];
@@ -633,6 +582,58 @@ class Input extends EventEmitter
             if ($q && in_array($lang, $type)) return $lang;
         }
         return null;
+    }
+
+    /**
+     * Is given method?
+     *
+     * @param string $method
+     * @return bool
+     */
+    public function is($method)
+    {
+        return $this->method() == strtoupper($method);
+    }
+
+    /**
+     * Is ajax
+     *
+     *
+     * @return bool
+     */
+    public function ajax()
+    {
+        return !$this->header('x-requested-with') && 'XMLHttpRequest' == $this->header('x-requested-with');
+    }
+
+    /**
+     * Is Ajax?
+     *
+     * @return bool
+     */
+    public function xhr()
+    {
+        return $this->ajax();
+    }
+
+    /**
+     * Is secure connection?
+     *
+     * @return bool
+     */
+    public function secure()
+    {
+        return $this->scheme() === 'https';
+    }
+
+    /**
+     * Is upload request?
+     *
+     * @return bool
+     */
+    public function upload()
+    {
+        return !empty($this->injectors['files']);
     }
 
     /**

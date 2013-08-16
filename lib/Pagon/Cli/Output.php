@@ -99,7 +99,7 @@ class Output extends EventEmitter
      *
      * @return bool
      */
-    public function isOk()
+    public function ok()
     {
         return $this->injectors['status'] === 0;
     }

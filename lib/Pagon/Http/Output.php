@@ -536,7 +536,7 @@ class Output extends EventEmitter
      *
      * @return bool
      */
-    public function isCachable()
+    public function cachable()
     {
         return $this->injectors['status'] >= 200 && $this->injectors['status'] < 300 || $this->injectors['status'] == 304;
     }
@@ -546,7 +546,7 @@ class Output extends EventEmitter
      *
      * @return bool
      */
-    public function isEmpty()
+    public function bare()
     {
         return in_array($this->injectors['status'], array(201, 204, 304));
     }
@@ -556,7 +556,7 @@ class Output extends EventEmitter
      *
      * @return bool
      */
-    public function isOk()
+    public function ok()
     {
         return $this->injectors['status'] === 200;
     }
@@ -566,7 +566,7 @@ class Output extends EventEmitter
      *
      * @return bool
      */
-    public function isSuccessful()
+    public function successful()
     {
         return $this->injectors['status'] >= 200 && $this->injectors['status'] < 300;
     }
@@ -576,7 +576,7 @@ class Output extends EventEmitter
      *
      * @return bool
      */
-    public function isRedirect()
+    public function redirecting()
     {
         return in_array($this->injectors['status'], array(301, 302, 303, 307));
     }
@@ -586,7 +586,7 @@ class Output extends EventEmitter
      *
      * @return bool
      */
-    public function isForbidden()
+    public function forbidden()
     {
         return $this->injectors['status'] === 403;
     }
@@ -596,7 +596,7 @@ class Output extends EventEmitter
      *
      * @return bool
      */
-    public function isNotFound()
+    public function notFound()
     {
         return $this->injectors['status'] === 404;
     }
@@ -606,7 +606,7 @@ class Output extends EventEmitter
      *
      * @return bool
      */
-    public function isClientError()
+    public function clientError()
     {
         return $this->injectors['status'] >= 400 && $this->injectors['status'] < 500;
     }
@@ -616,7 +616,7 @@ class Output extends EventEmitter
      *
      * @return bool
      */
-    public function isServerError()
+    public function serverError()
     {
         return $this->injectors['status'] >= 500 && $this->injectors['status'] < 600;
     }
