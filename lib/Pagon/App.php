@@ -431,23 +431,6 @@ class App extends EventEmitter
     }
 
     /**
-     * Match all method
-     *
-     * @param string          $path
-     * @param \Closure|string $route
-     * @param \Closure|string $more
-     * @return Router
-     */
-    public function any($path, $route = null, $more = null)
-    {
-        if ($more !== null) {
-            return $this->router->map($path, array_slice(func_get_args(), 1));
-        } else {
-            return $this->router->map($path, $route);
-        }
-    }
-
-    /**
      * Map cli route
      *
      * @param string          $path
@@ -456,6 +439,23 @@ class App extends EventEmitter
      * @return Router
      */
     public function command($path, $route = null, $more = null)
+    {
+        if ($more !== null) {
+            return $this->router->map($path, array_slice(func_get_args(), 1), "CLI");
+        } else {
+            return $this->router->map($path, $route, "CLI");
+        }
+    }
+
+    /**
+     * Match all method
+     *
+     * @param string          $path
+     * @param \Closure|string $route
+     * @param \Closure|string $more
+     * @return Router
+     */
+    public function any($path, $route = null, $more = null)
     {
         if ($more !== null) {
             return $this->router->map($path, array_slice(func_get_args(), 1));
