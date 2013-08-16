@@ -705,7 +705,9 @@ class App extends EventEmitter
                 $dir = isset($options['dir']) ? $options['dir'] : 'bundles/' . $id;
 
                 // Path check, if not match start of path, skip
-                if (isset($options['path']) && strpos($this->input->path(), $options['path']) !== 0) {
+                if (isset($options['path'])
+                    && strpos($this->input->path(), $options['path']) !== 0
+                ) {
                     continue;
                 }
 
