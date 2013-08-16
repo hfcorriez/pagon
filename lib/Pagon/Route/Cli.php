@@ -17,7 +17,7 @@ abstract class Cli extends Route
      */
     public function call()
     {
-        if (!$this->app->isCli()) {
+        if (!$this->app->cli()) {
             throw new \RuntimeException("Daemon route can used under the CLI mode only!");
         }
 

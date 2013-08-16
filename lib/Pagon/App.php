@@ -185,7 +185,7 @@ class App extends EventEmitter
      *
      * @return bool
      */
-    public function isCli()
+    public function cli()
     {
         return $this->injectors['cli'];
     }
@@ -195,7 +195,7 @@ class App extends EventEmitter
      *
      * @return bool
      */
-    public function isRunning()
+    public function running()
     {
         return $this->_run;
     }
@@ -205,7 +205,7 @@ class App extends EventEmitter
      *
      * @param string $key
      * @param mixed  $value
-     * @return void
+     * @return $this|void
      */
     public function set($key, $value = null)
     {
@@ -224,26 +224,29 @@ class App extends EventEmitter
         } else {
             $this->injectors[$key] = $value;
         }
+        return $this;
     }
 
     /**
      * Set config as true
      *
      * @param string $key
+     * @return $this|void
      */
     public function enable($key)
     {
-        $this->set($key, true);
+        return $this->set($key, true);
     }
 
     /**
      * Set config as false
      *
      * @param string $key
+     * @return $this|void
      */
     public function disable($key)
     {
-        $this->set($key, false);
+        return $this->set($key, false);
     }
 
     /**
