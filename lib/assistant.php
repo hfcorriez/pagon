@@ -515,17 +515,6 @@ function select($name, array $options, $selected = null, array $attributes = arr
  *****************************************************/
 
 /**
- *
- * Defer execution
- *
- * @param Closure $closure
- */
-function defer(Closure $closure)
-{
-    App::self()->defer($closure);
-}
-
-/**
  * With
  *
  * @param mixed $obj
