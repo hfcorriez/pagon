@@ -13,6 +13,11 @@ use Pagon\App;
 class Html
 {
     /**
+     * @var array Macros
+     */
+    public static $macros = array();
+
+    /**
      * @var string Encode for HTML
      */
     protected static $charset = 'utf-8';
@@ -55,6 +60,22 @@ class Html
     public static function specialChars($value)
     {
         return htmlspecialchars($value, ENT_QUOTES, static::charset(), false);
+    }
+
+    /**
+     * Get or set macro
+     *
+     * @param string          $key
+     * @param string|\Closure $html
+     * @return mixed
+     */
+    public static function macro($key, $html = null)
+    {
+        if ($html == null) {
+            return isset(self::$macros[$key]) ? (is_callable(self::$macros[$key]) ? call_user_func(self::$macros[$key]) : self::$macros[$key]) : null;
+        }
+
+        return self::$macros[$key] = $html;
     }
 
     /**
