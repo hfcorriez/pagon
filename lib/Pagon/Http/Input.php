@@ -29,8 +29,9 @@ class Input extends EventEmitter
             'params' => array(),
             'query'  => &$_GET,
             'data'   => &$_POST,
-            'files'  => &$_FILES
-        ) + $_SERVER);
+            'files'  => &$_FILES,
+            'server' => &$_SERVER
+        ));
     }
 
     /**
@@ -41,7 +42,7 @@ class Input extends EventEmitter
      */
     public function protocol()
     {
-        return $this->injectors['SERVER_PROTOCOL'];
+        return $this->injectors['server']['SERVER_PROTOCOL'];
     }
 
     /**
@@ -51,7 +52,7 @@ class Input extends EventEmitter
      */
     public function uri()
     {
-        return $this->injectors['REQUEST_URI'];
+        return $this->injectors['server']['REQUEST_URI'];
     }
 
     /**
@@ -61,7 +62,7 @@ class Input extends EventEmitter
      */
     public function root()
     {
-        return rtrim($this->injectors['DOCUMENT_ROOT'], '/') . rtrim($this->scriptName(), '/');
+        return rtrim($this->injectors['server']['DOCUMENT_ROOT'], '/') . rtrim($this->scriptName(), '/');
     }
 
     /**
@@ -72,8 +73,8 @@ class Input extends EventEmitter
     public function scriptName()
     {
         if (!isset($this->injectors['script_name'])) {
-            $_script_name = $this->injectors['SCRIPT_NAME'];
-            if (strpos($this->injectors['REQUEST_URI'], $_script_name) !== 0) {
+            $_script_name = $this->injectors['server']['SCRIPT_NAME'];
+            if (strpos($this->injectors['server']['REQUEST_URI'], $_script_name) !== 0) {
                 $_script_name = str_replace('\\', '/', dirname($_script_name));
             }
             $this->injectors['script_name'] = rtrim($_script_name, '/');
@@ -89,7 +90,7 @@ class Input extends EventEmitter
     public function path()
     {
         if (!isset($this->injectors['path_info'])) {
-            $_path_info = substr_replace($this->injectors['REQUEST_URI'], '', 0, strlen($this->scriptName()));
+            $_path_info = substr_replace($this->injectors['server']['REQUEST_URI'], '', 0, strlen($this->scriptName()));
             if (strpos($_path_info, '?') !== false) {
                 // Query string is not removed automatically
                 $_path_info = substr_replace($_path_info, '', strpos($_path_info, '?'));
@@ -107,9 +108,9 @@ class Input extends EventEmitter
      */
     public function url($full = true)
     {
-        if (!$full) return $this->injectors['REQUEST_URI'];
+        if (!$full) return $this->injectors['server']['REQUEST_URI'];
 
-        return $this->site() . $this->injectors['REQUEST_URI'];
+        return $this->site() . $this->injectors['server']['REQUEST_URI'];
     }
 
     /**
@@ -129,7 +130,7 @@ class Input extends EventEmitter
      */
     public function method()
     {
-        return $this->injectors['REQUEST_METHOD'];
+        return $this->injectors['server']['REQUEST_METHOD'];
     }
 
     /**
@@ -194,7 +195,7 @@ class Input extends EventEmitter
         if ($ips = $this->proxy()) {
             return $ips[0];
         }
-        return $this->injectors['REMOTE_ADDR'];
+        return $this->injectors['server']['REMOTE_ADDR'];
     }
 
     /**
@@ -204,11 +205,10 @@ class Input extends EventEmitter
      */
     public function proxy()
     {
-        if ($ips = $this->get('HTTP_X_FORWARDED_FOR')) {
-            return strpos($ips, ', ') ? explode(', ', $ips) : array($ips);
-        }
+        if (empty($this->injectors['server']['HTTP_X_FORWARDED_FOR'])) return array();
 
-        return array();
+        $ips = $this->injectors['server']['HTTP_X_FORWARDED_FOR'];
+        return strpos($ips, ', ') ? explode(', ', $ips) : array($ips);
     }
 
     /**
@@ -230,7 +230,7 @@ class Input extends EventEmitter
      */
     public function refer()
     {
-        return $this->get('HTTP_REFERER');
+        return isset($this->injectors['server']['HTTP_REFERER']) ? $this->injectors['server']['HTTP_REFERER'] : null;
     }
 
     /**
@@ -241,7 +241,7 @@ class Input extends EventEmitter
      */
     public function host($port = false)
     {
-        if ($host = $this->get('HTTP_HOST')) {
+        if (isset($this->injectors['server']['HTTP_HOST']) && ($host = $this->injectors['server']['HTTP_HOST'])) {
             if ($port) return $host;
 
             if (strpos($host, ':') !== false) {
@@ -252,7 +252,7 @@ class Input extends EventEmitter
 
             return $host;
         }
-        return $this->injectors['SERVER_NAME'];
+        return $this->injectors['server']['SERVER_NAME'];
     }
 
     /**
@@ -272,7 +272,7 @@ class Input extends EventEmitter
      */
     public function scheme()
     {
-        return !$this->get('HTTPS') || $this->get('HTTPS') === 'off' ? 'http' : 'https';
+        return !isset($this->injectors['server']['HTTPS']) || $this->injectors['server']['HTTPS'] == 'off' ? 'http' : 'https';
     }
 
     /**
@@ -282,7 +282,7 @@ class Input extends EventEmitter
      */
     public function port()
     {
-        return (int)$this->get('SERVER_PORT');
+        return empty($this->injectors['server']['SERVER_PORT']) ? null : (int)$this->injectors['server']['SERVER_PORT'];
     }
 
     /**
@@ -302,7 +302,7 @@ class Input extends EventEmitter
      */
     public function ua()
     {
-        return $this->get('HTTP_USER_AGENT');
+        return !empty($this->injectors['server']['HTTP_USER_AGENT']) ? $this->injectors['server']['HTTP_USER_AGENT'] : null;
     }
 
     /**
@@ -312,7 +312,8 @@ class Input extends EventEmitter
      */
     public function type()
     {
-        if (!$type = $this->get('CONTENT_TYPE')) return null;
+        if (empty($this->injectors['server']['CONTENT_TYPE'])) return null;
+        $type = $this->injectors['server']['CONTENT_TYPE'];
 
         $parts = preg_split('/\s*[;,]\s*/', $type);
 
@@ -324,9 +325,10 @@ class Input extends EventEmitter
      */
     public function charset()
     {
-        if (!($type = $this->get('CONTENT_TYPE'))
-            || !preg_match('/charset=([a-z0-9\-]+)/', $type, $match)
-        ) return null;
+        if (empty($this->injectors['server']['CONTENT_TYPE'])) return null;
+        $type = $this->injectors['server']['CONTENT_TYPE'];
+
+        if (!preg_match('/charset=([a-z0-9\-]+)/', $type, $match)) return null;
 
         return strtolower($match[1]);
     }
@@ -338,10 +340,9 @@ class Input extends EventEmitter
      */
     public function length()
     {
-        if ($len = $this->get('CONTENT_LENGTH')) {
-            return (int)$len;
-        }
-        return 0;
+        if (empty($this->injectors['server']['CONTENT_LENGTH'])) return 0;
+
+        return (int)$this->injectors['server']['CONTENT_LENGTH'];
     }
 
     /**
@@ -386,6 +387,18 @@ class Input extends EventEmitter
     }
 
     /**
+     * Get server variable
+     *
+     * @param string $key
+     * @param mixed  $default
+     * @return mixed
+     */
+    public function server($key, $default = null)
+    {
+        return isset($this->injectors['server'][$key]) ? $this->injectors['server'][$key] : $default;
+    }
+
+    /**
      * Get any params from get or post
      *
      * @param string $key
@@ -407,7 +420,7 @@ class Input extends EventEmitter
     {
         if (!isset($this->injectors['headers'])) {
             $_header = array();
-            foreach ($this->injectors as $key => $value) {
+            foreach ($this->injectors['server'] as $key => $value) {
                 $_name = false;
                 if ('HTTP_' === substr($key, 0, 5)) {
                     $_name = substr($key, 5);
@@ -425,9 +438,9 @@ class Input extends EventEmitter
                 $_header[strtolower(str_replace('_', '-', $_name))] = trim($value);
             }
 
-            if (isset($_SERVER['PHP_AUTH_USER'])) {
-                $pass = isset($_SERVER['PHP_AUTH_PW']) ? $_SERVER['PHP_AUTH_PW'] : '';
-                $_header['authorization'] = 'Basic ' . base64_encode($_SERVER['PHP_AUTH_USER'] . ':' . $pass);
+            if (isset($this->injectors['server']['PHP_AUTH_USER'])) {
+                $pass = isset($this->injectors['server']['PHP_AUTH_PW']) ? $this->injectors['server']['PHP_AUTH_PW'] : '';
+                $_header['authorization'] = 'Basic ' . base64_encode($this->injectors['server']['PHP_AUTH_USER'] . ':' . $pass);
             }
             $this->injectors['headers'] = $_header;
             unset($_header);
@@ -520,7 +533,11 @@ class Input extends EventEmitter
     public function accept($type = null)
     {
         if (!isset($this->injectors['accept'])) {
-            $this->injectors['accept'] = self::parseAcceptsMap($this->get('HTTP_ACCEPT'));
+            if (!empty($this->injectors['server']['HTTP_ACCEPT'])) {
+                $this->injectors['accept'] = self::parseAcceptsMap($this->injectors['server']['HTTP_ACCEPT']);
+            } else {
+                $this->injectors['accept'] = array();
+            }
         }
 
         // if no parameter was passed, just return parsed data
@@ -559,7 +576,11 @@ class Input extends EventEmitter
     public function encoding($type = null)
     {
         if (!isset($this->injectors['accept_encoding'])) {
-            $this->injectors['accept_encoding'] = self::parseAcceptsMap($this->get('HTTP_ACCEPT_LANGUAGE'));
+            if (!empty($this->injectors['server']['HTTP_ACCEPT_ENCODING'])) {
+                $this->injectors['accept_encoding'] = self::parseAcceptsMap($this->injectors['server']['HTTP_ACCEPT_ENCODING']);
+            } else {
+                $this->injectors['accept_encoding'] = array();
+            }
         }
 
         // if no parameter was passed, just return parsed data
@@ -589,7 +610,11 @@ class Input extends EventEmitter
     public function language($type = null)
     {
         if (!isset($this->injectors['accept_language'])) {
-            $this->injectors['accept_language'] = self::parseAcceptsMap($this->get('HTTP_ACCEPT_LANGUAGE'));
+            if (!empty($this->injectors['server']['HTTP_ACCEPT_LANGUAGE'])) {
+                $this->injectors['accept_language'] = self::parseAcceptsMap($this->injectors['server']['HTTP_ACCEPT_LANGUAGE']);
+            } else {
+                $this->injectors['accept_language'] = array();
+            }
         }
 
         // if no parameter was passed, just return parsed data
