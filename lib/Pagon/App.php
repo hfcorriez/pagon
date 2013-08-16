@@ -600,7 +600,6 @@ class App extends EventEmitter
      * @param string $path
      * @param array  $data
      * @param array  $options
-     * @throws \RuntimeException
      * @return void
      */
     public function render($path, array $data = null, array $options = array())
@@ -666,7 +665,6 @@ class App extends EventEmitter
 
     /**
      * App will run
-     *
      */
     public function run()
     {
