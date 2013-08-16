@@ -28,12 +28,11 @@ class Flash extends Middleware
      * @param string|array $message
      * @return Flash
      */
-    public function set($type, $message)
+    public function set($type, $message = null)
     {
         if (!isset($this->flash[$type])) {
             $this->flash[$type] = array();
         }
-
 
         if (!is_array($message)) {
             $this->flash[$type][] = $message;
@@ -46,14 +45,15 @@ class Flash extends Middleware
     /**
      * Get message with type
      *
-     * @param string|null $type
+     * @param string $type
+     * @param array  $default
      * @return array
      */
-    public function get($type = null)
+    public function get($type = null, $default = array())
     {
         if (!$type) return $this->current;
 
-        return isset($this->current[$type]) ? $this->current[$type] : array();
+        return isset($this->current[$type]) ? $this->current[$type] : $default;
     }
 
     /**
