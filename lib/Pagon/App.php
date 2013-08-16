@@ -370,9 +370,9 @@ class App extends EventEmitter
         }
 
         if (func_num_args() > 2) {
-            return call_user_func_array(array($this->router, 'add'), func_get_args())->via('GET');
+            return $this->router->map($key, array_slice(func_get_args(), 1, 'GET'));
         } else {
-            return $this->router->add($key, $default)->via('GET');
+            return $this->router->map($key, $default, 'GET');
         }
     }
 
@@ -387,9 +387,9 @@ class App extends EventEmitter
     public function post($path, $route, $more = null)
     {
         if ($more !== null) {
-            return call_user_func_array(array($this->router, 'add'), func_get_args())->via('POST');
+            return $this->router->map($path, array_slice(func_get_args(), 1), 'POST');
         } else {
-            return $this->router->add($path, $route)->via('POST');
+            return $this->router->map($path, $route, 'POST');
         }
     }
 
@@ -404,9 +404,9 @@ class App extends EventEmitter
     public function put($path, $route, $more = null)
     {
         if ($more !== null) {
-            return call_user_func_array(array($this->router, 'add'), func_get_args())->via('PUT');
+            return $this->router->map($path, array_slice(func_get_args(), 1), 'PUT');
         } else {
-            return $this->router->add($path, $route)->via('PUT');
+            return $this->router->map($path, $route, 'PUT');
         }
     }
 
@@ -421,9 +421,9 @@ class App extends EventEmitter
     public function delete($path, $route, $more = null)
     {
         if ($more !== null) {
-            return call_user_func_array(array($this->router, 'add'), func_get_args())->via('DELETE');
+            return $this->router->map($path, array_slice(func_get_args(), 1), 'DELETE');
         } else {
-            return $this->router->add($path, $route)->via('DELETE');
+            return $this->router->map($path, $route, 'DELETE');
         }
     }
 
@@ -438,9 +438,9 @@ class App extends EventEmitter
     public function any($path, $route = null, $more = null)
     {
         if ($more !== null) {
-            return call_user_func_array(array($this->router, 'add'), func_get_args())->via('*');
+            return $this->router->map($path, array_slice(func_get_args(), 1));
         } else {
-            return $this->router->add($path, $route)->via('*');
+            return $this->router->map($path, $route);
         }
     }
 
@@ -455,9 +455,9 @@ class App extends EventEmitter
     public function command($path, $route = null, $more = null)
     {
         if ($more !== null) {
-            return call_user_func_array(array($this->router, 'add'), func_get_args())->via('CLI');
+            return $this->router->map($path, array_slice(func_get_args(), 1));
         } else {
-            return $this->router->add($path, $route)->via('CLI');
+            return $this->router->map($path, $route);
         }
     }
 
@@ -738,20 +738,19 @@ class App extends EventEmitter
             // Emit "middleware" event
             $this->emit('middleware');
 
-            // Loop stacks to match
-            foreach ($this->injectors['stacks'] as $index => &$middleware) {
-                if (!is_array($middleware)) {
-                    $middleware = array('', $middleware);
-                }
-                // Try to match the path
-                if ($middleware[0] && strpos($this->input->path(), $middleware[0]) === false) {
-                    unset($this->injectors['stacks'][$index]);
-                }
-            }
-
             try {
-                $this->router->pass($this->injectors['stacks'], function ($m) {
-                    return Middleware::build($m[1], isset($m[2]) ? $m[2] : array());
+                $path = $this->input->path();
+                $this->router->handle($this->injectors['stacks'], function ($stack) use ($path) {
+                    // Try to match the path
+                    if (is_array($stack) && $stack[0] && strpos($path, $stack[0]) === false) {
+                        return false;
+                    }
+
+                    if (!is_array($stack)) {
+                        return $stack;
+                    } else {
+                        return Middleware::build($stack[1], $stack[2]);
+                    }
                 });
             } catch (Exception\Pass $e) {
             }
@@ -801,12 +800,12 @@ class App extends EventEmitter
         if (is_string($route) && is_subclass_of($route, Route::_CLASS_, true)
             || $route instanceof \Closure
         ) {
-            $this->injectors['routes']['_' . $type] = (array)$route;
+            $this->injectors['errors'][$type][2] = $route;
         } else {
             ob_get_level() && ob_clean();
             ob_start();
-            if (!$this->router->handle('_' . $type,
-                array('error' => array(
+            if (empty($this->injectors['errors'][$type][2])
+                || !$this->router->run($this->injectors['errors'][$type][2], array('error' => array(
                     'type'    => $type,
                     'error'   => $route,
                     'message' => $this->injectors['errors'][$type])

@@ -20,48 +20,59 @@ class RouterTest extends AppTest
 
         $this->router = $this->app->router;
 
-        $this->test_router = new Router(array('path' => '/test'));
-        $this->test_router->app = $this->app;
+        $this->test_router = new Router(array('path' => '/test', 'app' => $this->app));
     }
 
     public function testAdd()
     {
         $closure = function ($req, $res) {
         };
-        $this->router->add('/', $closure);
-        $this->router->add('/', $closure);
+        $this->router->map('/', $closure);
+        $this->router->map('/', $closure);
 
-        $this->assertEquals(array($closure, $closure), $this->app->routes['/']);
+        $this->assertEquals(
+            array(array('path' => '/', 'route' => $closure, 'via' => null), array('path' => '/', 'route' => $closure, 'via' => null)),
+            $this->app->routes
+        );
     }
 
     public function testVia()
     {
         $closure = function ($req, $res) {
         };
-        $this->router->add('/', $closure)->via('*');
-        $this->assertEquals(array($closure, 'via' => array()), $this->app->routes['/']);
+        $this->router->map('/', $closure, 'GET');
+        $this->assertEquals(
+            array('path' => '/', 'route' => $closure, 'via' => array('GET')),
+            end($this->app->routes)
+        );
     }
 
     public function testRules()
     {
         $closure = function ($req, $res) {
         };
-        $this->router->add('/:test', $closure)->rules(array('test' => '[a-z]+'));
-        $this->assertEquals(array($closure, 'rules' => array('test' => '[a-z]+')), $this->app->routes['/:test']);
+        $this->router->map('/:test', $closure)->rules(array('test' => '[a-z]+'));
+        $this->assertEquals(
+            array('path' => '/:test', 'route' => $closure, 'via' => null, 'rules' => array('test' => '[a-z]+')),
+            end($this->app->routes)
+        );
     }
 
     public function testDefaults()
     {
         $closure = function ($req, $res) {
         };
-        $this->router->add('/:test', $closure)->defaults(array('test' => 'a'));
-        $this->assertEquals(array($closure, 'defaults' => array('test' => 'a')), $this->app->routes['/:test']);
+        $this->router->map('/:test', $closure)->defaults(array('test' => 'a'));
+        $this->assertEquals(
+            array('path' => '/:test', 'route' => $closure, 'via' => null, 'defaults' => array('test' => 'a')),
+            end($this->app->routes)
+        );
     }
 
-    public function testPass()
+    public function testHandle()
     {
         $run = false;
-        $this->test_router->pass(array(function () use (&$run) {
+        $this->test_router->handle(array(function () use (&$run) {
             $run = true;
         }), function ($route) {
             return $route;
@@ -73,9 +84,9 @@ class RouterTest extends AppTest
     public function testRun()
     {
         $run = false;
-        $this->test_router->run(array(function () use (&$run) {
+        $run = $this->test_router->run(function () use (&$run) {
             $run = true;
-        }));
+        });
 
         $this->assertEquals(true, $run);
     }

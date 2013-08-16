@@ -14,16 +14,6 @@ abstract class Middleware extends EventEmitter
     const _CLASS_ = __CLASS__;
 
     /**
-     * @var Http\Input|Cli\Input
-     */
-    protected $input;
-
-    /**
-     * @var Http\Output|Cli\Output
-     */
-    protected $output;
-
-    /**
      * @var callable
      */
     protected $next;
@@ -35,9 +25,9 @@ abstract class Middleware extends EventEmitter
      * @param array           $options
      * @param array           $prefixes
      * @throws \InvalidArgumentException
-     * @return bool|Route
+     * @return bool|Route|callable
      */
-    public static function build($route, array $options = array(), array $prefixes = array())
+    public static function build($route, $options = null, array $prefixes = array())
     {
         if (is_object($route)) return $route;
 
@@ -49,7 +39,7 @@ abstract class Middleware extends EventEmitter
         foreach ($prefixes as $namespace) {
             if (!is_subclass_of($class = $namespace . '\\' . $route, __CLASS__, true)) continue;
 
-            return new $class($options);
+            return new $class((array)$options);
         }
 
         throw new \InvalidArgumentException("Non-exists route class '$route'");
@@ -70,7 +60,7 @@ abstract class Middleware extends EventEmitter
         }
 
         return call_user_func_array($route, array(
-            $this->input, $this->output, $this->next
+            $this->injectors['input'], $this->injectors['output'], $this->next
         ));
     }
 
@@ -86,10 +76,10 @@ abstract class Middleware extends EventEmitter
      */
     public function __invoke($input, $output, $next)
     {
-        $this->input = $input;
-        $this->output = $output;
-        $this->next = $next;
+        $this->injectors['input'] = $input;
+        $this->injectors['output'] = $output;
         $this->injectors['app'] = $input->app;
+        $this->next = $next;
         $this->call();
     }
 

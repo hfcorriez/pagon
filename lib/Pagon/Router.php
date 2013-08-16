@@ -24,6 +24,11 @@ class Router extends Middleware
     protected $routes;
 
     /**
+     * @var int Last index
+     */
+    protected $last = -1;
+
+    /**
      * @param array $injectors
      */
     public function __construct(array $injectors = array())
@@ -35,26 +40,32 @@ class Router extends Middleware
     /**
      * Add router for path
      *
-     * @param string               $path
-     * @param \Closure|string      $route
-     * @param \Closure|string|null $more
+     * @param string          $path
+     * @param \Closure|string $route
+     * @param string          $method
      * @return $this
      */
-    public function add($path, $route, $more = null)
+    public function map($path, $route, $method = '*')
     {
-        if ($more) {
-            $_args = func_get_args();
-            $path = array_shift($_args);
-            $route = $_args;
-        }
-
-        // Init route node
-        if (!isset($this->routes[$path])) {
-            $this->routes[$path] = (array)$route;
+        if (!is_array($route)) {
+            // Init route node
+            $this->routes[] = array(
+                'path'  => $path,
+                'route' => $route,
+                'via'   => $method == '*' ? null : (array)$method
+            );
+            $this->last++;
         } else {
-            $this->routes[$path] = array_merge($this->routes[$path], (array)$route);
+            foreach ($route as $r) {
+                // Init route node
+                $this->routes[] = array(
+                    'path'  => $path,
+                    'route' => $r,
+                    'via'   => $method == '*' ? null : (array)$method
+                );
+                $this->last++;
+            }
         }
-
 
         return $this;
     }
@@ -69,32 +80,12 @@ class Router extends Middleware
     public function name($name, $path = null)
     {
         if ($path === null) {
-            $path = $this->lastPath();
+            $path = $this->routes[$this->last]['path'];
         }
 
         $this->injectors['app']->names[$name] = $path;
         return $this;
     }
-
-    /**
-     * Via methods
-     *
-     * @param $method
-     * @return $this
-     */
-    public function via($method)
-    {
-        $_last = $this->lastPath();
-
-        if (!isset($this->routes[$_last]['via']) || $method == '*') {
-            $this->routes[$_last]['via'] = $method == '*' ? array() : (array)$method;
-        } else if (!in_array($method, $this->routes[$_last]['via'])) {
-            $this->routes[$_last]['via'][] = $method;
-        }
-
-        return $this;
-    }
-
 
     /**
      * Set default parameters
@@ -104,7 +95,7 @@ class Router extends Middleware
      */
     public function defaults($defaults = array())
     {
-        $this->routes[$this->lastPath()]['defaults'] = $defaults;
+        $this->routes[$this->last]['defaults'] = $defaults;
         return $this;
     }
 
@@ -116,7 +107,7 @@ class Router extends Middleware
      */
     public function rules($rules = array())
     {
-        $this->routes[$this->lastPath()]['rules'] = $rules;
+        $this->routes[$this->last]['rules'] = $rules;
         return $this;
     }
 
@@ -143,132 +134,98 @@ class Router extends Middleware
         // Check path
         if ($this->injectors['path'] === null) return false;
 
-        // Loop routes for parse and dispatch
-        foreach ($this->routes as $p => $route) {
+        $method = $this->injectors['input']->method();
+        $path = & $this->injectors['path'];
+        $prefixes = & $this->injectors['prefixes'];
+        $app = & $this->injectors['app'];
+
+        if ($this->handle($this->routes, function ($route) use ($path, $method, $prefixes, $app) {
             // Lookup rules
             $rules = isset($route['rules']) ? $route['rules'] : array();
 
             // Lookup defaults
             $defaults = isset($route['defaults']) ? $route['defaults'] : array();
 
-            // Set via
-            $via = isset($route['via']) ? $route['via'] : array();
-
             // Try to parse the params
-            if (($param = self::match($this->injectors['path'], $p, $rules, $defaults)) !== false) {
+            if (($params = Router::match($path, $route['path'], $rules, $defaults)) !== false) {
                 // Method match
-                if ($via && !in_array($this->input->method(), $via)) continue;
+                if ($route['via'] && !in_array($method, $route['via'])) return false;
 
-                try {
-                    $param && $this->injectors['app']->param($param);
+                $app->input->params = $params;
 
-                    return $this->run($route);
-                    // If multiple controller
-                } catch (Pass $e) {
-                }
+                return Route::build($route['route'], null, $prefixes);
             }
-        }
+            return false;
+        })
+        ) return true;
+
 
         // Try to check automatic route parser
         if (isset($this->injectors['automatic']) && is_callable($this->injectors['automatic'])) {
             $routes = (array)call_user_func($this->injectors['automatic'], $this->injectors['path']);
 
-            foreach ($routes as $route) {
-                // Try to check the class is route
-                if (!is_subclass_of($route, Middleware::_CLASS_, true)) continue;
+            return $this->handle($routes, function ($route) use ($prefixes) {
+                if (!is_subclass_of($route, Middleware::_CLASS_, true)) return false;
 
-                try {
-                    return $this->run($route);
-                } catch (Pass $e) {
-                }
-            }
+                return Route::build($route, null, $prefixes);
+            });
         }
 
         return false;
     }
 
     /**
-     * Run the routes
+     * Process the routes serious
      *
-     * @param $routes
-     * @return array|string
+     * @param array    $routes
+     * @param callable $mapper
+     * @return bool
      */
-    public function run($routes)
+    public function handle(array $routes, \Closure $mapper)
     {
-        $prefixes = array();
-        // Prefixes Lookup
-        if ($this->injectors['app']->prefixes) {
-            foreach ($this->injectors['app']->prefixes as $path => $namespace) {
-                if (strpos($this->injectors['path'], $path) === 0) {
-                    $prefixes[99 - strlen($path)] = $namespace;
-                }
-            }
-            ksort($prefixes);
-        }
-        return $this->pass($routes, function ($route) use ($prefixes) {
-            return Route::build($route, array(), $prefixes);
-        });
-    }
+        array_unshift($routes, null);
 
-    /**
-     * Run the route
-     *
-     * @param array|string $routes
-     * @param  \Closure    $build
-     * @throws \InvalidArgumentException
-     * @throws Exception\Pass
-     * @return array|string
-     */
-    public function pass($routes, \Closure $build)
-    {
-        if (!$routes) return false;
-
-        $routes = (array)$routes;
-        $param = null;
-        $run = false;
-
-        $pass = function ($route) use ($build, &$param, &$run) {
-            $runner = $route instanceof \Closure ? $route : $build($route);
-            if (is_callable($runner)) {
-                $run = true;
-                call_user_func_array($runner, $param);
-                return true;
-            } else {
-                throw new \InvalidArgumentException("Route '$route' is not exists");
-            }
-        };
-
-        $param = array(
+        $arguments = array(
             $this->injectors['app']->input,
             $this->injectors['app']->output,
-            function () use (&$routes, $pass) {
-                do {
-                    $route = next($routes);
-                } while ($route && !is_numeric(key($routes)));
+            function () use (&$routes, $mapper, &$arguments) {
+                while ($route = next($routes)) {
+                    if ($route = $mapper($route)) break;
+                }
 
                 if (!$route) throw new Pass;
 
-                $pass($route);
+                call_user_func_array($route, $arguments);
+                return true;
             }
         );
 
-        $pass(current($routes));
-
-        return $run;
+        try {
+            return $arguments[2]();
+        } catch (Pass $e) {
+            return false;
+        }
     }
 
     /**
-     * Run the route
+     * Run the given route
      *
-     * @param string $route
-     * @param array  $params
+     * @param \Closure|string $route
+     * @param array           $params
      * @return bool
      */
-    public function handle($route, $params = array())
+    public function run($route, array $params = array())
     {
-        if (isset($this->routes[$route])) {
-            $params && $this->injectors['app']->param($params);
-            return $this->run($this->routes[$route]);
+        if ($route = Route::build($route)) {
+            $this->injectors['app']->input->params = $params;
+            call_user_func_array($route, array(
+                $this->injectors['app']->input,
+                $this->injectors['app']->output,
+                function () {
+                    throw new Pass;
+                }
+            ));
+            return true;
         }
         return false;
     }
@@ -279,22 +236,23 @@ class Router extends Middleware
     public function call()
     {
         try {
+            $prefixes = array();
+            // Prefixes Lookup
+            if ($this->injectors['app']->prefixes) {
+                foreach ($this->injectors['app']->prefixes as $path => $namespace) {
+                    if (strpos($this->injectors['path'], $path) === 0) {
+                        $prefixes[99 - strlen($path)] = $namespace;
+                    }
+                }
+                ksort($prefixes);
+            }
+            $this->injectors['prefixes'] = $prefixes;
+
             if (!$this->dispatch()) {
                 $this->injectors['app']->handleError('404');
             }
         } catch (Stop $e) {
         }
-    }
-
-    /**
-     * Last path of routes
-     *
-     * @return mixed
-     */
-    protected function lastPath()
-    {
-        $path = array_keys($this->routes);
-        return end($path);
     }
 
     /**
@@ -307,7 +265,7 @@ class Router extends Middleware
      * @param array  $defaults
      * @return array|bool
      */
-    protected static function match($path, $route, $rules = array(), $defaults = array())
+    public static function match($path, $route, $rules = array(), $defaults = array())
     {
         $param = false;
 
@@ -336,7 +294,7 @@ class Router extends Middleware
      * @param array  $rules
      * @return string
      */
-    protected static function pathToRegex($path, $rules = array())
+    public static function pathToRegex($path, $rules = array())
     {
         if ($path[1] !== '^') {
             $path = str_replace(array('/'), array('\\/'), $path);
