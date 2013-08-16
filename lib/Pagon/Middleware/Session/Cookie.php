@@ -43,7 +43,7 @@ class Cookie extends Session
 
     public function destroy($id)
     {
-        $this->output->cookie(``->injectors['name'], '');
+        $this->output->cookie($this->injectors['name'], '');
         return true;
     }
 

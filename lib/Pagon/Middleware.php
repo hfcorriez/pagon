@@ -7,7 +7,10 @@ namespace Pagon;
  * structure of base middleware
  *
  * @package Pagon
- * @property App app Application to service
+ * @property App                    app          Application to service
+ * @property Http\Input|Cli\Input   input        Input of Application
+ * @property Http\Output|Cli\Output output       Output of Application
+ *
  */
 abstract class Middleware extends EventEmitter
 {

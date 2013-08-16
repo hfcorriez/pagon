@@ -36,11 +36,11 @@ abstract class Rest extends Route
             throw new \RuntimeException("Daemon route can not use under the CLI mode!");
         }
 
-        $this->params = $this->input->params;
-        $method = strtolower($this->input->method());
+        $this->params = $this->injectors['input']->params;
+        $method = strtolower($this->injectors['input']->method());
 
         $this->before();
-        $this->$method($this->input, $this->output);
+        $this->$method($this->injectors['input'], $this->injectors['output']);
         $this->after();
     }
 }

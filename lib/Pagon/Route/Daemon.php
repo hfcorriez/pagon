@@ -22,7 +22,7 @@ abstract class Daemon extends Route
         try {
             while (1) {
                 // Run
-                $this->run($this->input, $this->output);
+                $this->run($this->injectors['input'], $this->injectors['output']);
 
                 // Sleep after run
                 if ($this->sleep_time) usleep($this->sleep_time);

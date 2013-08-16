@@ -43,9 +43,9 @@ abstract class Classic extends Route
 
     public function call()
     {
-        $action = $this->input->param('action');
+        $action = $this->injectors['input']->param('action');
 
-        $this->params = $this->input->params;
+        $this->params = $this->injectors['input']->params;
 
         if (!$action) {
             throw new \RuntimeException('Route need ":action" param');
@@ -55,7 +55,7 @@ abstract class Classic extends Route
 
         // Check method
         $this->before();
-        $this->$method($this->input, $this->output);
+        $this->$method($this->injectors['input'], $this->injectors['output']);
         $this->after();
     }
 }
