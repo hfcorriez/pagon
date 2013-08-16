@@ -2,10 +2,10 @@
 
 namespace Pagon\Http;
 
+use Pagon\Config;
 use Pagon\EventEmitter;
 use Pagon\Exception\Pass;
 use Pagon\Exception\Stop;
-use Pagon\Config;
 use Pagon\Html;
 use Pagon\View;
 
