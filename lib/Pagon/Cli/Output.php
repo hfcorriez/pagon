@@ -17,6 +17,11 @@ use Pagon\Exception\Stop;
 class Output extends EventEmitter
 {
     /**
+     * @var \Pagon\App
+     */
+    public $app;
+
+    /**
      * @var array Local variables
      */
     public $locals = array();
@@ -31,7 +36,8 @@ class Output extends EventEmitter
             'body'   => '',
         ));
 
-        $this->locals = & $this->injectors['app']->locals;
+        $this->app = & $this->injectors['app'];
+        $this->locals = & $this->app->locals;
     }
 
     /**

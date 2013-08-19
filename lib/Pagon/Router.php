@@ -19,6 +19,11 @@ class Router extends Middleware
     const _CLASS_ = __CLASS__;
 
     /**
+     * @var App
+     */
+    public $app;
+
+    /**
      * @var array Routes pointer
      */
     protected $routes;
@@ -34,7 +39,8 @@ class Router extends Middleware
     public function __construct(array $injectors = array())
     {
         parent::__construct($injectors);
-        $this->routes = & $this->injectors['app']->routes;
+        $this->app = & $this->injectors['app'];
+        $this->routes = & $this->app->routes;
     }
 
     /**
@@ -83,7 +89,7 @@ class Router extends Middleware
             $path = $this->routes[$this->last]['path'];
         }
 
-        $this->injectors['app']->names[$name] = $path;
+        $this->app->names[$name] = $path;
         return $this;
     }
 
@@ -119,7 +125,7 @@ class Router extends Middleware
      */
     public function path($name)
     {
-        return isset($this->injectors['app']->names[$name]) ? $this->injectors['app']->names[$name] : false;
+        return isset($this->app->names[$name]) ? $this->app->names[$name] : false;
     }
 
     /**
@@ -137,7 +143,7 @@ class Router extends Middleware
         $method = $this->injectors['input']->method();
         $path = & $this->injectors['path'];
         $prefixes = & $this->injectors['prefixes'];
-        $app = & $this->injectors['app'];
+        $app = & $this->app;
 
         if ($this->handle($this->routes, function ($route) use ($path, $method, $prefixes, $app) {
             // Lookup rules
@@ -186,8 +192,8 @@ class Router extends Middleware
         array_unshift($routes, null);
 
         $arguments = array(
-            $this->injectors['app']->input,
-            $this->injectors['app']->output,
+            $this->app->input,
+            $this->app->output,
             function () use (&$routes, $mapper, &$arguments) {
                 while ($route = next($routes)) {
                     if ($route = $mapper($route)) break;
@@ -217,10 +223,10 @@ class Router extends Middleware
     public function run($route, array $params = array())
     {
         if ($route = Route::build($route)) {
-            $this->injectors['app']->input->params = $params;
+            $this->app->input->params = $params;
             call_user_func_array($route, array(
-                $this->injectors['app']->input,
-                $this->injectors['app']->output,
+                $this->app->input,
+                $this->app->output,
                 function () {
                     throw new Pass;
                 }
@@ -238,8 +244,8 @@ class Router extends Middleware
         try {
             $prefixes = array();
             // Prefixes Lookup
-            if ($this->injectors['app']->prefixes) {
-                foreach ($this->injectors['app']->prefixes as $path => $namespace) {
+            if ($this->app->prefixes) {
+                foreach ($this->app->prefixes as $path => $namespace) {
                     if (strpos($this->injectors['path'], $path) === 0) {
                         $prefixes[99 - strlen($path)] = $namespace;
                     }
@@ -249,7 +255,7 @@ class Router extends Middleware
             $this->injectors['prefixes'] = $prefixes;
 
             if (!$this->dispatch()) {
-                $this->injectors['app']->handleError('404');
+                $this->app->handleError('404');
             }
         } catch (Stop $e) {
         }

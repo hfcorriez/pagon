@@ -17,11 +17,18 @@ use Pagon\Config;
 class Input extends EventEmitter
 {
     /**
+     * @var \Pagon\App
+     */
+    public $app;
+
+    /**
      * @param array $injectors
      */
     public function __construct(array $injectors = array())
     {
-        parent::__construct($injectors + array('params' => array()) + $_SERVER);
+        parent::__construct($injectors + array('params' => array(), 'app' => null) + $_SERVER);
+
+        $this->app = & $this->injectors['app'];
     }
 
     /**

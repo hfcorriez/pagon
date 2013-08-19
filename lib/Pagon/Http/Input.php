@@ -13,13 +13,17 @@ use Pagon\View;
  * Http Input
  *
  * @package Pagon\Http
- * @property \Pagon\App app     Application to service
  * @property array      params
  * @property array      query
  * @property array      data
  */
 class Input extends EventEmitter
 {
+    /**
+     * @var \Pagon\App
+     */
+    public $app;
+
     /**
      * @param array $injectors
      */
@@ -30,8 +34,10 @@ class Input extends EventEmitter
             'query'  => &$_GET,
             'data'   => &$_POST,
             'files'  => &$_FILES,
-            'server' => &$_SERVER
+            'server' => &$_SERVER,
+            'app'    => null
         ));
+        $this->app = & $this->injectors['app'];
     }
 
     /**
@@ -329,7 +335,7 @@ class Input extends EventEmitter
     public function query($key, $default = null)
     {
         if (isset($this->injectors['query'][$key])) {
-            return $this->injectors['app']->enabled('safe_query') && View::$rendering ? Html::encode($this->injectors['query'][$key]) : $this->injectors['query'][$key];
+            return $this->app->enabled('safe_query') && View::$rendering ? Html::encode($this->injectors['query'][$key]) : $this->injectors['query'][$key];
         }
         return $default;
     }
@@ -344,7 +350,7 @@ class Input extends EventEmitter
     public function data($key, $default = null)
     {
         if (isset($this->injectors['data'][$key])) {
-            return $this->injectors['app']->enabled('safe_query') && View::$rendering ? Html::encode($this->injectors['data'][$key]) : $this->injectors['data'][$key];
+            return $this->app->enabled('safe_query') && View::$rendering ? Html::encode($this->injectors['data'][$key]) : $this->injectors['data'][$key];
         }
         return $default;
     }
@@ -426,13 +432,13 @@ class Input extends EventEmitter
     {
         if (!isset($this->injectors['cookies'])) {
             $this->injectors['cookies'] = $_COOKIE;
-            $_option = $this->injectors['app']->cookie;
+            $_option = $this->app->cookie;
             foreach ($this->injectors['cookies'] as &$value) {
                 if (!$value) continue;
 
                 // Check crypt
                 if (strpos($value, 'c:') === 0) {
-                    $value = $this->injectors['app']->cryptor->decrypt(substr($value, 2));
+                    $value = $this->app->cryptor->decrypt(substr($value, 2));
                 }
 
                 // Parse signed cookie
@@ -657,7 +663,7 @@ class Input extends EventEmitter
      */
     public function pass()
     {
-        $this->injectors['app']->pass();
+        $this->app->pass();
     }
 
     /**
@@ -667,7 +673,7 @@ class Input extends EventEmitter
      */
     public function stop()
     {
-        $this->injectors['app']->stop();
+        $this->app->stop();
     }
 
     /**
