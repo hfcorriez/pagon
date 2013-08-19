@@ -17,12 +17,17 @@ class Logger extends Logger\LoggerInterface
      * @var array Options
      */
     protected $injectors = array(
-        'file'       => 'app.log',
-        'auto_write' => false,
-        'level'      => 'debug',
-        'default'    => true,
-        'streams '   => array()
+        'file'           => 'app.log',
+        'auto_write'     => false,
+        'level'          => 'debug',
+        'default_stream' => true,
+        'streams '       => array()
     );
+
+    /**
+     * @var Logger default
+     */
+    public static $default;
 
     /**
      * @var array Levels
@@ -66,11 +71,12 @@ class Logger extends Logger\LoggerInterface
             throw new \BadMethodCallException('Call to undefined method ' . __CLASS__ . '::' . $method);
         }
 
-        if (!isset(App::self()->logger)) {
-            throw new \RuntimeException('App has no logger found.');
+        if (self::$default) {
+            // Create default logger with file "app.log" under your working directory
+            self::$default = new self(array('file' => getcwd() . '/app.log'));
         }
 
-        return call_user_func_array(array(App::self()->logger, $method), $arguments);
+        return call_user_func_array(array(self::$default, $method), $arguments);
     }
 
     /**
@@ -81,14 +87,14 @@ class Logger extends Logger\LoggerInterface
     {
         // Default handler
         if (is_bool($injectors)) {
-            $injectors = array('default' => $injectors);
+            $injectors = array('default_stream' => $injectors);
         }
 
         // Construct by parent
         parent::__construct($injectors);
 
         // Auto add current file logger to streams
-        if ($this->injectors['level'] && $this->injectors['default']) {
+        if ($this->injectors['level'] && $this->injectors['default_stream']) {
             $this->add($this->injectors['level'], $this);
         }
 

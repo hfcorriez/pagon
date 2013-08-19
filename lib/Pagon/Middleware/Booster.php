@@ -34,7 +34,7 @@ class Booster extends Middleware
 
         // Share the logger for the app
         if ($_log = $app->get($this->injectors['logger'])) {
-            $app->logger = new Logger($_log);
+            $app->logger = Logger::$default = new Logger($_log);
         }
 
         // Configure debug
