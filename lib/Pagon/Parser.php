@@ -33,6 +33,7 @@ class Parser
             throw new \InvalidArgumentException("Non-exists parser for '$type'");
         }
 
+        /** @var $class Parser */
         return $class::parse($string, $option);
     }
 
@@ -54,7 +55,7 @@ class Parser
             throw new \InvalidArgumentException("Non-exists parser for '$type'");
         }
 
-
+        /** @var $class Parser */
         return $class::dump($array, $option);
     }
 
