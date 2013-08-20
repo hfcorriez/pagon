@@ -2,9 +2,17 @@
 
 namespace Pagon\Route;
 
+use Pagon\Cli\Input;
+use Pagon\Cli\Output;
 use Pagon\Route;
 use Pagon\Utility\ArgParser;
 
+/**
+ * Cli base route
+ *
+ * @package Pagon\Route
+ * @method run(Input $input, Output $output)
+ */
 abstract class Cli extends Route
 {
     protected $arguments = array();

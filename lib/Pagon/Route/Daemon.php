@@ -2,9 +2,17 @@
 
 namespace Pagon\Route;
 
+use Pagon\Cli\Input;
+use Pagon\Cli\Output;
 use Pagon\Exception\Stop;
 use Pagon\Route;
 
+/**
+ * Daemon base route
+ *
+ * @package Pagon\Route
+ * @method run(Input $input, Output $output)
+ */
 abstract class Daemon extends Route
 {
     protected $sleep_time = 1000000;

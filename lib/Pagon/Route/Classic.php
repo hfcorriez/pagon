@@ -37,6 +37,11 @@ namespace Pagon\Route;
 
 use Pagon\Route;
 
+/**
+ * Classic base route
+ *
+ * @package Pagon\Route
+ */
 abstract class Classic extends Route
 {
     protected $params;

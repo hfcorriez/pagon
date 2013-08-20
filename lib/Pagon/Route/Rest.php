@@ -21,8 +21,19 @@
 
 namespace Pagon\Route;
 
+use Pagon\Http\Input;
+use Pagon\Http\Output;
 use Pagon\Route;
 
+/**
+ * Rest base route
+ *
+ * @package Pagon\Route
+ * @method get(Input $input, Output $output)
+ * @method post(Input $input, Output $output)
+ * @method put(Input $input, Output $output)
+ * @method delete(Input $input, Output $output)
+ */
 abstract class Rest extends Route
 {
     protected $params;
