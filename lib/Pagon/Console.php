@@ -159,16 +159,25 @@ class Console
     /**
      * Interactive mode
      *
-     * @param string   $text
+     * @param          $title
      * @param \Closure $cb
+     * @param bool     $auto_br
+     * @internal param string $text
      */
-    public static function interactive($text, $cb)
+    public static function interactive($title, $cb, $auto_br = true)
     {
         while (true) {
-            echo (string)$text;
-            $input = trim(fgets(STDIN, 1024), "\n");
+            $input = readline($title);
+
+            if ($input === false) {
+                exit(0);
+            }
+
+            if (strlen($input) == 0) continue;
+
+            readline_add_history($input);
             $cb($input);
-            echo PHP_EOL;
+            if ($auto_br) echo PHP_EOL;
         }
     }
 
