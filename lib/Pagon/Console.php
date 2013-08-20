@@ -13,12 +13,33 @@ class Console
     /**
      * @var array Colors
      */
-    protected static $colors = array('black' => 0, 'red' => 1, 'green' => 2, 'yellow' => 3, 'blue' => 4, 'purple' => 5, 'cyan' => 6, 'white' => 7);
-
-    /**
-     * @var array Cli text options
-     */
-    protected static $displays = array('default' => 0, 'bold' => '1', 'dim' => 2, 'underline' => '4', 'blink' => '5', 'reverse' => '7', 'hidden' => '8');
+    public static $COLORS = array(
+        'reset'        => 0,
+        'bold'         => 1,
+        'italic'       => 3,
+        'underline'    => 4,
+        'blink'        => 5,
+        'inverse'      => 7,
+        'line-through' => 9,
+        'black'        => 30,
+        'red'          => 31,
+        'green'        => 32,
+        'yellow'       => 33,
+        'blue'         => 34,
+        'purple'       => 35,
+        'cyan'         => 36,
+        'white'        => 37,
+        'grey'         => 90,
+        'grey-bg'      => '49;5;8',
+        'black-bg'     => 40,
+        'red-bg'       => 41,
+        'green-bg'     => 42,
+        'yellow-bg'    => 43,
+        'blue-bg'      => 44,
+        'purple-bg'    => 45,
+        'cyan-bg'      => 46,
+        'white-bg'     => 47,
+    );
 
     /**
      * Color output text for the CLI
@@ -29,36 +50,53 @@ class Console
      * @return string
      * @example
      *
-     *  text('Hello', 'red');       // "Hello" with red color
-     *  text('Hello', true);        // "Hello" with PHP_EOL
-     *  text('Hello', 'red', true)  // "Hello" with red color and PHP_EOL
-     *  text('Hello', 'red', "\r")  // "Hello" with red color and "\r" line ending
+     *  text('Hello', 'red');               // "Hello" with red color
+     *  text('Hello', true);                // "Hello" with PHP_EOL
+     *  text('Hello', 'red', true)          // "Hello" with red color and PHP_EOL
+     *  text('Hello', 'red', "\r")          // "Hello" with red color and "\r" line ending
+     *  text('Hello', array('red', 'bold')) // "Hello" with red color and bold style
+     *  text('<grey red-bg>H<reset>ello')   // "H" with grey color and red background, "ello" with normal color
      */
-    public static function text($text, $color, $auto_br = false)
+    public static function text($text, $color = null, $auto_br = false)
     {
-        $options = array();
-        if (is_string($color)) {
-            if (isset(self::$colors[$color])) $options[] = '3' . self::$colors[$color];
-        } else if (is_array($color)) {
-            foreach ($color as $key => $value) {
-                switch ((string)$key) {
-                    case 'color':
-                        if (isset(self::$colors[$value])) $options[] = '3' . self::$colors[$value];
-                        break;
-                    case 'background':
-                        if (isset(self::$colors[$value])) $options[] = '4' . self::$colors[$value];
-                        break;
-                    default:
-                        if (isset(self::$displays[$value])) $options[] = self::$displays[$value];
-                        break;
+        // Normal colors set
+        if (is_string($color) || is_array($color)) {
+            $options = array();
+            if (is_string($color)) {
+                // String match
+                if (isset(self::$COLORS[$color])) $options[] = self::$COLORS[$color];
+            } else if (is_array($color)) {
+                // Loop array to match all colors
+                foreach ($color as $value) {
+                    if (!empty(self::$COLORS[$value])) {
+                        $options[] = self::$COLORS[$value];
+                    }
                 }
             }
-        } else if ($color === true) {
-            $auto_br = $color;
+            $text = $options ? "\033[" . join(';', $options) . "m$text\033[0m" : $text;
+        } else if (strpos($text, '<') !== false) {
+            // Text template for colorize, Support "#{red}I'm red#{reset}"
+            $text = preg_replace_callback('/<(\/?.*?)>/', function ($match) {
+                if ($match[1]{0} == '/') return "\033[0m";
+
+                $options = array();
+                // Support {red bold}
+                $values = explode(' ', $match[1]);
+                foreach ($values as $value) {
+                    $value = trim($value);
+                    if (is_numeric($value)) {
+                        $options[] = $value;
+                    } else if (isset(Console::$COLORS[$value])) {
+                        $options[] = Console::$COLORS[$value];
+                    }
+                }
+                return $options ? "\033[" . join(';', $options) . "m" : $match[1];
+            }, $text);
         }
 
-        return ($options ? "\033[" . join(';', $options) . "m$text\033[0m" : $text)
-        . ($auto_br ? (is_bool($auto_br) ? PHP_EOL : $auto_br) : '');
+        $color === true && $auto_br = $color;
+
+        return $text . ($auto_br ? (is_bool($auto_br) ? PHP_EOL : $auto_br) : '');
     }
 
     /**
