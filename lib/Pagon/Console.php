@@ -159,13 +159,14 @@ class Console
     /**
      * Interactive mode
      *
-     * @param          $title
-     * @param \Closure $cb
-     * @param bool     $auto_br
-     * @internal param string $text
+     * @param string        $title      Prompt title
+     * @param \Closure      $cb         Line callback
+     * @param bool|\Closure $auto_br    Auto br or completion function
      */
     public static function interactive($title, $cb, $auto_br = true)
     {
+        if ($auto_br instanceof \Closure) readline_completion_function($auto_br);
+
         while (true) {
             $input = readline($title);
 
@@ -177,7 +178,7 @@ class Console
 
             readline_add_history($input);
             $cb($input);
-            if ($auto_br) echo PHP_EOL;
+            if ($auto_br === true) echo PHP_EOL;
         }
     }
 
