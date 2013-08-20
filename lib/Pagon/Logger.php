@@ -19,7 +19,7 @@ class Logger extends Logger\LoggerInterface
     protected $injectors = array(
         'file'           => 'app.log',
         'auto_write'     => false,
-        'level'          => 'debug',
+        'default_level'  => 'debug',
         'default_stream' => true,
         'streams '       => array()
     );
@@ -94,8 +94,8 @@ class Logger extends Logger\LoggerInterface
         parent::__construct($injectors);
 
         // Auto add current file logger to streams
-        if ($this->injectors['level'] && $this->injectors['default_stream']) {
-            $this->add($this->injectors['level'], $this);
+        if ($this->injectors['default_level'] && $this->injectors['default_stream']) {
+            $this->add($this->injectors['default_level'], $this);
         }
 
         // The time injector
