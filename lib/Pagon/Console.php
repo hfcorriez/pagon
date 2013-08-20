@@ -8,7 +8,7 @@ namespace Pagon;
  *
  * @package Pagon
  */
-class Cli
+class Console
 {
     /**
      * @var array Colors

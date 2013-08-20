@@ -1,5 +1,5 @@
 <?php
-use Pagon\Cli;
+use Pagon\Console;
 use Pagon\Debug;
 
 function console_output($text, $option, $length = 50)
@@ -12,7 +12,7 @@ function console_output($text, $option, $length = 50)
     }
 
     if (strlen($text) <= $length) {
-        return Cli::text('  ' . str_pad($text, $length, ' ') . ' ', $option);
+        return Console::text('  ' . str_pad($text, $length, ' ') . ' ', $option);
     } else {
         return console_output(str_split($text, $length), $option, $length);
     }
@@ -39,6 +39,6 @@ foreach (explode("\n", $source) as $line) {
 }
 echo console_output('Use "--debug-trace" for more info.', array('background' => 'blue', 'color' => 'white')) . PHP_EOL;
 if (array_search('--debug-trace', $GLOBALS['argv'])) {
-    echo PHP_EOL . Cli::text($info, array('underline', 'color' => 'yellow')) . PHP_EOL;
+    echo PHP_EOL . Console::text($info, array('underline', 'color' => 'yellow')) . PHP_EOL;
 }
 ?>
