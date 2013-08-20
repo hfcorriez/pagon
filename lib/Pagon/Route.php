@@ -2,8 +2,6 @@
 
 namespace Pagon;
 
-use Pagon\Http\Input as Request;
-use Pagon\Http\Output as Response;
 use Pagon\Http\Input;
 use Pagon\Http\Output;
 
@@ -12,7 +10,7 @@ use Pagon\Http\Output;
  * structure of base route
  *
  * @package Pagon
- * @method run(Input|Request $input, Output|Response $output)
+ * @method run(Input $input, Output $output)
  */
 abstract class Route extends Middleware
 {
