@@ -41,12 +41,25 @@ class Console
         'white-bg'     => 47,
     );
 
+
+    /**
+     * Print the text
+     *
+     * @param string               $text      The text to print
+     * @param string|array|boolean $color     The color or options for display
+     * @param bool|string          $auto_br
+     */
+    public static function write($text, $color = null, $auto_br = true)
+    {
+        echo Console::text($text, $color, $auto_br);
+    }
+
     /**
      * Color output text for the CLI
      *
-     * @param string       $text      The text to print
-     * @param string|array $color     The color or options for display
-     * @param bool         $auto_br
+     * @param string               $text      The text to print
+     * @param string|array|boolean $color     The color or options for display
+     * @param bool|string          $auto_br
      * @return string
      * @example
      *
