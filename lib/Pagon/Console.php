@@ -88,9 +88,7 @@ class Console
         while (!$input && $retry > 0) {
             if (!$password) {
                 echo (string)$text;
-                $fp = fopen('php://stdin', 'r');
-                $input = trim(fgets($fp, 1024), "\n");
-                fclose($fp);
+                $input = trim(fgets(STDIN, 1024), "\n");
             } else {
                 $command = "/usr/bin/env bash -c 'echo OK'";
                 if (rtrim(shell_exec($command)) !== 'OK') {
@@ -108,6 +106,22 @@ class Console
     }
 
     /**
+     * Interactive mode
+     *
+     * @param string   $text
+     * @param \Closure $cb
+     */
+    public static function interactive($text, $cb)
+    {
+        while (true) {
+            echo (string)$text;
+            $input = trim(fgets(STDIN, 1024), "\n");
+            $cb($input);
+            echo PHP_EOL;
+        }
+    }
+
+    /**
      * Confirm message
      *
      * @param string $text
@@ -121,9 +135,8 @@ class Console
     public static function confirm($text, $default = false, $retry = 3)
     {
         print (string)$text . ' [' . ($default ? 'Y/n' : 'y/N') . ']: ';
-        $fp = fopen('php://stdin', 'r');
         $retry--;
-        while (($input = trim(strtolower(fgets($fp, 1024)))) && !in_array($input, array('', 'y', 'n')) && $retry > 0) {
+        while (($input = trim(strtolower(fgets(STDIN, 1024)))) && !in_array($input, array('', 'y', 'n')) && $retry > 0) {
             echo PHP_EOL . 'Confirm: ';
             $retry--;
         }
@@ -131,8 +144,6 @@ class Console
         if ($retry == 0) die(PHP_EOL . 'Error input');
 
         $ret = $input === '' ? ($default === true ? true : false) : ($input === 'y' ? true : false);
-
-        fclose($fp);
 
         return $ret;
     }
