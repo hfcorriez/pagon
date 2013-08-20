@@ -25,9 +25,16 @@ class Cli
      *
      * @param string       $text      The text to print
      * @param string|array $color     The color or options for display
+     * @param bool         $auto_br
      * @return string
+     * @example
+     *
+     *  text('Hello', 'red');       // "Hello" with red color
+     *  text('Hello', true);        // "Hello" with PHP_EOL
+     *  text('Hello', 'red', true)  // "Hello" with red color and PHP_EOL
+     *  text('Hello', 'red', "\r")  // "Hello" with red color and "\r" line ending
      */
-    public static function text($text, $color)
+    public static function text($text, $color, $auto_br = false)
     {
         $options = array();
         if (is_string($color)) {
@@ -46,22 +53,57 @@ class Cli
                         break;
                 }
             }
+        } else if ($color === true) {
+            $auto_br = $color;
         }
-        return "\033[" . join(';', $options) . "m$text\033[0m";
+
+        return ($options ? "\033[" . join(';', $options) . "m$text\033[0m" : $text)
+        . ($auto_br ? (is_bool($auto_br) ? PHP_EOL : $auto_br) : '');
     }
 
     /**
      * Prompt a message and get return
      *
-     * @param string $text
+     * @param string   $text
+     * @param bool|int $password
+     * @param int      $retry
+     * @throws \RuntimeException
      * @return string
+     * @example
+     *
+     *  prompt('Your username: ')           // Display input
+     *  prompt('Your password: ', true)     // Hide input
+     *  prompt('Your password: ', true, 10) // Hide input and retry 3
+     *  prompt('Your username: ', 5)        // Display input and retry 5
      */
-    public static function prompt($text)
+    public static function prompt($text, $password = false, $retry = 3)
     {
-        print (string)$text;
-        $fp = fopen('php://stdin', 'r');
-        $input = trim(fgets($fp, 1024), "\n ");
-        fclose($fp);
+        $input = '';
+
+        if (is_numeric($password)) {
+            $retry = $password;
+            $password = false;
+        }
+
+        while (!$input && $retry > 0) {
+            if (!$password) {
+                echo (string)$text;
+                $fp = fopen('php://stdin', 'r');
+                $input = trim(fgets($fp, 1024), "\n");
+                fclose($fp);
+            } else {
+                $command = "/usr/bin/env bash -c 'echo OK'";
+                if (rtrim(shell_exec($command)) !== 'OK') {
+                    throw new \RuntimeException("Can not invoke bash to input password!");
+                }
+                $command = "/usr/bin/env bash -c 'read -s -p \""
+                    . addslashes($text)
+                    . "\" input && echo \$input'";
+                $input = rtrim(shell_exec($command));
+                echo "\n";
+            }
+            $retry--;
+        }
         return $input;
     }
 
@@ -70,20 +112,23 @@ class Cli
      *
      * @param string $text
      * @param bool   $default
-     * @param int    $num
+     * @param int    $retry
      * @return bool
+     * @example
+     *
+     *  confirm('Are you sure?', true)  // Will confirm with default "true" by empty input
      */
-    public static function confirm($text, $default = false, $num = 3)
+    public static function confirm($text, $default = false, $retry = 3)
     {
         print (string)$text . ' [' . ($default ? 'Y/n' : 'y/N') . ']: ';
         $fp = fopen('php://stdin', 'r');
-        $num--;
-        while (($input = trim(strtolower(fgets($fp, 1024)))) && !in_array($input, array('', 'y', 'n')) && $num > 0) {
+        $retry--;
+        while (($input = trim(strtolower(fgets($fp, 1024)))) && !in_array($input, array('', 'y', 'n')) && $retry > 0) {
             echo PHP_EOL . 'Confirm: ';
-            $num--;
+            $retry--;
         }
 
-        if ($num == 0) die(PHP_EOL . 'Error input');
+        if ($retry == 0) die(PHP_EOL . 'Error input');
 
         $ret = $input === '' ? ($default === true ? true : false) : ($input === 'y' ? true : false);
 
