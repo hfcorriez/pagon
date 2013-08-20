@@ -140,7 +140,7 @@ class Router extends Middleware
         // Check path
         if ($this->injectors['path'] === null) return false;
 
-        $method = $this->injectors['input']->method();
+        $method = $this->input->method();
         $path = & $this->injectors['path'];
         $prefixes = & $this->injectors['prefixes'];
         $app = & $this->app;

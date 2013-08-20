@@ -80,8 +80,20 @@ class App extends EventEmitter
         'mounts'     => array('/' => ''),
         'bundles'    => array(),
         'locals'     => array(),
-        'safe_query' => true
+        'safe_query' => true,
+        'input'      => null,
+        'output'     => null,
     );
+
+    /**
+     * @var Http\Input|Cli\Input
+     */
+    public $input;
+
+    /**
+     * @var Http\Output|Cli\Output
+     */
+    public $output;
 
     /**
      * @var bool Is run?
@@ -178,6 +190,9 @@ class App extends EventEmitter
 
         // Set pagon root directory
         $this->injectors['mounts']['pagon'] = dirname(dirname(__DIR__));
+
+        $this->input = & $this->injectors['input'];
+        $this->output = & $this->injectors['output'];
     }
 
     /**
@@ -188,7 +203,7 @@ class App extends EventEmitter
      */
     public function id($id = null)
     {
-        return $this->injectors['input']->id($id);
+        return $this->input->id($id);
     }
 
     /**
@@ -615,7 +630,7 @@ class App extends EventEmitter
      */
     public function render($path, array $data = null, array $options = array())
     {
-        $this->injectors['output']->body($this->compile($path, $data, $options));
+        $this->output->body($this->compile($path, $data, $options));
     }
 
     /**
@@ -718,7 +733,7 @@ class App extends EventEmitter
 
                 // Path check, if not match start of path, skip
                 if (isset($options['path'])
-                    && strpos($this->injectors['input']->path(), $options['path']) !== 0
+                    && strpos($this->input->path(), $options['path']) !== 0
                 ) {
                     continue;
                 }
@@ -753,7 +768,7 @@ class App extends EventEmitter
             $this->emit('middleware');
 
             try {
-                $path = $this->injectors['input']->path();
+                $path = $this->input->path();
                 $this->router->handle($this->injectors['stacks'], function ($stack) use ($path) {
                     // Try to match the path
                     if (is_array($stack) && $stack[0] && strpos($path, $stack[0]) === false) {
@@ -770,7 +785,7 @@ class App extends EventEmitter
             }
 
             // Write direct output to the head of buffer
-            if ($this->injectors['buffer']) $this->injectors['output']->write(ob_get_clean());
+            if ($this->injectors['buffer']) $this->output->write(ob_get_clean());
         } catch (Exception\Stop $e) {
         } catch (\Exception $e) {
             if ($this->injectors['debug']) {
@@ -830,7 +845,7 @@ class App extends EventEmitter
                 } else {
                     $this->render('pagon/views/error.php', array(
                         'title'   => $this->injectors['errors'][$type][1],
-                        'message' => 'Could not ' . $this->injectors['input']->method() . ' ' . $this->injectors['input']->path()
+                        'message' => 'Could not ' . $this->input->method() . ' ' . $this->input->path()
                     ));
                     $this->stop();
                 }
@@ -847,13 +862,13 @@ class App extends EventEmitter
     public function param($param = null)
     {
         if ($param === null) {
-            return $this->injectors['input']->params;
+            return $this->input->params;
         } else {
             if (is_array($param)) {
-                $this->injectors['input']->params = $param;
+                $this->input->params = $param;
                 return true;
             } else {
-                return isset($this->injectors['input']->params[$param]) ? $this->injectors['input']->params[$param] : null;
+                return isset($this->input->params[$param]) ? $this->input->params[$param] : null;
             }
         }
     }
@@ -875,7 +890,7 @@ class App extends EventEmitter
      */
     public function halt($status, $body = '')
     {
-        $this->injectors['output']->status($status)->body($body);
+        $this->output->status($status)->body($body);
         throw new Exception\Stop;
     }
 
@@ -886,11 +901,11 @@ class App extends EventEmitter
     {
         // Send headers
         if (!$this->injectors['cli']) {
-            $this->injectors['output']->sendHeader();
+            $this->output->sendHeader();
         }
 
         // Send
-        echo $this->injectors['output']->body();
+        echo $this->output->body();
     }
 
     /**

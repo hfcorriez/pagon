@@ -75,7 +75,7 @@ abstract class Middleware extends EventEmitter
         }
 
         return call_user_func_array($route, array(
-            $this->injectors['input'], $this->injectors['output'], $this->next
+            $this->input, $this->output, $this->next
         ));
     }
 
