@@ -709,6 +709,7 @@ class App extends EventEmitter
         $this->_run = true;
 
         $_error = false;
+        $_path = $this->input->path();
         if ($this->injectors['error']) {
             // If config error, register error handle and set flag
             $_error = true;
@@ -733,7 +734,7 @@ class App extends EventEmitter
 
                 // Path check, if not match start of path, skip
                 if (isset($options['path'])
-                    && strpos($this->input->path(), $options['path']) !== 0
+                    && strpos($_path, $options['path']) !== 0
                 ) {
                     continue;
                 }
@@ -768,10 +769,9 @@ class App extends EventEmitter
             $this->emit('middleware');
 
             try {
-                $path = $this->input->path();
-                $this->router->handle($this->injectors['stacks'], function ($stack) use ($path) {
+                $this->router->handle($this->injectors['stacks'], function ($stack) use ($_path) {
                     // Try to match the path
-                    if (is_array($stack) && $stack[0] && strpos($path, $stack[0]) === false) {
+                    if (is_array($stack) && $stack[0] && strpos($_path, $stack[0]) === false) {
                         return false;
                     }
 
