@@ -181,11 +181,11 @@ class Fiber implements \ArrayAccess
      */
     public function __call($method, $args)
     {
-        if (($closure = $this->$method) instanceof \Closure) {
-            return call_user_func_array($closure, $args);
+        if (!isset($this->injectors[$method]) || !($closure = $this->$method) instanceof \Closure) {
+            throw new \BadMethodCallException(sprintf('Call to undefined protect injector "%s::%s()', get_called_class(), $method));
         }
 
-        throw new \BadMethodCallException(sprintf('Call to undefined protect injector "%s::%s()', get_called_class(), $method));
+        return call_user_func_array($closure, $args);
     }
 
     /**
