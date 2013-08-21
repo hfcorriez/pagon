@@ -43,7 +43,11 @@ abstract class Cli extends Route
         }
 
         $this->before();
-        $this->run($this->input, $this->output);
+        // Fallback call all
+        if (!method_exists($this, $method = 'run') && method_exists($this, 'all')) {
+            $method = 'all';
+        }
+        $this->$method($this->input, $this->output);
         $this->after();
     }
 }

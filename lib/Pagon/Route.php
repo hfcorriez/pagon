@@ -40,7 +40,12 @@ abstract class Route extends Middleware
     public function call()
     {
         $this->before();
-        $this->run($this->input, $this->output);
+        // Fallback call all
+        if (!method_exists($this, 'run') && method_exists($this, 'all')) {
+            call_user_func(array($this, 'all'), $this->input, $this->output);
+        } else {
+            $this->run($this->input, $this->output);
+        }
         $this->after();
     }
 
