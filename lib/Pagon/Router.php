@@ -241,23 +241,20 @@ class Router extends Middleware
      */
     public function call()
     {
-        try {
-            $prefixes = array();
-            // Prefixes Lookup
-            if ($this->app->prefixes) {
-                foreach ($this->app->prefixes as $path => $namespace) {
-                    if (strpos($this->injectors['path'], $path) === 0) {
-                        $prefixes[99 - strlen($path)] = $namespace;
-                    }
+        $prefixes = array();
+        // Prefixes Lookup
+        if ($this->app->prefixes) {
+            foreach ($this->app->prefixes as $path => $namespace) {
+                if (strpos($this->injectors['path'], $path) === 0) {
+                    $prefixes[99 - strlen($path)] = $namespace;
                 }
-                ksort($prefixes);
             }
-            $this->injectors['prefixes'] = $prefixes;
+            ksort($prefixes);
+        }
+        $this->injectors['prefixes'] = $prefixes;
 
-            if (!$this->dispatch()) {
-                $this->app->handleError('404');
-            }
-        } catch (Stop $e) {
+        if (!$this->dispatch()) {
+            $this->next();
         }
     }
 

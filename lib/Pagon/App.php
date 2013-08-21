@@ -341,19 +341,6 @@ class App extends EventEmitter
             $path = '';
         }
 
-        if (is_string($middleware)) {
-            // If middleware is class name
-            if ($middleware{0} !== '\\') {
-                // Support short class name
-                $middleware = __NAMESPACE__ . '\Middleware\\' . $middleware;
-            }
-
-            // Check if base on Middleware class
-            if (!is_subclass_of($middleware, Middleware::_CLASS_)) {
-                throw new \RuntimeException("Bad middleware \"$middleware\" can not be called");
-            }
-        }
-
         // Add to the end
         $this->injectors['stacks'][] = array($path, $middleware, $options);
     }
@@ -778,25 +765,26 @@ class App extends EventEmitter
 
             // Start buffer
             if ($this->injectors['buffer']) ob_start();
-            $this->injectors['stacks'][] = $this->router;
+            if (!in_array(array('', $this->router, array()), $this->injectors['stacks'])) $this->injectors['stacks'][] = $this->router;
 
             // Emit "middleware" event
             $this->emit('middleware');
 
-            try {
-                $this->router->handle($this->injectors['stacks'], function ($stack) use ($_path) {
-                    // Try to match the path
-                    if (is_array($stack) && $stack[0] && strpos($_path, $stack[0]) === false) {
-                        return false;
-                    }
+            // Process the stacks
+            if (!$this->router->handle($this->injectors['stacks'], function ($stack) use ($_path) {
+                // Try to match the path
+                if (is_array($stack) && $stack[0] && strpos($_path, $stack[0]) === false) {
+                    return false;
+                }
 
-                    if (!is_array($stack)) {
-                        return $stack;
-                    } else {
-                        return Middleware::build($stack[1], $stack[2]);
-                    }
-                });
-            } catch (Exception\Pass $e) {
+                if (!is_array($stack)) {
+                    return $stack;
+                } else {
+                    return Middleware::build($stack[1], $stack[2]);
+                }
+            })
+            ) {
+                $this->handleError('404');
             }
 
             // Write direct output to the head of buffer
