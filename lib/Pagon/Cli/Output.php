@@ -101,6 +101,17 @@ class Output extends EventEmitter
     }
 
     /**
+     * Clear the response
+     */
+    public function clear()
+    {
+        $this->injectors = array(
+                'status' => 0,
+                'body'   => '',
+            ) + $this->injectors;
+    }
+
+    /**
      * Is ok?
      *
      * @return bool

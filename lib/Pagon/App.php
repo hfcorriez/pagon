@@ -906,6 +906,9 @@ class App extends EventEmitter
 
         // Send
         echo $this->output->body();
+
+        // Clear
+        $this->output->clear();
     }
 
     /**

@@ -539,6 +539,22 @@ class Output extends EventEmitter
     }
 
     /**
+     * Clear the response
+     */
+    public function clear()
+    {
+        $this->injectors = array(
+                'status'       => 200,
+                'body'         => '',
+                'content_type' => 'text/html',
+                'length'       => false,
+                'charset'      => $this->app->charset,
+                'headers'      => array(),
+                'cookies'      => array(),
+            ) + $this->injectors;
+    }
+
+    /**
      * Is response cachable?
      *
      * @return bool
