@@ -46,7 +46,7 @@ class PrettyException extends Middleware
                 'line'    => $err['line'],
                 'code'    => $e->getCode(),
                 'trace'   => $trace,
-                'message' => 'Can not get non-exists injector "' . $err['args'][0] . '"',
+                'message' => $e->getMessage(),
                 'type'    => $err['class'],
                 'info'    => $e->getTraceAsString(),
             );
