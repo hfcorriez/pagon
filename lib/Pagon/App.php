@@ -467,9 +467,9 @@ class App extends EventEmitter
     public function command($path, $route = null, $more = null)
     {
         if ($more !== null) {
-            return $this->router->map($path, array_slice(func_get_args(), 1), "CLI");
+            return $this->router->map($path . '( :args)', array_slice(func_get_args(), 1), "CLI");
         } else {
-            return $this->router->map($path, $route, "CLI");
+            return $this->router->map($path . '( :args)', $route, "CLI");
         }
     }
 
@@ -505,23 +505,31 @@ class App extends EventEmitter
             $_cli = $this->injectors['cli'];
             // Set route use default automatic
             return $this->router->automatic = function ($path) use ($closure, $_cli, $index) {
-                $splits = array();
+                $parts = array();
 
                 // Split rule
-                if (!$_cli && $path !== '/' || $_cli && $path !== '') {
-                    $splits = array_map(function ($split) {
-                        return ucfirst(strtolower($split));
-                    }, $_cli ? explode(':', $path) : explode('/', ltrim($path, '/')));
+                if (!$_cli && $path !== '/') {
+                    $_paths = explode('/', ltrim($path, '/'));
+                } else if ($_cli && $path !== '') {
+                    $_ = explode(' ', $path);
+                    $_paths = explode(':', array_shift($_));
+                }
+
+                // Process parts
+                if (isset($_paths)) {
+                    foreach ($_paths as $_path) {
+                        $parts[] = ucfirst(strtolower($_path));
+                    }
                 }
 
                 // Set default namespace
-                if ($closure !== true) array_unshift($splits, $closure);
+                if ($closure !== true) array_unshift($parts, $closure);
 
                 // Index
-                if (!$splits) return $index;
+                if (!$parts) return $index;
 
                 // Generate class name
-                $class = join('\\', $splits);
+                $class = join('\\', $parts);
 
                 // Try to lookup class and with it's index
                 return array($class, $class . '\\' . $index);

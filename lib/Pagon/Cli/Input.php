@@ -54,7 +54,9 @@ class Input extends EventEmitter
     public function path()
     {
         if (!isset($this->injectors['path_info'])) {
-            $this->injectors['path_info'] = isset($GLOBALS['argv'][1]) && $GLOBALS['argv'][1]{0} != '-' ? $GLOBALS['argv'][1] : '';
+            $argv = $GLOBALS['argv'];
+            array_shift($argv);
+            $this->injectors['path_info'] = join(' ', $argv);
         }
 
         return $this->injectors['path_info'];
