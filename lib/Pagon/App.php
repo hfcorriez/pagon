@@ -83,6 +83,7 @@ class App extends EventEmitter
         'safe_query' => true,
         'input'      => null,
         'output'     => null,
+        'router'     => null,
     );
 
     /**
@@ -94,6 +95,11 @@ class App extends EventEmitter
      * @var Http\Output|Cli\Output
      */
     public $output;
+
+    /**
+     * @var Router
+     */
+    public $router;
 
     /**
      * @var bool Is run?
@@ -193,6 +199,7 @@ class App extends EventEmitter
 
         $this->input = & $this->injectors['input'];
         $this->output = & $this->injectors['output'];
+        $this->router = & $this->injectors['router'];
     }
 
     /**
