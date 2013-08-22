@@ -621,7 +621,7 @@ class Input extends EventEmitter
      *
      * @return bool
      */
-    public function ajax()
+    public function isAjax()
     {
         return !$this->header('x-requested-with') && 'XMLHttpRequest' == $this->header('x-requested-with');
     }
@@ -631,7 +631,7 @@ class Input extends EventEmitter
      *
      * @return bool
      */
-    public function xhr()
+    public function isXhr()
     {
         return $this->ajax();
     }
@@ -641,7 +641,7 @@ class Input extends EventEmitter
      *
      * @return bool
      */
-    public function secure()
+    public function isSecure()
     {
         return $this->scheme() === 'https';
     }
@@ -651,7 +651,7 @@ class Input extends EventEmitter
      *
      * @return bool
      */
-    public function upload()
+    public function isUpload()
     {
         return !empty($this->injectors['files']);
     }
