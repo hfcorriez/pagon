@@ -633,7 +633,7 @@ class Input extends EventEmitter
      */
     public function isXhr()
     {
-        return $this->ajax();
+        return $this->isAjax();
     }
 
     /**
