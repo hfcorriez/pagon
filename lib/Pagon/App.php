@@ -475,7 +475,7 @@ class App extends EventEmitter
      * @param \Closure|string $more
      * @return Router
      */
-    public function any($path, $route = null, $more = null)
+    public function all($path, $route = null, $more = null)
     {
         if ($more !== null) {
             return $this->router->map($path, array_slice(func_get_args(), 1));
@@ -529,6 +529,7 @@ class App extends EventEmitter
                 return array($class, $class . '\\' . $index);
             };
         }
+        return false;
     }
 
     /**
@@ -536,6 +537,7 @@ class App extends EventEmitter
      *
      * @param string $path
      * @param string $dir
+     * @return $this
      */
     public function mount($path, $dir = null)
     {
@@ -545,6 +547,7 @@ class App extends EventEmitter
         }
 
         $this->injectors['mounts'][$path] = $dir;
+        return $this;
     }
 
     /**
@@ -581,26 +584,6 @@ class App extends EventEmitter
                 if (!$path = stream_resolve_include_path(rtrim($dir, '/') . '/' . ltrim(($path ? substr($file, strlen($path)) : $file), '/'))) continue;
                 return $path;
             }
-        }
-
-        return false;
-    }
-
-    /**
-     * Check if file loaded
-     *
-     * @param string $file
-     * @return bool
-     * @throws \InvalidArgumentException
-     */
-    public function loaded($file)
-    {
-        if (!$file = $this->path($file)) {
-            throw new \InvalidArgumentException('Can not check non-exists file "' . $file . '"');
-        }
-
-        if (isset(self::$loads[$file])) {
-            return true;
         }
 
         return false;
