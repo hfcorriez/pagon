@@ -1,6 +1,6 @@
 <?php
 
-namespace Pagon\Parser;
+namespace Pagon\Config;
 
 class Json
 {

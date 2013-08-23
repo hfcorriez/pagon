@@ -90,6 +90,19 @@ class Config extends Fiber
      */
     public static function load($file, $type = self::LOAD_AUTODETECT)
     {
+        return new self(self::from($file, $type));
+    }
+
+    /**
+     * Load from file
+     *
+     * @param string $file
+     * @param int    $type
+     * @throws \InvalidArgumentException
+     * @return array
+     */
+    public static function from($file, $type = self::LOAD_AUTODETECT)
+    {
         if (!is_file($file)) {
             throw new \InvalidArgumentException("Config load error with non-exists file \"$file\"");
         }
@@ -99,20 +112,75 @@ class Config extends Fiber
         }
 
         if ($type !== 'php') {
-            return new self(Parser::load($file, $type));
+            return self::parse(file_get_contents($file), $type);
         } else {
-            return new self(include($file));
+            return include($file);
         }
     }
 
     /**
-     * Dump to given type
+     * Config string
+     *
+     * @param string $string
+     * @param string $type
+     * @param array  $option
+     * @throws \InvalidArgumentException
+     * @return array
+     */
+    public static function parse($string, $type, array $option = array())
+    {
+        // Try to use custom parser
+        if (!class_exists($class = __NAMESPACE__ . "\\Config\\" . ucfirst(strtolower($type)))
+            && !class_exists($class = $type)
+        ) {
+            throw new \InvalidArgumentException("Non-exists parser for '$type'");
+        }
+
+        /** @var $class Config */
+        return $class::parse($string, $option);
+    }
+
+    /**
+     * Dump to array
+     *
+     * @param array  $array
+     * @param string $type
+     * @param array  $option
+     * @throws \InvalidArgumentException
+     * @return array
+     */
+    public static function dump($array, $type, array $option = array())
+    {
+        // Try to use custom parser
+        if (!class_exists($class = __NAMESPACE__ . "\\Config\\" . ucfirst(strtolower($type)))
+            && !class_exists($class = $type)
+        ) {
+            throw new \InvalidArgumentException("Non-exists parser for '$type'");
+        }
+
+        /** @var $class Config */
+        return $class::dump($array, $option);
+    }
+
+    /**
+     * Dump to string by given type
      *
      * @param string $type
      * @return array
      */
-    public function dump($type)
+    public function string($type)
     {
-        return Parser::dump($this->injectors, $type);
+        return self::dump($this->injectors, $type);
+    }
+
+    /**
+     * Dump to file by given type
+     *
+     * @param string $file
+     * @param string $type
+     */
+    public function file($file, $type)
+    {
+        file_put_contents($file, $this->toString($type));
     }
 }

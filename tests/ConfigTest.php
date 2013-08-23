@@ -61,7 +61,7 @@ class ConfigTest extends \PHPUnit_Framework_TestCase
     {
         $config = new Config(array('test' => 'abc'));
 
-        $string = $config->dump('json');
+        $string = $config->string('json');
         $this->assertEquals('{"test":"abc"}', $string);
     }
 
@@ -69,5 +69,56 @@ class ConfigTest extends \PHPUnit_Framework_TestCase
     {
         $this->setExpectedException('InvalidArgumentException');
         Config::load('/tmp/test.' . md5(microtime(true)));
+    }
+
+    public function testParse()
+    {
+        file_put_contents('/tmp/test.json', '{"test":"abc"}');
+
+        $config = Config::from('/tmp/test.json');
+
+        $this->assertEquals(array('test' => 'abc'), $config);
+        unlink('/tmp/test.json');
+    }
+
+    public function testParseGivenType()
+    {
+        file_put_contents('/tmp/test.abc', '{"test":"abc"}');
+
+        $config = Config::from('/tmp/test.abc', 'json');
+
+        $this->assertEquals(array('test' => 'abc'), $config);
+        unlink('/tmp/test.abc');
+    }
+
+    public function testParsePHP()
+    {
+        file_put_contents('/tmp/test.php', '<?php return array("test" => "abc"); ?>');
+
+        $config = Config::from('/tmp/test.php');
+
+        $this->assertEquals(array('test' => 'abc'), $config);
+    }
+
+    public function testParseUnknownType()
+    {
+        file_put_contents('/tmp/test.abc', '{"test":"abc"}');
+
+        $this->setExpectedException('InvalidArgumentException');
+        Config::load('/tmp/test.abc');
+
+        unlink('/tmp/test.abc');
+    }
+
+    public function testString()
+    {
+        $string = Config::dump(array('test' => 'abc'), 'json');
+        $this->assertEquals('{"test":"abc"}', $string);
+    }
+
+    public function testDumpUnknownType()
+    {
+        $this->setExpectedException('InvalidArgumentException');
+        $string = Config::dump(array('test' => 'abc'), 'abc');
     }
 }
