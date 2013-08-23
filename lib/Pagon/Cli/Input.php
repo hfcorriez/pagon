@@ -54,9 +54,13 @@ class Input extends EventEmitter
     public function path()
     {
         if (!isset($this->injectors['path_info'])) {
-            $argv = $GLOBALS['argv'];
-            array_shift($argv);
-            $this->injectors['path_info'] = join(' ', $argv);
+            if (!empty($GLOBALS['argv'])) {
+                $argv = $GLOBALS['argv'];
+                array_shift($argv);
+                $this->injectors['path_info'] = join(' ', $argv);
+            } else {
+                $this->injectors['path_info'] = '';
+            }
         }
 
         return $this->injectors['path_info'];
