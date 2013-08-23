@@ -52,8 +52,8 @@ abstract class Rest extends Route
 
         $this->before();
         // Fallback call all
-        if (!method_exists($this, $method) && method_exists($this, 'all')) {
-            $method = 'all';
+        if (!method_exists($this, $method) && method_exists($this, 'missing')) {
+            $method = 'missing';
         }
         $this->$method($this->input, $this->output);
         $this->after();

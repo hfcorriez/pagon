@@ -29,8 +29,8 @@ abstract class Daemon extends Route
         $this->before();
         try {
             // Fallback call all
-            if (!method_exists($this, $method = 'run') && method_exists($this, 'all')) {
-                $method = 'all';
+            if (!method_exists($this, $method = 'run') && method_exists($this, 'missing')) {
+                $method = 'missing';
             }
 
             while (1) {
