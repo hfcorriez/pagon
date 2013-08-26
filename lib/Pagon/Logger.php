@@ -21,7 +21,8 @@ class Logger extends Logger\LoggerInterface
         'auto_write'     => false,
         'default_level'  => 'debug',
         'default_stream' => true,
-        'streams '       => array()
+        'streams'        => array(),
+        'contexts'       => array()
     );
 
     /**
@@ -99,24 +100,38 @@ class Logger extends Logger\LoggerInterface
         }
 
         // The time injector
-        $this->time = function () {
+        $this->context('time', function () {
             return date('Y-m-d H:i:s') . ',' . substr(microtime(true) * 1000, 10, 3);
-        };
+        });
 
         // Injector the token with share instance
-        $this->token = $this->share(function () {
+        $this->context('token', $this->share(function () {
             return substr(sha1(uniqid()), 0, 6);
-        });
+        }));
 
         // The level
-        $this->level = $this->protect(function ($level) {
+        $this->context('level', $this->protect(function ($level) {
             return str_pad(strtoupper(substr($level, 0, 6)), 6, ' ', STR_PAD_RIGHT);
-        });
+        }));
 
         $that = $this;
         register_shutdown_function(function () use ($that) {
             $that->emit('flush');
         });
+    }
+
+    /**
+     * Set context
+     *
+     * @param string          $key
+     * @param \Closure|String $closure
+     */
+    public function context($key, $closure)
+    {
+        $this->$key = $closure;
+        if (!in_array($key, $this->injectors['contexts'])) {
+            $this->injectors['contexts'][] = $key;
+        }
     }
 
     /**
@@ -160,10 +175,10 @@ class Logger extends Logger\LoggerInterface
         }
 
         // Default text and level
-        $context = array('text' => $text, 'level' => $level);
+        $context = array('text' => $text, 'level' => $level, 'level_num' => self::$levels[$level]);
 
         // The format matches to convert to context
-        foreach ($this->injectors as $key => $injector) {
+        foreach ($this->injectors['contexts'] as $key) {
             $value = $this->$key;
             if ($value instanceof Closure) {
                 $context[$key] = call_user_func($value, $context[$key]);
@@ -197,6 +212,7 @@ class Logger extends Logger\LoggerInterface
                         $this->on('flush', function () use ($stream) {
                             $stream->tryToWrite();
                         });
+                        break;
                     }
                 } elseif ($stream instanceof \Closure) {
                     $stream($this->format($context), $context);
