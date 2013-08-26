@@ -142,9 +142,13 @@ class Logger extends Logger\LoggerInterface
      * @param array                                 $options
      * @throws \InvalidArgumentException
      */
-    public function add($level, $stream, array $options = array())
+    public function add($level, $stream = null, array $options = array())
     {
-        if (!isset(self::$levels[$level])) {
+        if (is_array($stream) || $stream === null) {
+            $options = (array)$stream;
+            $stream = $level;
+            $level = 'info';
+        } else if (!isset(self::$levels[$level])) {
             throw new \InvalidArgumentException('Given level "' . $level . '" is not acceptable');
         }
 
