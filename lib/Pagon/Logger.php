@@ -72,7 +72,7 @@ class Logger extends Logger\LoggerInterface
             throw new \BadMethodCallException('Call to undefined method ' . __CLASS__ . '::' . $method);
         }
 
-        if (self::$default) {
+        if (!self::$default) {
             // Create default logger with file "app.log" under your working directory
             self::$default = new self(array('file' => getcwd() . '/app.log'));
         }
