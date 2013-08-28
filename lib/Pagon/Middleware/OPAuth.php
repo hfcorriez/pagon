@@ -25,6 +25,10 @@ class OPAuth extends Middleware
 
         if (!isset($injectors['callback'])) throw new \InvalidArgumentException('OPAuth middleware need "callback" option');
 
+        if (isset($injectors['strategies'])) {
+            $injectors['Strategy'] = & $injectors['strategies'];
+        }
+
         parent::__construct($injectors);
 
         $this->injectors['path'] = $this->injectors['login_url'] . '/';
@@ -64,7 +68,11 @@ class OPAuth extends Middleware
         };
 
         $init = function ($req, $res, $next) use ($options) {
-            new OPAuthService($options);
+            if (isset($options['Strategy'][$req->params['strategy']])) {
+                new OPAuthService($options);
+            } else {
+                $next();
+            }
         };
 
         $app->post($options['callback_url'], $callback, $options['callback']);
