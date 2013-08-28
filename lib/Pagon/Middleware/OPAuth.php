@@ -49,21 +49,23 @@ class OPAuth extends Middleware
             $opauth = new OPAuthService($options, false);
 
             $response = unserialize(base64_decode($app->input->data('opauth')));
-
             $reason = null;
+            $auth = false;
 
             if (isset($response['error'])) {
                 $reason = $response['error'];
             } else {
                 if (empty($response['auth']) || empty($response['timestamp']) || empty($response['signature']) || empty($response['auth']['provider']) || empty($response['auth']['uid'])) {
                     $reason = 'Missing key auth response components';
-                } elseif (!$opauth->validate(sha1(print_r($response['auth'], true)), $response['timestamp'], $response['signature'], $reason)) {
+                } elseif (!$opauth->validate(sha1(print_r($response['auth'], true)), $response['timestamp'], $response['signature'], $_reason)) {
+                    $reason = $_reason;
+                } else {
+                    $auth = $response['auth'];
                 }
             }
 
-            $req->auth = $response;
-            $req->auth_success = !$reason;
-            $req->auth_message = $reason;
+            $req->auth = $auth;
+            $req->auth_error = $reason;
             $next();
         };
 
@@ -75,6 +77,7 @@ class OPAuth extends Middleware
             }
         };
 
+        // Register url routes
         $app->post($options['callback_url'], $callback, $options['callback']);
         $app->get($options['login_url'] . '/:strategy', $init);
         $app->all($options['login_url'] . '/:strategy/:return', $init);

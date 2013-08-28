@@ -66,7 +66,7 @@ class Fiber implements \ArrayAccess
      */
     public function &__get($key)
     {
-        if (!isset($this->injectors[$key])) throw new \InvalidArgumentException(sprintf('Can not get non-exists injector "%s::%s"', get_called_class(), $key));
+        if (!array_key_exists($key, $this->injectors)) throw new \InvalidArgumentException(sprintf('Can not get non-exists injector "%s::%s"', get_called_class(), $key));
 
         if ($this->injectors[$key] instanceof \Closure) {
             $tmp = $this->injectors[$key]();
@@ -84,7 +84,7 @@ class Fiber implements \ArrayAccess
      */
     public function __isset($key)
     {
-        return isset($this->injectors[$key]);
+        return isset($this->injectors, $key);
     }
 
     /**
@@ -155,7 +155,7 @@ class Fiber implements \ArrayAccess
      */
     public function extend($key, \Closure $closure)
     {
-        if (!isset($this->injectors[$key])) {
+        if (!array_key_exists($key, $this->injectors)) {
             throw new \InvalidArgumentException(sprintf('Injector "%s::%s" is not defined.', get_called_class(), $key));
         }
 
@@ -181,7 +181,7 @@ class Fiber implements \ArrayAccess
      */
     public function __call($method, $args)
     {
-        if (!isset($this->injectors[$method]) || !($closure = $this->$method) instanceof \Closure) {
+        if (!array_key_exists($method, $this->injectors) || !($closure = $this->$method) instanceof \Closure) {
             throw new \BadMethodCallException(sprintf('Call to undefined method "%s::%s()', get_called_class(), $method));
         }
 
@@ -201,7 +201,7 @@ class Fiber implements \ArrayAccess
             return $this->injectors;
         }
 
-        return isset($this->injectors[$key]) ? $this->injectors[$key] : $default;
+        return array_key_exists($key, $this->injectors) ? $this->injectors[$key] : $default;
     }
 
     /**
