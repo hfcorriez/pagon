@@ -620,6 +620,10 @@ class App extends EventEmitter
      */
     public function compile($path, array $data = null, array $options = array())
     {
+        // Support mount file system
+        if ($_path = $this->path($path)) $path = $_path;
+
+        // Check engine
         if (!isset($options['engine'])) {
             // Get ext
             $ext = pathinfo($path, PATHINFO_EXTENSION);
