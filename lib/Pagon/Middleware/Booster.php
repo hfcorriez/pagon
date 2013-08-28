@@ -30,6 +30,10 @@ class Booster extends Middleware
         }
 
         // Configure debug
-        if ($app->debug) self::graft('PrettyException');
+        if ($app->debug) {
+            self::graft('PrettyException');
+        } else {
+            $this->next();
+        }
     }
 }
