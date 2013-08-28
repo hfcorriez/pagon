@@ -111,7 +111,7 @@ class Router extends Middleware
             $this->app->routes[$_last]['via'] = array();
         }
 
-        if (!in_array($method, $this->app->routes[$_last]['via'])) {
+        if ($method && $method != '*' && !in_array($method, $this->app->routes[$_last]['via'])) {
             $this->app->routes[$_last]['via'][] = $method;
         }
 
