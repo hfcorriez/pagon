@@ -625,16 +625,14 @@ class App extends EventEmitter
      * @param array  $data
      * @param array  $options
      * @throws \RuntimeException
-     * @throws \InvalidArgumentException
      * @return View
      */
     public function compile($path, array $data = null, array $options = array())
     {
-        if (!$_path = $this->path($path)) {
-            throw new \InvalidArgumentException("Unknown template file \"$path\"");
-        }
-        $path = $_path;
+        // Support mount file system
+        if ($_path = $this->path($path)) $path = $_path;
 
+        // Check engine
         if (!isset($options['engine'])) {
             // Get ext
             $ext = pathinfo($path, PATHINFO_EXTENSION);
