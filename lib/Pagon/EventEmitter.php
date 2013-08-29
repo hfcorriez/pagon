@@ -55,7 +55,7 @@ class EventEmitter extends Fiber
         foreach ($all_listeners as $name => $listeners) {
             $this_args = $args;
             if (strpos($name, '*') !== false) {
-                array_unshift($this_args, $event);
+                array_push($this_args, $event);
             }
             foreach ($listeners as &$listener) {
                 if ($listener instanceof \Closure) {
