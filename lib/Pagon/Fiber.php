@@ -84,7 +84,7 @@ class Fiber implements \ArrayAccess
      */
     public function __isset($key)
     {
-        return isset($this->injectors, $key);
+        return isset($this->injectors[$key]);
     }
 
     /**
@@ -155,7 +155,7 @@ class Fiber implements \ArrayAccess
      */
     public function extend($key, \Closure $closure)
     {
-        if (!array_key_exists($key, $this->injectors)) {
+        if (!isset($this->injectors[$key])) {
             throw new \InvalidArgumentException(sprintf('Injector "%s::%s" is not defined.', get_called_class(), $key));
         }
 
@@ -201,7 +201,7 @@ class Fiber implements \ArrayAccess
             return $this->injectors;
         }
 
-        return array_key_exists($key, $this->injectors) ? $this->injectors[$key] : $default;
+        return isset($this->injectors[$key]) ? $this->injectors[$key] : $default;
     }
 
     /**
