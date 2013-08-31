@@ -21,6 +21,7 @@ class EventEmitter extends Fiber
      * @static
      * @param string $event
      * @param mixed  $args
+     * @return bool
      */
     public function emit($event, $args = null)
     {
@@ -51,6 +52,8 @@ class EventEmitter extends Fiber
             }
         }
 
+        $emitted = false;
+
         // Loop listeners for callback
         foreach ($all_listeners as $name => $listeners) {
             $this_args = $args;
@@ -61,15 +64,19 @@ class EventEmitter extends Fiber
                 if ($listener instanceof \Closure) {
                     // Closure Listener
                     call_user_func_array($listener, $this_args);
+                    $emitted = true;
                 } elseif (is_array($listener) && $listener[0] instanceof \Closure) {
                     if ($listener[1]['times'] > 0) {
                         // Closure Listener
                         call_user_func_array($listener[0], $this_args);
+                        $emitted = true;
                         $listener[1]['times']--;
                     }
                 }
             }
         }
+
+        return $emitted;
     }
 
     /**
@@ -78,6 +85,7 @@ class EventEmitter extends Fiber
      * @static
      * @param array|string $event
      * @param \Closure     $listener
+     * @return $this
      */
     public function on($event, \Closure $listener)
     {
@@ -88,6 +96,7 @@ class EventEmitter extends Fiber
         } else {
             $this->listeners[strtolower($event)][] = $listener;
         }
+        return $this;
     }
 
     /**
@@ -95,6 +104,7 @@ class EventEmitter extends Fiber
      *
      * @param array|string $event
      * @param callable     $listener
+     * @return $this
      */
     public function once($event, \Closure $listener)
     {
@@ -105,6 +115,7 @@ class EventEmitter extends Fiber
         } else {
             $this->listeners[strtolower($event)][] = array($listener, array('times' => 1));
         }
+        return $this;
     }
 
     /**
@@ -113,6 +124,7 @@ class EventEmitter extends Fiber
      * @param array|string $event
      * @param int          $times
      * @param callable     $listener
+     * @return $this
      */
     public function many($event, $times = 1, \Closure $listener)
     {
@@ -123,6 +135,7 @@ class EventEmitter extends Fiber
         } else {
             $this->listeners[strtolower($event)][] = array($listener, array('times' => $times));
         }
+        return $this;
     }
 
     /**
@@ -130,6 +143,7 @@ class EventEmitter extends Fiber
      *
      * @param array|string $event
      * @param callable     $listener
+     * @return $this
      */
     public function off($event, \Closure $listener)
     {
@@ -147,6 +161,7 @@ class EventEmitter extends Fiber
                 }
             }
         }
+        return $this;
     }
 
     /**
@@ -169,10 +184,11 @@ class EventEmitter extends Fiber
      * @static
      * @param array|string $event
      * @param \Closure     $listener
+     * @return $this
      */
     public function addListener($event, \Closure $listener)
     {
-        $this->on($event, $listener);
+        return $this->on($event, $listener);
     }
 
     /**
@@ -181,16 +197,18 @@ class EventEmitter extends Fiber
      * @static
      * @param string   $event
      * @param \Closure $listener
+     * @return $this
      */
     public function removeListener($event, \Closure $listener)
     {
-        $this->off($event, $listener);
+        return $this->off($event, $listener);
     }
 
     /**
      * Remove all listeners of given event
      *
      * @param string $event
+     * @return $this
      */
     public function removeAllListeners($event = null)
     {
@@ -199,6 +217,7 @@ class EventEmitter extends Fiber
         } else if (($event = strtolower($event)) && !empty($this->listeners[$event])) {
             $this->listeners[$event] = array();
         }
+        return $this;
     }
 
     /**
