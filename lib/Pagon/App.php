@@ -80,6 +80,15 @@ class App extends EventEmitter
         'mounts'     => array('/' => ''),
         'bundles'    => array(),
         'locals'     => array(),
+        'resource'   => array(
+            'index'   => array('GET'),
+            'create'  => array('GET', 'create'),
+            'store'   => array('POST'),
+            'show'    => array('GET', ':id'),
+            'edit'    => array('GET', ':id/edit'),
+            'update'  => array('PUT', ':id'),
+            'destroy' => array('DELETE', ':id'),
+        ),
         'safe_query' => true,
         'input'      => null,
         'output'     => null,
@@ -481,6 +490,23 @@ class App extends EventEmitter
             return $this->router->map($path, array_slice(func_get_args(), 1));
         } else {
             return $this->router->map($path, $route);
+        }
+    }
+
+    /**
+     * Resource map
+     *
+     * @param string $path
+     * @param string $namespace
+     */
+    public function resource($path, $namespace)
+    {
+        foreach ($this->injectors['resource'] as $type => $opt) {
+            $this->router->map(
+                $path . (!empty($opt[1]) ? '/' . $opt[1] : ''),
+                $namespace. '\\' . (!empty($opt[2]) ? $opt[2] : ucfirst($type)),
+                $opt[0]
+            );
         }
     }
 
