@@ -83,22 +83,22 @@ class Flash extends Middleware
 
         $self = & $this;
 
-        $this->output->protect('flash', function ($type = null, $message = null) use ($self) {
+        $this->output->flash = function ($type = null, $message = null) use ($self) {
             if ($type && $message) {
                 return $self->set($type, $message);
             } elseif ($type) {
                 return $self->get($type);
             }
             return $self;
-        });
+        };
 
-        $this->output->protect('flashNow', function () use ($self) {
+        $this->output->flashNow = function () use ($self) {
             $self->flashNow();
-        });
+        };
 
-        $this->output->protect('flashKeep', function () use ($self) {
+        $this->output->flashKeep = function () use ($self) {
             $self->flashKeep();
-        });
+        };
 
         $this->next();
 

@@ -61,15 +61,33 @@ class Fiber implements \ArrayAccess
      * Get injector
      *
      * @param string $key
-     * @throws \InvalidArgumentException
      * @return mixed|\Closure
      */
     public function &__get($key)
     {
-        if (!array_key_exists($key, $this->injectors)) throw new \InvalidArgumentException(sprintf('Can not get non-exists injector "%s::%s"', get_called_class(), $key));
+        if (!isset($this->injectors[$key])) {
+            trigger_error('Undefined index "' . $key . '" of ' . get_class($this), E_USER_NOTICE);
+            return null;
+        }
 
-        if ($this->injectors[$key] instanceof \Closure) {
-            $tmp = $this->injectors[$key]();
+        // Inject or share
+        if (is_array($this->injectors[$key])
+            && isset($this->injectors[$key]['fiber'])
+            && isset($this->injectors[$key][0])
+            && $this->injectors[$key][0] instanceof \Closure
+        ) {
+            switch ($this->injectors[$key]['fiber']) {
+                case 1:
+                    // share
+                    $this->injectors[$key] = call_user_func($this->injectors[$key][0]);
+                    $tmp = & $this->injectors[$key];
+                    break;
+                case 0:
+                    // inject
+                    return call_user_func($this->injectors[$key][0]);
+                default:
+                    return null;
+            }
         } else {
             $tmp = & $this->injectors[$key];
         }
@@ -104,25 +122,21 @@ class Fiber implements \ArrayAccess
      * @param \Closure|String $closure
      * @return \Closure
      */
-    public function protect($key, \Closure $closure = null)
+    public function inject($key, \Closure $closure = null)
     {
         if (!$closure) {
             $closure = $key;
             $key = false;
         }
 
-        $func = function () use ($closure) {
-            return $closure;
-        };
-
-        return $key ? ($this->injectors[$key] = $func) : $func;
+        return $key ? ($this->injectors[$key] = array($closure, 'fiber' => 0)) : array($closure, 'fiber' => 0);
     }
 
     /**
      * Share the closure
      *
      * @param \Closure|string $key
-     * @param \Closure|null   $closure
+     * @param \Closure        $closure
      * @return \Closure
      */
     public function share($key, \Closure $closure = null)
@@ -131,18 +145,8 @@ class Fiber implements \ArrayAccess
             $closure = $key;
             $key = false;
         }
-        $that = $this;
-        $func = function () use ($closure, $that) {
-            static $obj;
 
-            if ($obj === null) {
-                $obj = $closure($that);
-            }
-
-            return $obj;
-        };
-
-        return $key ? ($this->injectors[$key] = $func) : $func;
+        return $key ? ($this->injectors[$key] = array($closure, 'fiber' => 1)) : array($closure, 'fiber' => 1);
     }
 
     /**
@@ -151,24 +155,15 @@ class Fiber implements \ArrayAccess
      * @param string   $key
      * @param \Closure $closure
      * @return \Closure
-     * @throws \InvalidArgumentException
      */
     public function extend($key, \Closure $closure)
     {
-        if (!isset($this->injectors[$key])) {
-            throw new \InvalidArgumentException(sprintf('Injector "%s::%s" is not defined.', get_called_class(), $key));
-        }
-
         $factory = $this->injectors[$key];
 
-        if (!($factory instanceof \Closure)) {
-            throw new \InvalidArgumentException(sprintf('Injector "%s::%s" does not contain an object definition.', get_called_class(), $key));
-        }
-
         $that = $this;
-        return $this->injectors[$key] = function () use ($closure, $factory, $that) {
-            return $closure(call_user_func_array($factory, func_get_args()), $that);
-        };
+        return $this->injectors[$key] = array('fiber' => isset($factory['fiber']) ? $factory['fiber'] : 0, function () use ($closure, $factory, $that) {
+            return $closure($factory(), $that);
+        });
     }
 
     /**
@@ -181,7 +176,7 @@ class Fiber implements \ArrayAccess
      */
     public function __call($method, $args)
     {
-        if (!array_key_exists($method, $this->injectors) || !($closure = $this->$method) instanceof \Closure) {
+        if (!isset($this->injectors[$method]) || !($closure = $this->injectors[$method]) instanceof \Closure) {
             throw new \BadMethodCallException(sprintf('Call to undefined method "%s::%s()', get_called_class(), $method));
         }
 
@@ -283,13 +278,10 @@ class Fiber implements \ArrayAccess
      * @param mixed $offset <p>
      *                      The offset to retrieve.
      * </p>
-     * @throws \InvalidArgumentException
      * @return mixed Can return all value types.
      */
     public function &offsetGet($offset)
     {
-        if (!isset($this->injectors[$offset])) throw new \InvalidArgumentException(sprintf('Can not get non-exists injector "%s::%s"', get_called_class(), $offset));
-
         return $this->__get($offset);
     }
 

@@ -36,7 +36,7 @@ class HttpMethods extends Middleware
             $app = $this->app;
 
             // Register route
-            $this->app->protect($method, function ($path, $route, $more = null) use ($app, $method) {
+            $this->app->$method = function ($path, $route, $more = null) use ($app, $method) {
                 if ($more !== null) {
                     $args = func_get_args();
                     $args[] = $method;
@@ -44,7 +44,7 @@ class HttpMethods extends Middleware
                 } else {
                     $app->router->map($path, $route, strtoupper($method));
                 }
-            });
+            };
         }
 
         $this->next();

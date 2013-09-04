@@ -100,9 +100,9 @@ class Logger extends Logger\LoggerInterface
         }
 
         // The time injector
-        $this->context('time', function () {
+        $this->context('time', $this->inject(function () {
             return date('Y-m-d H:i:s') . ',' . substr(microtime(true) * 1000, 10, 3);
-        });
+        }));
 
         // Injector the token with share instance
         $this->context('token', $this->share(function () {
@@ -110,9 +110,9 @@ class Logger extends Logger\LoggerInterface
         }));
 
         // The level
-        $this->context('level', $this->protect(function ($level) {
+        $this->context('level', function ($level) {
             return str_pad(strtoupper(substr($level, 0, 6)), 6, ' ', STR_PAD_RIGHT);
-        }));
+        });
 
         $that = $this;
         register_shutdown_function(function () use ($that) {

@@ -29,12 +29,16 @@ class Booster extends Middleware
 
         // Share the cryptor for the app
         if ($_crypt = $app->get($this->injectors['cryptor'])) {
-            $app->cryptor = new Cryptor($_crypt);
+            $app->cryptor = $app->share(function () use ($_crypt) {
+                new Cryptor($_crypt);
+            });
         }
 
         // Share the logger for the app
         if ($_log = $app->get($this->injectors['logger'])) {
-            $app->logger = Logger::$default = new Logger($_log);
+            $app->logger = $app->share(function () use ($_log) {
+                Logger::$default = new Logger($_log);
+            });
         }
 
         // Configure debug
