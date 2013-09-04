@@ -181,6 +181,6 @@ class Config extends Fiber
      */
     public function file($file, $type)
     {
-        file_put_contents($file, $this->toString($type));
+        file_put_contents($file, $this->string($type));
     }
 }
