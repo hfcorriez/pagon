@@ -49,7 +49,7 @@ class Console
      * @param string|array|boolean $color     The color or options for display
      * @param bool|string          $auto_br
      */
-    public static function write($text, $color = null, $auto_br = true)
+    public static function log($text, $color = null, $auto_br = true)
     {
         echo Console::text($text, $color, $auto_br);
     }
