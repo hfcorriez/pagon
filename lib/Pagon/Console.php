@@ -41,6 +41,15 @@ class Console
         'whitebg'     => 47,
     );
 
+    /**
+     * @var array Execute command default options
+     */
+    public static $EXEC_OPTIONS = array(
+        'timeout' => 3600,
+        'env'     => array(),
+        'cwd'     => null
+    );
+
 
     /**
      * Print the text
@@ -215,22 +224,21 @@ class Console
      * @param string $cmd
      * @param string $stdout
      * @param string $stderr
-     * @param int    $timeout
+     * @param array  $options
      * @return int
      */
-    public static function exec($cmd, &$stdout, &$stderr, $timeout = 3600)
+    public static function exec($cmd, &$stdout, &$stderr, $options = array())
     {
-        if ($timeout <= 0) $timeout = 3600;
-
         $descriptors = array(
             1 => array("pipe", "w"),
             2 => array("pipe", "w")
         );
+        $options = self::$EXEC_OPTIONS + $options;
 
         $stdout = $stderr = $status = null;
-        $process = proc_open($cmd, $descriptors, $pipes);
+        $process = proc_open($cmd, $descriptors, $pipes, $options['cwd'], $options['env']);
 
-        $time_end = time() + $timeout;
+        $time_end = time() + $options['timeout'];
         if (is_resource($process)) {
             do {
                 $time_left = $time_end - time();
