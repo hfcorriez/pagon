@@ -174,6 +174,34 @@ class Html
     }
 
     /**
+     * Checkbox
+     *
+     * @param string $name
+     * @param string $value
+     * @param bool   $check
+     * @param array  $attributes
+     * @return string
+     */
+    public function checkbox($name, $value, $check = false, $attributes = null)
+    {
+        return self::dom('input', ($check ? array('checked' => 'true') : array()) + (array)$attributes + array('name' => $name, 'value' => $value));
+    }
+
+    /**
+     * Radio
+     *
+     * @param string $name
+     * @param string $value
+     * @param bool   $check
+     * @param array  $attributes
+     * @return string
+     */
+    public function radio($name, $value, $check = false, $attributes = null)
+    {
+        return self::dom('input', ($check ? array('checked' => 'true') : array()) + (array)$attributes + array('name' => $name, 'value' => $value));
+    }
+
+    /**
      * Checkboxes
      *
      * @param string         $name
@@ -233,6 +261,7 @@ class Html
                 } else if (is_callable($wrapper)) {
                     return $wrapper(Html::dom('input', $value, $attr));
                 }
+                return null;
             } else {
                 return Html::dom('input', $value, $attr);
             }
