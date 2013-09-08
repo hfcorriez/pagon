@@ -190,7 +190,7 @@ class App extends EventEmitter
 
         // Set config
         $this->injectors =
-            (!is_array($config) ? Parser::load((string)$config) : $config)
+            (!is_array($config) ? Config::load((string)$config) : $config)
             + (!empty($this->injectors['cli']) ? array('buffer' => false) : array())
             + $this->injectors;
 
