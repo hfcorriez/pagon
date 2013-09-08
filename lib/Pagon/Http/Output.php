@@ -3,9 +3,9 @@
 namespace Pagon\Http;
 
 use Pagon\Config;
+use Pagon\Config\Xml;
 use Pagon\EventEmitter;
 use Pagon\Exception\Stop;
-use Pagon\Parser\Xml;
 use Pagon\View;
 
 /**
