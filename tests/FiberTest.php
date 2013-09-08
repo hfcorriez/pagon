@@ -23,8 +23,7 @@ class FiberTest extends PHPUnit_Framework_TestCase
         unset($this->di->a);
         $this->assertFalse(isset($this->di->a));
 
-        $this->setExpectedException('InvalidArgumentException');
-        $this->di->b;
+        $this->assertFalse(isset($this->di->b));
     }
 
     public function testSet()
@@ -35,13 +34,15 @@ class FiberTest extends PHPUnit_Framework_TestCase
 
     public function testSetObj()
     {
-        $this->di->obj = function () {
+        $obj = function () {
             static $i = 0;
             return ++$i;
         };
 
-        $this->assertEquals(1, $this->di->obj);
-        $this->assertEquals(2, $this->di->obj);
+        $this->di->obj = $obj;
+
+        $this->assertEquals($obj, $this->di->obj);
+        $this->assertEquals($obj, $this->di->obj);
     }
 
     public function testShare()
@@ -52,16 +53,6 @@ class FiberTest extends PHPUnit_Framework_TestCase
 
         $first = $this->di->s;
         $this->assertEquals($first, $this->di->s);
-    }
-
-    public function testShareWithoutKey()
-    {
-        $rand = $this->di->share(function () {
-            rand();
-        });
-
-        $second = $rand();
-        $this->assertEquals($rand(), $second);
     }
 
     public function testExtend()
@@ -79,23 +70,17 @@ class FiberTest extends PHPUnit_Framework_TestCase
 
     public function testExtendNonExists()
     {
-        $this->setExpectedException('InvalidArgumentException');
-        $this->di->extend('b', function () {
+        $this->di->extend('b', function ($b) {
+            return $b ? 'exists' : 'non-exists';
         });
-    }
-
-    public function testExtendBad()
-    {
-        $this->setExpectedException('InvalidArgumentException');
-        $this->di->extend('a', function () {
-        });
+        $this->assertEquals('non-exists', $this->di->b);
     }
 
     public function testProtect()
     {
-        $this->di->protect('md5', function ($key) {
+        $this->di->md5 = function ($key) {
             return md5($key);
-        });
+        };
 
         $this->assertEquals(md5('a'), $this->di->md5('a'));
     }
@@ -106,17 +91,6 @@ class FiberTest extends PHPUnit_Framework_TestCase
 
         $this->setExpectedException('BadMethodCallException');
         $this->di->md6('a');
-    }
-
-    public function testProtectWithoutKey()
-    {
-        $closure = function ($key) {
-            return $key . '$';
-        };
-
-        $protected = $this->di->protect($closure);
-
-        $this->assertEquals($protected(), $closure);
     }
 
     public function testRaw()
@@ -149,9 +123,6 @@ class FiberTest extends PHPUnit_Framework_TestCase
         $this->assertEquals('a', $this->di['a']);
         unset($this->di['a']);
         $this->assertFalse(isset($this->di['a']));
-
-        $this->setExpectedException('InvalidArgumentException');
-        $this->di['b'];
     }
 
     public function testSetWithSub()

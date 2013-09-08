@@ -84,9 +84,10 @@ class Fiber implements \ArrayAccess
                     break;
                 case 0:
                     // inject
-                    return call_user_func($this->injectors[$key][0]);
+                    $tmp = call_user_func($this->injectors[$key][0]);
+                    break;
                 default:
-                    return null;
+                    $tmp = null;
             }
         } else {
             $tmp = & $this->injectors[$key];
@@ -158,12 +159,11 @@ class Fiber implements \ArrayAccess
      */
     public function extend($key, \Closure $closure)
     {
-        $factory = $this->injectors[$key];
-
+        $factory = isset($this->injectors[$key]) ? $this->injectors[$key] : null;
         $that = $this;
-        return $this->injectors[$key] = array('fiber' => isset($factory['fiber']) ? $factory['fiber'] : 0, function () use ($closure, $factory, $that) {
-            return $closure($factory(), $that);
-        });
+        return $this->injectors[$key] = array(function () use ($closure, $factory, $that) {
+            return $closure(isset($factory[0]) && isset($factory['fiber']) && $factory[0] instanceof \Closure ? $factory[0]() : $factory, $that);
+        }, 'fiber' => isset($factory['fiber']) ? $factory['fiber'] : 0);
     }
 
     /**
