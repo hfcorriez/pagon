@@ -219,23 +219,53 @@ class Console
     }
 
     /**
+     * Copy string to system clipboard
+     *
+     * @param string $string
+     * @return bool
+     */
+    public static function clip($string)
+    {
+        switch (strtoupper(PHP_OS)) {
+            case 'DARWIN':
+                $command = 'pbcopy';
+                break;
+            case 'LINUX':
+                $command = 'xclip';
+                break;
+            case 'WINNT':
+                $command = 'clip';
+                break;
+            default:
+                return false;
+        }
+        $code = self::exec('printf ' . escapeshellarg($string) . ' | ' . $command);
+        if ($code !== 0) return false;
+        return true;
+    }
+
+    /**
      * Execute the command
      *
      * @param string $cmd
-     * @param string $stdout
-     * @param string $stderr
+     * @param bool   $output
      * @param array  $options
      * @return int
      */
-    public static function exec($cmd, &$stdout, &$stderr, $options = array())
+    public static function exec($cmd, $output = false, $options = array())
     {
+        if (is_array($output)) {
+            $options = $output;
+            $output = false;
+        }
+
         $descriptors = array(
             1 => array("pipe", "w"),
             2 => array("pipe", "w")
         );
         $options = self::$EXEC_OPTIONS + $options;
 
-        $stdout = $stderr = $status = null;
+        $stdout = $stderr = $status = $write = $except = null;
         $process = proc_open($cmd, $descriptors, $pipes, $options['cwd'], $options['env']);
 
         $time_end = time() + $options['timeout'];
@@ -243,7 +273,7 @@ class Console
             do {
                 $time_left = $time_end - time();
                 $read = array($pipes[1]);
-                stream_select($read, $write = NULL, $exceptions = NULL, $time_left, NULL);
+                stream_select($read, $write, $except, $time_left);
                 $stdout .= fread($pipes[1], 2048);
             } while (!feof($pipes[1]) && $time_left > 0);
             fclose($pipes[1]);
@@ -251,18 +281,18 @@ class Console
             if ($time_left <= 0) {
                 proc_terminate($process);
                 $stderr = 'process terminated for timeout.';
-                return -1;
-            }
+                $status = -1;
+            } else {
+                while (!feof($pipes[2])) {
+                    $stderr .= fread($pipes[2], 2048);
+                }
+                fclose($pipes[2]);
 
-            while (!feof($pipes[2])) {
-                $stderr .= fread($pipes[2], 2048);
+                $status = proc_close($process);
             }
-            fclose($pipes[2]);
-
-            $status = proc_close($process);
         }
 
-        return $status;
+        return !$output ? $status : array($status, $stdout, $stderr);
     }
 
     /**
