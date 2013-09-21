@@ -607,7 +607,7 @@ class App extends EventEmitter
      */
     public function render($path, array $data = null, array $options = array())
     {
-        $this->output->body($this->compile($path, $data, $options));
+        $this->output->body($this->compile($path, $data, $options)->render());
     }
 
     /**
@@ -616,8 +616,8 @@ class App extends EventEmitter
      * @param string $path
      * @param array  $data
      * @param array  $options
-     * @return View
      * @throws \RuntimeException
+     * @return View
      */
     public function compile($path, array $data = null, array $options = array())
     {
