@@ -56,6 +56,9 @@ class View extends EventEmitter
             if ($path{0} == '/' && is_file($path)) {
                 $injectors['path'] = $path;
                 $injectors['dir'] = '';
+            } else if ($injectors['app'] && ($_path = $injectors['app']->path($injectors['path']))) {
+                $injectors['path'] = $_path;
+                $injectors['dir'] = '';
             } else {
                 throw new \Exception('Template file is not exist: ' . $injectors['path']);
             }

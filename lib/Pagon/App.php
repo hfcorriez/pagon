@@ -504,7 +504,7 @@ class App extends EventEmitter
         foreach ($this->injectors['resource'] as $type => $opt) {
             $this->router->map(
                 $path . (!empty($opt[1]) ? '/' . $opt[1] : ''),
-                $namespace. '\\' . (!empty($opt[2]) ? $opt[2] : ucfirst($type)),
+                $namespace . '\\' . (!empty($opt[2]) ? $opt[2] : ucfirst($type)),
                 $opt[0]
             );
         }
@@ -607,8 +607,9 @@ class App extends EventEmitter
     {
         foreach ($this->injectors['mounts'] as $path => $dir) {
             if ($path === '' || strpos($file, $path) === 0) {
-                if (!$path = stream_resolve_include_path(rtrim($dir, '/') . '/' . ltrim(($path ? substr($file, strlen($path)) : $file), '/'))) continue;
-                return $path;
+                $_path = rtrim($dir, '/') . '/' . ltrim(($path ? substr($file, strlen($path)) : $file), '/');
+                if (!is_file($_path)) continue;
+                return $_path;
             }
         }
 
@@ -641,7 +642,7 @@ class App extends EventEmitter
      */
     public function render($path, array $data = null, array $options = array())
     {
-        $this->output->body($this->compile($path, $data, $options));
+        $this->output->body($this->compile($path, $data, $options)->render());
     }
 
     /**
@@ -655,9 +656,6 @@ class App extends EventEmitter
      */
     public function compile($path, array $data = null, array $options = array())
     {
-        // Support mount file system
-        if ($_path = $this->path($path)) $path = $_path;
-
         // Check engine
         if (!isset($options['engine'])) {
             // Get ext
@@ -691,7 +689,7 @@ class App extends EventEmitter
         // Create view
         $view = new View($path,
             $data + $this->injectors['locals'],
-            $options + array('dir' => $this->injectors['views'])
+            $options + array('dir' => $this->injectors['views'], 'app' => $this)
         );
 
         // Return view
