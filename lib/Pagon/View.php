@@ -55,6 +55,9 @@ class View extends EventEmitter
             if ($path{0} == '/' && is_file($path)) {
                 $this->path = $path;
                 $this->options['dir'] = '';
+            } else if ($options['app'] && ($_path = $options['app']->path($this->path))) {
+                $this->path = $_path;
+                $this->options['dir'] = '';
             } else {
                 throw new \Exception('Template file is not exist: ' . $this->path);
             }
