@@ -73,7 +73,7 @@ $error_id = uniqid('error');
                         <?php foreach ($step['args'] as $name => $arg): ?>
                         <tr>
                             <td><code><?php echo $name ?></code></td>
-                            <td><pre><?php echo \Pagon\Debug::dump($arg) ?></pre></td>
+                            <td><pre><?php echo \Pagon\Debug::dump($arg, 128, 3) ?></pre></td>
                         </tr>
                         <?php endforeach ?>
                     </table>
