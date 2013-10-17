@@ -853,7 +853,7 @@ class App extends EventEmitter
                 } else {
                     $this->render('pagon/views/error.php', array(
                         'title'   => $this->injectors['errors'][$type][1],
-                        'message' => 'Could not ' . $this->input->method() . ' ' . $this->input->path()
+                        'message' => $route ? ($route instanceof \Exception ? $route->getMessage() : (string)$route) : 'Could not ' . $this->input->method() . ' ' . $this->input->path()
                     ));
                     $this->stop();
                 }
