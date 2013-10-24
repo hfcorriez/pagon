@@ -24,7 +24,7 @@ class Url
     {
         return
             (!strpos($path, '://') ?
-                ($full ? self::site() : self::base()) . '/' . ltrim($path, '/')
+                rtrim($full ? self::site() : self::base()) . '/' . ltrim($path, '/')
                 : $path) .
             ($query ? '?' . http_build_query($query) : '');
     }
@@ -72,7 +72,7 @@ class Url
         $asset_url = App::self()->get('asset_url');
 
         return
-            ($asset_url ? $asset_url : ($full ? self::site() : self::base())) .
+            rtrim($asset_url ? $asset_url : ($full ? self::site() : self::base())) .
             '/' . ltrim($path, '/') .
             ($query ? '?' . http_build_query($query) : '');
     }
