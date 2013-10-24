@@ -107,6 +107,6 @@ class Url
      */
     public static function base()
     {
-        return App::self()->input->scriptName();
+        return ($base = App::self()->get('base_uri')) ? $base : App::self()->input->scriptName();
     }
 }
