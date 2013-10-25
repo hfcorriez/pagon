@@ -37,9 +37,13 @@ class Url
      */
     public static function transform($path, array $query = null, $prefix = false)
     {
-        return
-            rtrim((!strpos($path, '://') ? ($prefix ? rtrim($prefix, '/') : '') . '/' : '') . trim($path, '/'), '/') .
-            ($query ? '?' . http_build_query($query) : '');
+        if (strpos($path, '://')) $url = $path;
+        else {
+            $url = rtrim(($prefix ? rtrim($prefix, '/') : '') . '/' . trim($path, '/'), '/');
+            if (!$url) $url = '/';
+        }
+
+        return $url . ($query ? '?' . http_build_query($query) : '');
     }
 
     /**
@@ -94,7 +98,7 @@ class Url
     public static function current(array $query = null, $full = false)
     {
         $input = App::self()->input;
-        return self::to($input->path(), ($query ? $query : array()) + $input->query, $full);
+        return self::to($input->path(), (array)$query + $input->query, $full);
     }
 
     /**
