@@ -22,10 +22,23 @@ class Url
      */
     public static function to($path, array $query = null, $full = false)
     {
+        $url_mode = App::self()->get('url_rewrite');
+        if (isset($url_mode)) $url_mode = !$url_mode;
+        return self::transform($path, $query, $full ? self::site($url_mode) : self::base($url_mode));
+    }
+
+    /**
+     * Transform url
+     *
+     * @param string $path
+     * @param array  $query
+     * @param bool   $prefix
+     * @return string
+     */
+    public static function transform($path, array $query = null, $prefix = false)
+    {
         return
-            (!strpos($path, '://') ?
-                rtrim($full ? self::site() : self::base()) . '/' . ltrim($path, '/')
-                : $path) .
+            (!strpos($path, '://') ? rtrim($prefix) . '/' . ltrim($path, '/') : $path) .
             ($query ? '?' . http_build_query($query) : '');
     }
 
@@ -62,19 +75,13 @@ class Url
      *
      * @param string $path
      * @param array  $query
-     * @param bool   $full
      * @return string
      */
-    public static function asset($path, array $query = null, $full = false)
+    public static function asset($path, array $query = null)
     {
-        if (strpos($path, '://')) return self::to($path, $query, $full);
-
         $asset_url = App::self()->get('asset_url');
 
-        return
-            rtrim($asset_url ? $asset_url : ($full ? self::site() : self::base())) .
-            '/' . ltrim($path, '/') .
-            ($query ? '?' . http_build_query($query) : '');
+        return self::transform($path, $query, $asset_url ? $asset_url : self::base(false));
     }
 
     /**
@@ -93,20 +100,22 @@ class Url
     /**
      * Get site of application
      *
+     * @param bool $basename
      * @return string
      */
-    public static function site()
+    public static function site($basename = null)
     {
-        return ($site = App::self()->get('site_url')) ? $site : App::self()->input->site();
+        return ($site = App::self()->get('site_url')) ? $site : App::self()->input->site($basename);
     }
 
     /**
      * Get base path
      *
+     * @param bool $basename
      * @return string
      */
-    public static function base()
+    public static function base($basename = null)
     {
-        return ($base = App::self()->get('base_uri')) ? $base : App::self()->input->scriptName();
+        return App::self()->input->scriptName($basename);
     }
 }
