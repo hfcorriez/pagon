@@ -79,7 +79,7 @@ class Input extends EventEmitter
             if (strpos($this->injectors['REQUEST_URI'], $_script_name) !== 0) {
                 $_script_name = dirname($_script_name);
             }
-        } else if ($basename === false) {
+        } else if (!$basename) {
             $_script_name = dirname($_script_name);
         }
         return rtrim(str_replace('\\', '/', $_script_name), '/');

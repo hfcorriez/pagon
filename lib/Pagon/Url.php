@@ -38,7 +38,7 @@ class Url
     public static function transform($path, array $query = null, $prefix = false)
     {
         return
-            (!strpos($path, '://') ? rtrim($prefix) . '/' . ltrim($path, '/') : $path) .
+            rtrim(!strpos($path, '://') ? rtrim($prefix) . '/' . ltrim($path, '/') : $path) .
             ($query ? '?' . http_build_query($query) : '');
     }
 
