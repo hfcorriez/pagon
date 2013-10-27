@@ -2,8 +2,6 @@
 
 namespace Pagon;
 
-use Pagon\App;
-
 /**
  * Url
  * functional usage for build URL
@@ -22,11 +20,28 @@ class Url
      */
     public static function to($path, array $query = null, $full = false)
     {
-        return
-            (!strpos($path, '://') ?
-                ($full ? self::site() : self::base()) . '/' . ltrim($path, '/')
-                : $path) .
-            ($query ? '?' . http_build_query($query) : '');
+        $url_mode = App::self()->get('url_rewrite');
+        if (isset($url_mode)) $url_mode = !$url_mode;
+        return self::transform($path, $query, $full ? self::site($url_mode) : self::base($url_mode));
+    }
+
+    /**
+     * Transform url
+     *
+     * @param string $path
+     * @param array  $query
+     * @param bool   $prefix
+     * @return string
+     */
+    public static function transform($path, array $query = null, $prefix = false)
+    {
+        if (strpos($path, '://')) $url = $path;
+        else {
+            $url = rtrim(($prefix ? rtrim($prefix, '/') : '') . '/' . trim($path, '/'), '/');
+            if (!$url) $url = '/';
+        }
+
+        return $url . ($query ? '?' . http_build_query($query) : '');
     }
 
     /**
@@ -62,19 +77,13 @@ class Url
      *
      * @param string $path
      * @param array  $query
-     * @param bool   $full
      * @return string
      */
-    public static function asset($path, array $query = null, $full = false)
+    public static function asset($path, array $query = null)
     {
-        if (strpos($path, '://')) return self::to($path, $query, $full);
-
         $asset_url = App::self()->get('asset_url');
 
-        return
-            ($asset_url ? $asset_url : ($full ? self::site() : self::base())) .
-            '/' . ltrim($path, '/') .
-            ($query ? '?' . http_build_query($query) : '');
+        return self::transform($path, $query, $asset_url ? $asset_url : self::base(false));
     }
 
     /**
@@ -87,26 +96,28 @@ class Url
     public static function current(array $query = null, $full = false)
     {
         $input = App::self()->input;
-        return self::to($input->path(), ($query ? $query : array()) + $input->query, $full);
+        return self::to($input->path(), (array)$query + $input->query, $full);
     }
 
     /**
      * Get site of application
      *
+     * @param bool $basename
      * @return string
      */
-    public static function site()
+    public static function site($basename = null)
     {
-        return ($site = App::self()->get('site_url')) ? $site : App::self()->input->site();
+        return ($site = App::self()->get('site_url')) ? $site : App::self()->input->site($basename);
     }
 
     /**
      * Get base path
      *
+     * @param bool $basename
      * @return string
      */
-    public static function base()
+    public static function base($basename = null)
     {
-        return App::self()->input->scriptName();
+        return App::self()->input->scriptName($basename);
     }
 }

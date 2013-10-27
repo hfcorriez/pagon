@@ -88,18 +88,20 @@ class Input extends EventEmitter
     /**
      * Get script name
      *
+     * @param null $basename
      * @return string
      */
-    public function scriptName()
+    public function scriptName($basename = null)
     {
-        if (!isset($this->injectors['script_name'])) {
-            $_script_name = $this->injectors['server']['SCRIPT_NAME'];
-            if (strpos($this->injectors['server']['REQUEST_URI'], $_script_name) !== 0) {
-                $_script_name = str_replace('\\', '/', dirname($_script_name));
+        $_script_name = $this->injectors['SCRIPT_NAME'];
+        if ($basename === null) {
+            if (strpos($this->injectors['REQUEST_URI'], $_script_name) !== 0) {
+                $_script_name = dirname($_script_name);
             }
-            $this->injectors['script_name'] = rtrim($_script_name, '/');
+        } else if (!$basename) {
+            $_script_name = dirname($_script_name);
         }
-        return $this->injectors['script_name'];
+        return rtrim(str_replace('\\', '/', $_script_name), '/');
     }
 
     /**
@@ -136,11 +138,12 @@ class Input extends EventEmitter
     /**
      * Get site url
      *
+     * @param bool $basename
      * @return string
      */
-    public function site()
+    public function site($basename = null)
     {
-        return $this->scheme() . '://' . $this->host();
+        return $this->scheme() . '://' . $this->domain() . $this->scriptName($basename);
     }
 
     /**
