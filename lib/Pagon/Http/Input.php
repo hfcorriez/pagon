@@ -93,9 +93,9 @@ class Input extends EventEmitter
      */
     public function scriptName($basename = null)
     {
-        $_script_name = $this->injectors['SCRIPT_NAME'];
+        $_script_name = $this->injectors['server']['SCRIPT_NAME'];
         if ($basename === null) {
-            if (strpos($this->injectors['REQUEST_URI'], $_script_name) !== 0) {
+            if (strpos($this->injectors['server']['REQUEST_URI'], $_script_name) !== 0) {
                 $_script_name = dirname($_script_name);
             }
         } else if (!$basename) {
