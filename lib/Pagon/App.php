@@ -2,8 +2,8 @@
 /**
  * Pagon Framework
  *
- * @package   Pagon
- * @author    Corrie Zhao <hfcorriez@gmail.com>
+ * @package       Pagon
+ * @author        Corrie Zhao <hfcorriez@gmail.com>
  * @copyright (c) 2011 - 2013 Pagon Framework
  */
 
@@ -153,7 +153,7 @@ class App extends EventEmitter
         }
 
         // Init Route
-        $app->router = new Router(array('path' => $app->input->path(), 'app' => $app));
+        $app->router = new Router(array('app' => $app));
 
         return $app;
     }
@@ -357,8 +357,8 @@ class App extends EventEmitter
     /**
      * Add a bundle
      *
-     * @param string       $name        Bundle name or path
-     * @param string|array $options     Bundle options or name
+     * @param string       $name    Bundle name or path
+     * @param string|array $options Bundle options or name
      */
     public function bundle($name, $options = array())
     {

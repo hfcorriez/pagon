@@ -242,6 +242,8 @@ class Router extends Middleware
     public function call()
     {
         $prefixes = array();
+        $this->injectors['path'] = $this->app->input->path();
+
         // Prefixes Lookup
         if ($this->app->prefixes) {
             foreach ($this->app->prefixes as $path => $namespace) {
