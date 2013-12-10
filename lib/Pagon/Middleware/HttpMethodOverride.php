@@ -4,7 +4,7 @@ namespace Pagon\Middleware;
 
 use Pagon\Middleware;
 
-class MethodOverride extends Middleware
+class HttpMethodOverride extends Middleware
 {
     protected $injectors = array(
         'method' => '_METHOD'
