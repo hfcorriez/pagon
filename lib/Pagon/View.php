@@ -129,7 +129,8 @@ class View extends EventEmitter
                 extract((array)$this->injectors);
             }
             ob_start();
-            include($this->options['dir'] . ($this->path{0} == '/' ? '' : '/') . $this->path);
+            $dir = $this->options['dir'];
+            include($dir . ($dir && $dir[strlen($dir) - 1] !== '/' ? '/' : '') . $this->path);
             $html = ob_get_clean();
         } else {
             $html = $engine->render($this->path, $this->injectors, $this->options['dir']);
