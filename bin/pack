@@ -1,0 +1,104 @@
+#!/usr/bin/env php
+<?php
+
+define('PAGON_DIR', dirname(__DIR__));
+define('ROOT_DIR', PAGON_DIR . '/lib');
+
+$files = array(
+    'Pagon/Fiber',
+    'Pagon/EventEmitter',
+    'Pagon/Middleware',
+    'Pagon/Route',
+    'Pagon/Router',
+    'Pagon/Config',
+    'Pagon/View',
+    'Pagon/App',
+    'Pagon/Http/Input',
+    'Pagon/Http/Output',
+    'Pagon/Cli/Input',
+    'Pagon/Cli/Output',
+    'Pagon/Engine/Jade',
+    'Pagon/Exception/Pass',
+    'Pagon/Exception/Stop',
+    'assistant',
+);
+
+$codes = array();
+
+foreach ($files as $file) {
+    $path = ROOT_DIR . '/' . $file . '.php';
+    if (strpos($file, 'Pagon/') === 0) {
+        $namespace = str_replace('/', '\\', dirname($file));
+    } else {
+        $namespace = '';
+    }
+    $php = file_get_contents($path);
+    $uses = get_uses($php);
+    $php = remove_use_statement(remove_namespace(remove_comment(remove_php_tag($php))));
+
+    if (!isset($codes[$namespace])) {
+        $codes[$namespace] = array(
+            'uses'      => array(),
+            'codes'     => array(),
+            'namespace' => $namespace,
+        );
+    }
+    $codes[$namespace]['uses'] = array_unique(array_merge($uses, $codes[$namespace]['uses']));
+
+    switch ($file) {
+        case 'Pagon/App';
+            $php = preg_replace("#const VERSION = '([0-9\.]+)';([\S\s]+?)\nclass#", "const VERSION = '$1';\n\nclass", $php);
+            break;
+        case 'Pagon/Config';
+            $mimes = file_get_contents(PAGON_DIR . '/config/mimes.php');
+            preg_match('#return ([\s\S]+);#', $mimes, $m);
+            $php = str_replace("array('pagon/config/mimes.php', 0)", $m[1], $php);
+            break;
+    }
+
+    $codes[$namespace]['codes'][] = $php;
+}
+
+$output = '';
+
+foreach ($codes as $namespace => $info) {
+    $output .= 'namespace ' . $namespace . " {\n";
+    if ($info['uses']) {
+        $output .= "\nuse " . join(";\nuse ", $info['uses']) . ";\n";
+    }
+    foreach ($info['codes'] as $code) {
+        $output .= $code;
+    }
+    $output .= "\n}\n\n";
+}
+
+file_put_contents(PAGON_DIR . '/pack/pagon.core.php', "<?php\n\n" . $output);
+
+function remove_namespace($php)
+{
+    return preg_replace('#\nnamespace .+?;#', '', $php);
+}
+
+function remove_php_tag($php)
+{
+    return preg_replace('#\<\?php\n#', '', $php);
+}
+
+function remove_use_statement($php)
+{
+    return preg_replace('#\nuse .*?;#', '', $php);
+}
+
+function remove_comment($php)
+{
+    return preg_replace('#([ ]*)\/\*\*([\s\S]+?)\*\/\n#', '', $php);
+}
+
+function get_uses($php)
+{
+    if (!preg_match_all('#\nuse (.+?);#', $php, $match)) {
+        return array();
+    }
+
+    return $match[1];
+}
