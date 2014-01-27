@@ -4,7 +4,7 @@
 
 [下载最新版](https://github.com/hfcorriez/pagon/releases)
 
-[Git下载]
+Git下载：
 
 ```
 git clone https://github.com/hfcorriez/pagon
