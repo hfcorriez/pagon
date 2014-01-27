@@ -214,7 +214,7 @@ $app->add('/monitor', 'HttpBasicAuth', array('username' => 'test', 'password' =>
 环境配置可以通过环境变量`PAGON_ENV`来设置，默认为`develop`
 
 ```php
-$app = new App();
+$app = App::create();
 
 // 获取当前环境
 $app->mode();
