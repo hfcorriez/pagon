@@ -2,7 +2,13 @@
 
 ## 发行版
 
-[下载](https://github.com/hfcorriez/pagon/releases)
+[下载最新版](https://github.com/hfcorriez/pagon/releases)
+
+[Git下载]
+
+```
+git clone https://github.com/hfcorriez/pagon
+```
 
 ## Composer
 
