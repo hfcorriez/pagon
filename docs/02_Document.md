@@ -182,17 +182,17 @@ $app->add(function($req, $res, $next) {
 ## 框架内置的中间件
 
 ```
-- Booster           助推器，根据配置文件为App做一些绑定工作，比如logger和cryptor
-- CSRF              CSRF自动防御中间件
-- OPAuth            OPAuth的中间件，用来做第三方验证
-- PrettyException   异常和错误输出，Debug模式下默认开启
-- Flash             信息闪存，用于验证提示等
-- HttpMethods       完整的Http方法支持
-- HttpBasicAuth     Http Basic验证支持
-- I18N              多语言支持
-- PageCache         页面缓存支持
-- Session           Session支持，包括（Cookie, Redis, Memcache）
-- MethodOveride     Http方法重载
+- Booster             助推器，根据配置文件为App做一些绑定工作，比如logger和cryptor
+- CSRF                CSRF自动防御中间件
+- OPAuth              OPAuth的中间件，用来做第三方验证
+- PrettyException     异常和错误输出，Debug模式下默认开启
+- Flash               信息闪存，用于验证提示等
+- HttpMethods         完整的Http方法支持
+- HttpBasicAuth       Http Basic验证支持
+- I18N                多语言支持
+- PageCache           页面缓存支持
+- Session             Session支持，包括（Cookie, Redis, Memcache）
+- HttpMethodOverride  Http方法重载
 ```
 
 例子：
