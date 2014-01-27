@@ -97,6 +97,7 @@ mounts      应用加载的路径列表
 bundles     包应用
 locals      默认的模板变量
 safe_query  在模板渲染时自动预防XSS
+url_rewrite 是否开启Url rewrite
 ```
 
 ## 配置应用
