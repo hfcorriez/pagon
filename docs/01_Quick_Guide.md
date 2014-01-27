@@ -1,5 +1,9 @@
 # 安装
 
+## 发行版
+
+[下载](https://github.com/hfcorriez/pagon/releases)
+
 ## Composer
 
 ### 已有项目
@@ -16,7 +20,7 @@ $ composer.phar require pagon/pagon="*"
 $ composer.phar create-project pagon/app myapp
 ```
 
-## 单文件方式
+## 单文件
 
 下载
 
@@ -26,13 +30,13 @@ wget https://github.com/hfcorriez/pagon/raw/0.8.0-dev/pack/pagon.core.php
 
 使用
 
-```
+```php
 require('pagon.core.php');
 
 $app = Pagon\App::create();
 ```
 
-# 示例
+# 入门
 
 ## Hello world
 
