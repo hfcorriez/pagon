@@ -159,6 +159,6 @@ class UrlTest extends \PHPUnit_Framework_TestCase
     {
         $url = Url::current(null, true);
 
-        $this->assertEquals('http://apple.com/test/', $url);
+        $this->assertEquals('http://apple.com/test', $url);
     }
 }
