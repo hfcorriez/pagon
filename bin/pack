@@ -19,8 +19,7 @@ $files = array(
     'Pagon/Cli/Output',
     'Pagon/Engine/Jade',
     'Pagon/Exception/Pass',
-    'Pagon/Exception/Stop',
-    'assistant',
+    'Pagon/Exception/Stop'
 );
 
 $codes = array();
