@@ -12,6 +12,7 @@ $files = array(
     'Pagon/Router',
     'Pagon/Config',
     'Pagon/View',
+    'Pagon/View/Error',
     'Pagon/App',
     'Pagon/Http/Input',
     'Pagon/Http/Output',

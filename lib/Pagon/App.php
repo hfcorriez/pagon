@@ -31,7 +31,7 @@ spl_autoload_register(function ($class) {
             require $file;
             return true;
         }
-    } else if (class_exists(__NAMESPACE__ . '\\' . $class, false)) {
+    } else if (class_exists(__NAMESPACE__ . '\\' . $class)) {
         // If class under pagon namespace, alias it.
         class_alias(__NAMESPACE__ . '\\' . $class, $class);
         return true;
@@ -665,6 +665,18 @@ class App extends EventEmitter
     }
 
     /**
+     * Render View
+     *
+     * @param string $view
+     * @param array  $data
+     * @return mixed
+     */
+    public function renderView($view, array $data = null)
+    {
+        $this->output->body(View::factory($view, $data));
+    }
+
+    /**
      * Compile view
      *
      * @param string $path
@@ -871,10 +883,11 @@ class App extends EventEmitter
                     $this->halt($this->injectors['errors'][$type][0], $this->injectors['errors'][$type][1]);
                 } else {
                     $this->output->status($this->injectors['errors'][$type][0]);
-                    $this->render('pagon/views/error.php', array(
+                    $this->renderView('Error', array(
                         'title'   => $this->injectors['errors'][$type][1],
                         'message' => $route ? ($route instanceof \Exception ? $route->getMessage() : (string)$route) : 'Could not ' . $this->input->method() . ' ' . $this->input->path()
                     ));
+
                     $this->stop();
                 }
             }

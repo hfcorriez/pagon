@@ -34,6 +34,25 @@ class View extends EventEmitter
     );
 
     /**
+     * Factory by view
+     *
+     * @param $view
+     * @param $data
+     * @return mixed
+     * @throws \InvalidArgumentException
+     */
+    public static function factory($view, $data)
+    {
+        $class = __NAMESPACE__ . '\\View\\' . $view;
+
+        if (!class_exists($class)) {
+            throw new \InvalidArgumentException('Can not find given "' . $view . '" view');
+        }
+
+        return new $class($data);
+    }
+
+    /**
      * Construct a view
      *
      * @param string $path
