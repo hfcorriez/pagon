@@ -40,19 +40,19 @@ class View extends EventEmitter
     );
 
     /**
-     * Factory by view
+     * Factory the view
      *
-     * @param $view
-     * @param $data
-     * @return mixed
+     * @param string $type
+     * @param array  $data
      * @throws \InvalidArgumentException
+     * @return mixed
      */
-    public static function factory($view, $data)
+    public static function factory($type, $data)
     {
-        $class = __NAMESPACE__ . '\\View\\' . $view;
+        $class = __NAMESPACE__ . '\\View\\' . ucfirst(strtolower($type));
 
-        if (!class_exists($class)) {
-            throw new \InvalidArgumentException('Can not find given "' . $view . '" view');
+        if (!class_exists($class) && !class_exists($class = $type)) {
+            throw new \InvalidArgumentException('Can not find given "' . $type . '" view');
         }
 
         return new $class($data);
