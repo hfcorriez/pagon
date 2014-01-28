@@ -994,31 +994,56 @@ class View extends EventEmitter
 
     protected $path;
 
+    protected $compileDirectly = false;
+
     protected $injectors = array(
         'dir'    => '',
         'engine' => null,
-        'data'   => array()
+        'data'   => array(),
+        'app'    => null
     );
+
+    public static function factory($view, $data)
+    {
+        $class = __NAMESPACE__ . '\\View\\' . $view;
+
+        if (!class_exists($class)) {
+            throw new \InvalidArgumentException('Can not find given "' . $view . '" view');
+        }
+
+        return new $class($data);
+    }
+
+    public static function make($path, $data = array(), $engine = null)
+    {
+        return new self($path, $data, array('engine' => $engine));
+    }
 
     public function __construct($path, $data = array(), $injectors = array())
     {
-        // Set dir for the view
-        $injectors = array('data' => (array)$data, 'path' => $path) + $injectors + $this->injectors;
+        if (is_array($path)) {
+            // Support View factory
+            $this->injectors['data'] = $path;
+            $this->compileDirectly = true;
+        } else {
+            // Set dir for the view
+            $injectors = array('data' => (array)$data, 'path' => $path) + $injectors + array('dir' => (string)App::self()->get('views'), 'app' => App::self()) + $this->injectors;
 
-        // Set path
-        $injectors['path'] = ltrim($path, '/');
+            // Set path
+            $injectors['path'] = ltrim($path, '/');
 
-        // If file exists?
-        if (!is_file($injectors['dir'] . '/' . $injectors['path'])) {
-            // Try to load file from absolute path
-            if ($path{0} == '/' && is_file($path)) {
-                $injectors['path'] = $path;
-                $injectors['dir'] = '';
-            } else if ($injectors['app'] && ($_path = $injectors['app']->path($injectors['path']))) {
-                $injectors['path'] = $_path;
-                $injectors['dir'] = '';
-            } else {
-                throw new \Exception('Template file is not exist: ' . $injectors['path']);
+            // If file exists?
+            if (!is_file($injectors['dir'] . '/' . $injectors['path'])) {
+                // Try to load file from absolute path
+                if ($path{0} == '/' && is_file($path)) {
+                    $injectors['path'] = $path;
+                    $injectors['dir'] = '';
+                } else if (!empty($injectors['app']) && ($_path = $injectors['app']->path($injectors['path']))) {
+                    $injectors['path'] = $_path;
+                    $injectors['dir'] = '';
+                } else {
+                    throw new \Exception('Template file is not exist: ' . $injectors['path']);
+                }
             }
         }
 
@@ -1031,26 +1056,34 @@ class View extends EventEmitter
         return $this->injectors['data'] = $array + $this->injectors['data'];
     }
 
+    public function compile()
+    {
+        throw new \RuntimeException("Implements compile method");
+    }
+
     public function render()
     {
-        $engine = $this->injectors['engine'];
-
         // Mark rendering flag
         self::$rendering = true;
 
         $this->emit('render');
 
-        if (!$engine) {
-            if ($this->injectors) {
-                extract((array)$this->injectors['data']);
-            }
-            ob_start();
-            include($this->injectors['dir'] . ($this->injectors['path']{0} == '/' ? '' : '/') . $this->injectors['path']);
-            $html = ob_get_clean();
-        } else if (is_callable($engine)) {
-            $html = $engine($this->injectors['path'], $this->injectors['data'], $this->injectors['dir']);
+        if ($this->compileDirectly) {
+            $__html = $this->compile();
         } else {
-            $html = $engine->render($this->injectors['path'], $this->injectors['data'], $this->injectors['dir']);
+            $engine = $this->injectors['engine'];
+            if (!$engine) {
+                if ($this->injectors) {
+                    extract((array)$this->injectors['data']);
+                }
+                ob_start();
+                include($this->injectors['dir'] . ($this->injectors['path']{0} == '/' ? '' : '/') . $this->injectors['path']);
+                $__html = ob_get_clean();
+            } else if (is_callable($engine)) {
+                $__html = $engine($this->injectors['path'], $this->injectors['data'], $this->injectors['dir']);
+            } else {
+                $__html = $engine->render($this->injectors['path'], $this->injectors['data'], $this->injectors['dir']);
+            }
         }
 
         $this->emit('rendered');
@@ -1058,7 +1091,7 @@ class View extends EventEmitter
         // Release rendering flag
         self::$rendering = false;
 
-        return $html;
+        return $__html;
     }
 
     public function __toString()
@@ -1077,7 +1110,7 @@ spl_autoload_register(function ($class) {
             require $file;
             return true;
         }
-    } else if (class_exists(__NAMESPACE__ . '\\' . $class, false)) {
+    } else if (class_exists(__NAMESPACE__ . '\\' . $class)) {
         // If class under pagon namespace, alias it.
         class_alias(__NAMESPACE__ . '\\' . $class, $class);
         return true;
@@ -1473,6 +1506,11 @@ class App extends EventEmitter
         $this->output->body($this->compile($path, $data, $options)->render());
     }
 
+    public function renderView($view, array $data = null)
+    {
+        $this->output->body(View::factory($view, $data));
+    }
+
     public function compile($path, array $data = null, array $options = array())
     {
         // Check engine
@@ -1658,10 +1696,11 @@ class App extends EventEmitter
                     $this->halt($this->injectors['errors'][$type][0], $this->injectors['errors'][$type][1]);
                 } else {
                     $this->output->status($this->injectors['errors'][$type][0]);
-                    $this->render('pagon/views/error.php', array(
+                    $this->renderView('Error', array(
                         'title'   => $this->injectors['errors'][$type][1],
                         'message' => $route ? ($route instanceof \Exception ? $route->getMessage() : (string)$route) : 'Could not ' . $this->input->method() . ' ' . $this->input->path()
                     ));
+
                     $this->stop();
                 }
             }
@@ -1782,11 +1821,6 @@ class App extends EventEmitter
             }
         }
 
-        $try_class = __NAMESPACE__ . '\\' . $class;
-        if (class_exists($try_class)) {
-            class_alias($try_class, $class);
-        }
-
         return false;
     }
 
@@ -1812,6 +1846,172 @@ class App extends EventEmitter
             $this->emit('crash', $error);
             $this->flush();
         }
+    }
+}
+
+}
+
+namespace Pagon\View {
+
+use Pagon\View;
+
+
+
+class Error extends View
+{
+    public function compile()
+    {
+        if ($this->injectors) {
+            extract((array)$this->injectors['data']);
+        }
+
+        $__html = <<<HTML
+<!DOCTYPE html>
+<html>
+<head>
+<title>$title</title>
+<meta charset="utf-8">
+<style type="text/css">
+@charset "utf-8";
+
+html {
+    color: #444333;
+    background: #fff;
+    -webkit-text-size-adjust: 100%;
+    -ms-text-size-adjust: 100%;
+    text-rendering: optimizelegibility;
+}
+
+body, dl, dt, dd, ul, ol, li, h1, h2, h3, h4, h5, h6 {
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font: 500 0.875em/1.8 Microsoft Yahei, Hiragino Sans GB, WenQuanYi Micro Hei, sans-serif;
+    *width: auto;
+    *overflow: visible;
+    line-height: 22px;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+ins, a {
+    text-decoration: none;
+}
+
+pre, code {
+    font-family: "Courier New", Courier, monospace;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+
+pre {
+    background: #f8f8f8;
+    border: 1px solid #ddd;
+    padding: 1em 1.5em;
+}
+
+hr {
+    border: none;
+    border-bottom: 1px solid #cfcfcf;
+    margin-bottom: 10px;
+    *color: pink;
+    *filter: chroma(color=pink);
+    height: 10px;
+    *margin: -7px 0 2px;
+}
+
+.clearfix:before, .clearfix:after {
+    content: "";
+    display: table;
+}
+
+.clearfix:after {
+    clear: both
+}
+
+.clearfix {
+    zoom: 1
+}
+
+.typo p, .typo pre, .typo ul, .typo ol, .typo dl, .typo form, .typo hr, .typo table,
+.typo-p, .typo-pre, .typo-ul, .typo-ol, .typo-dl, .typo-form, .typo-hr, .typo-table {
+    margin-bottom: 1.2em;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    font-weight: 500;
+    *font-weight: 800;
+    font-family: Helvetica Neue, Microsoft Yahei, Hiragino Sans GB, WenQuanYi Micro Hei, sans-serif;
+    color: #333;
+}
+
+.typo h1, .typo h2, .typo h3, .typo h4, .typo h5, .typo h6,
+.typo-h1, .typo-h2, .typo-h3, .typo-h4, .typo-h5, .typo-h6 {
+    margin-bottom: 0.4em;
+    line-height: 1.5;
+}
+
+.typo h1, .typo-h1 {
+    font-size: 1.8em;
+}
+
+.typo h2, .typo-h2 {
+    font-size: 1.6em;
+}
+
+.typo h3, .typo-h3 {
+    font-size: 1.4em;
+}
+
+.typo h4, .typo-h4 {
+    font-size: 1.2em;
+}
+
+.typo h5, .typo h6, .typo-h5, .typo-h6 {
+    font-size: 1em;
+}
+
+::-moz-selection {
+    background: #08c;
+    color: #fff;
+}
+
+::selection {
+    background: #08c;
+    color: #fff;
+}
+
+body h1 {
+    font: 38px/1.8em Hiragino Mincho ProN, STSong, serif!important;
+}
+
+#wrapper {
+    min-width: 480px;
+    padding: 5% 8%;
+}
+
+#tagline {
+    color: #888;
+    font-size: 1em;
+    margin: -2em 0 2em;
+    padding-bottom: 2em;
+}
+</style>
+</head>
+<body class="typo">
+<div id="wrapper" class="typo typo-selection">
+    <h1>$title</h1>
+    <h2 id="tagline">$message</h2>
+</div>
+</body>
+</html>
+HTML;
+
+        return $__html;
     }
 }
 
