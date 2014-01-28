@@ -22,6 +22,25 @@ if (!class_exists('EventEmitter')) {
 }
 
 /**
+ * Autoload pagon namespace and add pagon alias
+ */
+spl_autoload_register(function ($class) {
+    if (substr($class, 0, strlen(__NAMESPACE__) + 1) == __NAMESPACE__ . '\\') {
+        // If with Pagon path, force require
+        if ($file = stream_resolve_include_path(__DIR__ . '/' . str_replace('\\', '/', substr($class, strlen(__NAMESPACE__) + 1)) . '.php')) {
+            require $file;
+            return true;
+        }
+    } else if (class_exists(__NAMESPACE__ . '\\' . $class, false)) {
+        // If class under pagon namespace, alias it.
+        class_alias(__NAMESPACE__ . '\\' . $class, $class);
+        return true;
+    }
+
+    return false;
+});
+
+/**
  * App
  * The core of Pagon
  *
@@ -977,61 +996,53 @@ class App extends EventEmitter
             $class = $this->injectors['alias'][$class];
         }
 
-        // If with Pagon path, force require
-        if (substr($class, 0, strlen(__NAMESPACE__) + 1) == __NAMESPACE__ . '\\') {
-            if ($file = stream_resolve_include_path(__DIR__ . '/' . str_replace('\\', '/', substr($class, strlen(__NAMESPACE__) + 1)) . '.php')) {
-                require $file;
-                return true;
-            }
-        } else {
-            // Set the 99 high order for default autoload
-            $available_path = array();
+        // Set the 99 high order for default autoload
+        $available_path = array();
 
-            // Autoload
-            if ($this->injectors['autoload']) {
-                $available_path[99] = $this->injectors['autoload'];
-            }
+        // Autoload
+        if ($this->injectors['autoload']) {
+            $available_path[99] = $this->injectors['autoload'];
+        }
 
-            // Check other namespaces
-            if ($this->injectors['namespaces']) {
-                // Loop namespaces as autoload
-                foreach ($this->injectors['namespaces'] as $_prefix => $_path) {
-                    // Check if match prefix
-                    if (strpos($class, $_prefix) === 0) {
-                        // Set ordered path
-                        $available_path[(99 - strlen($_prefix)) . $_prefix] = $_path;
-                    }
-                }
-                // Sort by order
-                ksort($available_path);
-            }
-
-            // No available path, no continue
-            if ($available_path) {
-                // Set default file name
-                $file_name = '';
-                // PSR-0 check
-                if ($last_pos = strrpos($class, '\\')) {
-                    $namespace = substr($class, 0, $last_pos);
-                    $class = substr($class, $last_pos + 1);
-                    $file_name = str_replace('\\', '/', $namespace) . '/';
-                }
-                // Get last file name
-                $file_name .= str_replace('_', '/', $class) . '.php';
-                // Loop available path for check
-                foreach ($available_path as $_path) {
-                    // Check file if exists
-                    if ($file = stream_resolve_include_path($_path . '/' . $file_name)) {
-                        require $file;
-                        return true;
-                    }
+        // Check other namespaces
+        if ($this->injectors['namespaces']) {
+            // Loop namespaces as autoload
+            foreach ($this->injectors['namespaces'] as $_prefix => $_path) {
+                // Check if match prefix
+                if (strpos($class, $_prefix) === 0) {
+                    // Set ordered path
+                    $available_path[(99 - strlen($_prefix)) . $_prefix] = $_path;
                 }
             }
+            // Sort by order
+            ksort($available_path);
+        }
 
-            $try_class = __NAMESPACE__ . '\\' . $class;
-            if (class_exists($try_class)) {
-                class_alias($try_class, $class);
+        // No available path, no continue
+        if ($available_path) {
+            // Set default file name
+            $file_name = '';
+            // PSR-0 check
+            if ($last_pos = strrpos($class, '\\')) {
+                $namespace = substr($class, 0, $last_pos);
+                $class = substr($class, $last_pos + 1);
+                $file_name = str_replace('\\', '/', $namespace) . '/';
             }
+            // Get last file name
+            $file_name .= str_replace('_', '/', $class) . '.php';
+            // Loop available path for check
+            foreach ($available_path as $_path) {
+                // Check file if exists
+                if ($file = stream_resolve_include_path($_path . '/' . $file_name)) {
+                    require $file;
+                    return true;
+                }
+            }
+        }
+
+        $try_class = __NAMESPACE__ . '\\' . $class;
+        if (class_exists($try_class)) {
+            class_alias($try_class, $class);
         }
 
         return false;

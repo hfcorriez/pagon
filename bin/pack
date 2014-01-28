@@ -47,7 +47,7 @@ foreach ($files as $file) {
 
     switch ($file) {
         case 'Pagon/App';
-            $php = preg_replace("#const VERSION = '([0-9\.]+)';([\S\s]+?)\nclass#", "const VERSION = '$1';\n\nclass", $php);
+            $php = preg_replace("#const VERSION = '([0-9\.]+)';([\S\s]+?)\nspl_autoload_register#", "const VERSION = '$1';\n\nspl_autoload_register", $php);
             break;
         case 'Pagon/Config';
             $mimes = file_get_contents(PAGON_DIR . '/config/mimes.php');
