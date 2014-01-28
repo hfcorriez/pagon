@@ -1040,11 +1040,6 @@ class App extends EventEmitter
             }
         }
 
-        $try_class = __NAMESPACE__ . '\\' . $class;
-        if (class_exists($try_class)) {
-            class_alias($try_class, $class);
-        }
-
         return false;
     }
 
