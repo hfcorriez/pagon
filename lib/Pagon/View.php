@@ -145,6 +145,8 @@ class View extends EventEmitter
 
         $this->emit('render');
 
+        $er_code = error_reporting(E_ALL & ~E_NOTICE);
+
         if ($this->compileDirectly) {
             $__html = $this->compile();
         } else {
@@ -162,6 +164,8 @@ class View extends EventEmitter
                 $__html = $engine->render($this->injectors['path'], $this->injectors['data'], $this->injectors['dir']);
             }
         }
+
+        error_reporting($er_code);
 
         $this->emit('rendered');
 

@@ -77,7 +77,6 @@ class App extends EventEmitter
         'mode'       => 'develop',
         'debug'      => false,
         'views'      => false,
-        'error'      => true,
         'routes'     => array(),
         'prefixes'   => array(),
         'names'      => array(),
@@ -746,13 +745,8 @@ class App extends EventEmitter
         // Set run
         $this->_run = true;
 
-        $_error = false;
         $_path = $this->input->path();
-        if ($this->injectors['error']) {
-            // If config error, register error handle and set flag
-            $_error = true;
-            $this->registerErrorHandler();
-        }
+        $this->registerErrorHandler();
 
         try {
             // Emit "bundle" event
@@ -827,13 +821,9 @@ class App extends EventEmitter
             if ($this->injectors['buffer']) $this->output->write(ob_get_clean());
         } catch (Exception\Stop $e) {
         } catch (\Exception $e) {
-            if ($this->injectors['debug']) {
-                throw $e;
-            } else {
-                try {
-                    $this->handleError('exception', $e);
-                } catch (Exception\Stop $e) {
-                }
+            try {
+                $this->handleError('exception', $e);
+            } catch (Exception\Stop $e) {
             }
             $this->emit('error');
         }
@@ -849,7 +839,7 @@ class App extends EventEmitter
         // Send end
         $this->emit('end');
 
-        if ($_error) $this->restoreErrorHandler();
+        $this->restoreErrorHandler();
     }
 
     /**
@@ -883,10 +873,18 @@ class App extends EventEmitter
                     $this->halt($this->injectors['errors'][$type][0], $this->injectors['errors'][$type][1]);
                 } else {
                     $this->output->status($this->injectors['errors'][$type][0]);
-                    $this->renderView('Error', array(
-                        'title'   => $this->injectors['errors'][$type][1],
-                        'message' => $route ? ($route instanceof \Exception ? $route->getMessage() : (string)$route) : 'Could not ' . $this->input->method() . ' ' . $this->input->path()
-                    ));
+                    if ($this->injectors['debug']) {
+                        $this->renderView('Error', array(
+                            'title'   => $route instanceof \Exception ? $route->getMessage() : $this->injectors['errors'][$type][1],
+                            'message' => $route ? ($route instanceof \Exception ? $route->getFile() . '[' . $route->getLine() . ']' : (string)$route) : 'Could not ' . $this->input->method() . ' ' . $this->input->path(),
+                            'stacks'  => $this->injectors['debug'] && $route instanceof \Exception ? $route->getTraceAsString() : null
+                        ));
+                    } else {
+                        $this->renderView('Error', array(
+                            'title'   => $this->injectors['errors'][$type][1],
+                            'message' => $route ? ($route instanceof \Exception ? $route->getMessage() : (string)$route) : 'Could not ' . $this->input->method() . ' ' . $this->input->path()
+                        ));
+                    }
 
                     $this->stop();
                 }
@@ -986,7 +984,6 @@ class App extends EventEmitter
     /**
      * Restore error and exception handlers
      *
-
      */
     public function restoreErrorHandler()
     {
@@ -1081,11 +1078,9 @@ class App extends EventEmitter
         if (($error = error_get_last())
             && in_array($error['type'], array(E_PARSE, E_ERROR, E_USER_ERROR, E_COMPILE_ERROR, E_CORE_ERROR))
         ) {
-            if (!$this->injectors['debug']) {
-                try {
-                    $this->handleError('crash', $error);
-                } catch (Exception\Stop $e) {
-                }
+            try {
+                $this->handleError('crash', new \ErrorException($error['message'], $error['type'], 0, $error['file'], $error['line']));
+            } catch (Exception\Stop $e) {
             }
             $this->emit('crash', $error);
             $this->flush();

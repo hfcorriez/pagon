@@ -164,6 +164,16 @@ body h1 {
 <div id="wrapper" class="typo typo-selection">
     <h1>$title</h1>
     <h2 id="tagline">$message</h2>
+HTML;
+
+        if (!empty($stacks)) {
+            $__html .= <<<HTML
+<pre>
+$stacks
+</pre>
+HTML;
+        }
+        $__html .= <<<HTML
 </div>
 </body>
 </html>
