@@ -2,7 +2,6 @@
 
 namespace Pagon\View;
 
-use Pagon\EventEmitter;
 use Pagon\View;
 
 /**
@@ -11,52 +10,15 @@ use Pagon\View;
  *
  * @package Pagon
  */
-class Error extends EventEmitter
+class Error extends View
 {
-    const _CLASS_ = __CLASS__;
-
-    /**
-     * Is Rendering now?
-     *
-     * @var bool
-     */
-    public static $rendering = false;
-
-    /**
-     * @var array Injectors
-     */
-    protected $injectors = array(
-        'data' => null
-    );
-
-    public function __construct($data = array())
-    {
-        $this->injectors['data'] = $data;
-    }
-
-    /**
-     * Set variable for view
-     *
-     * @param array $array
-     * @return View
-     */
-    public function data(array $array = array())
-    {
-        return $this->injectors['data'] = $array + $this->injectors['data'];
-    }
-
     /**
      * render
      *
      * @return string
      */
-    public function render()
+    public function compile()
     {
-        // Mark rendering flag
-        self::$rendering = true;
-
-        $this->emit('render');
-
         if ($this->injectors) {
             extract((array)$this->injectors['data']);
         }
@@ -207,21 +169,6 @@ body h1 {
 </html>
 HTML;
 
-        $this->emit('rendered');
-
-        // Release rendering flag
-        self::$rendering = false;
-
         return $__html;
-    }
-
-    /**
-     * Output object
-     *
-     * @return string
-     */
-    public function __toString()
-    {
-        return $this->render();
     }
 }

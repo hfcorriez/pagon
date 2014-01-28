@@ -25,12 +25,18 @@ class View extends EventEmitter
     protected $path;
 
     /**
+     * @var bool If compile directly
+     */
+    protected $compileDirectly = false;
+
+    /**
      * @var array
      */
     protected $injectors = array(
         'dir'    => '',
         'engine' => null,
-        'data'   => array()
+        'data'   => array(),
+        'app'    => null
     );
 
     /**
@@ -53,6 +59,19 @@ class View extends EventEmitter
     }
 
     /**
+     * Make template
+     *
+     * @param string $path
+     * @param array  $data
+     * @param mixed  $engine
+     * @return View
+     */
+    public static function make($path, $data = array(), $engine = null)
+    {
+        return new self($path, $data, array('engine' => $engine));
+    }
+
+    /**
      * Construct a view
      *
      * @param string $path
@@ -63,23 +82,29 @@ class View extends EventEmitter
      */
     public function __construct($path, $data = array(), $injectors = array())
     {
-        // Set dir for the view
-        $injectors = array('data' => (array)$data, 'path' => $path) + $injectors + $this->injectors;
+        if (is_array($path)) {
+            // Support View factory
+            $this->injectors['data'] = $path;
+            $this->compileDirectly = true;
+        } else {
+            // Set dir for the view
+            $injectors = array('data' => (array)$data, 'path' => $path) + $injectors + array('dir' => (string)App::self()->get('views'), 'app' => App::self()) + $this->injectors;
 
-        // Set path
-        $injectors['path'] = ltrim($path, '/');
+            // Set path
+            $injectors['path'] = ltrim($path, '/');
 
-        // If file exists?
-        if (!is_file($injectors['dir'] . '/' . $injectors['path'])) {
-            // Try to load file from absolute path
-            if ($path{0} == '/' && is_file($path)) {
-                $injectors['path'] = $path;
-                $injectors['dir'] = '';
-            } else if ($injectors['app'] && ($_path = $injectors['app']->path($injectors['path']))) {
-                $injectors['path'] = $_path;
-                $injectors['dir'] = '';
-            } else {
-                throw new \Exception('Template file is not exist: ' . $injectors['path']);
+            // If file exists?
+            if (!is_file($injectors['dir'] . '/' . $injectors['path'])) {
+                // Try to load file from absolute path
+                if ($path{0} == '/' && is_file($path)) {
+                    $injectors['path'] = $path;
+                    $injectors['dir'] = '';
+                } else if (!empty($injectors['app']) && ($_path = $injectors['app']->path($injectors['path']))) {
+                    $injectors['path'] = $_path;
+                    $injectors['dir'] = '';
+                } else {
+                    throw new \Exception('Template file is not exist: ' . $injectors['path']);
+                }
             }
         }
 
@@ -99,30 +124,43 @@ class View extends EventEmitter
     }
 
     /**
+     * Need to implements
+     *
+     * @throws \RuntimeException
+     */
+    public function compile()
+    {
+        throw new \RuntimeException("Implements compile method");
+    }
+
+    /**
      * render
      *
      * @return string
      */
     public function render()
     {
-        $engine = $this->injectors['engine'];
-
         // Mark rendering flag
         self::$rendering = true;
 
         $this->emit('render');
 
-        if (!$engine) {
-            if ($this->injectors) {
-                extract((array)$this->injectors['data']);
-            }
-            ob_start();
-            include($this->injectors['dir'] . ($this->injectors['path']{0} == '/' ? '' : '/') . $this->injectors['path']);
-            $html = ob_get_clean();
-        } else if (is_callable($engine)) {
-            $html = $engine($this->injectors['path'], $this->injectors['data'], $this->injectors['dir']);
+        if ($this->compileDirectly) {
+            $__html = $this->compile();
         } else {
-            $html = $engine->render($this->injectors['path'], $this->injectors['data'], $this->injectors['dir']);
+            $engine = $this->injectors['engine'];
+            if (!$engine) {
+                if ($this->injectors) {
+                    extract((array)$this->injectors['data']);
+                }
+                ob_start();
+                include($this->injectors['dir'] . ($this->injectors['path']{0} == '/' ? '' : '/') . $this->injectors['path']);
+                $__html = ob_get_clean();
+            } else if (is_callable($engine)) {
+                $__html = $engine($this->injectors['path'], $this->injectors['data'], $this->injectors['dir']);
+            } else {
+                $__html = $engine->render($this->injectors['path'], $this->injectors['data'], $this->injectors['dir']);
+            }
         }
 
         $this->emit('rendered');
@@ -130,7 +168,7 @@ class View extends EventEmitter
         // Release rendering flag
         self::$rendering = false;
 
-        return $html;
+        return $__html;
     }
 
     /**
