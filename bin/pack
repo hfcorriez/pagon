@@ -18,7 +18,6 @@ $files = array(
     'Pagon/Http/Output',
     'Pagon/Cli/Input',
     'Pagon/Cli/Output',
-    'Pagon/Engine/Jade',
     'Pagon/Exception/Pass',
     'Pagon/Exception/Stop'
 );
