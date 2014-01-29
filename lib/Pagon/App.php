@@ -105,7 +105,7 @@ class App extends EventEmitter
             'show'    => array('GET', ':id'),
             'edit'    => array('GET', ':id/edit'),
             'update'  => array('PUT', ':id'),
-            'destroy' => array('DELETE', ':id'),
+            'destroy' => array('DELETE', ':id')
         ),
         'safe_query' => true,
         'input'      => null,
@@ -516,10 +516,14 @@ class App extends EventEmitter
      *
      * @param string $path
      * @param string $namespace
+     * @param array  $excepts
+     * @throws \InvalidArgumentException
      */
-    public function resource($path, $namespace)
+    public function resource($path, $namespace, $excepts = array())
     {
         foreach ($this->injectors['resource'] as $type => $opt) {
+            if (in_array($type, $excepts)) continue;
+
             $this->router->map(
                 $path . (!empty($opt[1]) ? '/' . $opt[1] : ''),
                 $namespace . '\\' . (!empty($opt[2]) ? $opt[2] : ucfirst($type)),

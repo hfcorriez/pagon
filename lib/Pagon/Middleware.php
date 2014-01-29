@@ -51,6 +51,15 @@ abstract class Middleware extends EventEmitter
         $prefixes[] = '';
         $prefixes[] = __NAMESPACE__ . "\\Middleware";
 
+        /**
+         * Support direct method like "Index@start"
+         */
+        if (strpos($route, '@')) {
+            $arr = explode('@', $route);
+            $route = $arr[0];
+            $options = (array)$options + array('entry' => $arr[1]);
+        }
+
         foreach ($prefixes as $namespace) {
             if (!is_subclass_of($class = ($namespace ? $namespace . '\\' : '') . $route, __CLASS__, true)) continue;
 
