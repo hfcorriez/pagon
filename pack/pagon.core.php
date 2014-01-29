@@ -52,7 +52,7 @@ class Fiber implements \ArrayAccess
             return null;
         }
 
-        // Inject or share
+       
         if (is_array($this->injectors[$key])
             && isset($this->injectors[$key]['fiber'])
             && isset($this->injectors[$key][0])
@@ -60,12 +60,12 @@ class Fiber implements \ArrayAccess
         ) {
             switch ($this->injectors[$key]['fiber']) {
                 case 1:
-                    // share
+                   
                     $this->injectors[$key] = call_user_func($this->injectors[$key][0]);
                     $tmp = & $this->injectors[$key];
                     break;
                 case 0:
-                    // inject
+                   
                     $tmp = call_user_func($this->injectors[$key][0]);
                     break;
                 default:
@@ -199,7 +199,7 @@ class EventEmitter extends Fiber
         $event = strtolower($event);
 
         if ($args !== null) {
-            // Check arguments, set inline args more than 1
+           
             $args = array_slice(func_get_args(), 1);
         } else {
             $args = array();
@@ -225,7 +225,7 @@ class EventEmitter extends Fiber
 
         $emitted = false;
 
-        // Loop listeners for callback
+       
         foreach ($all_listeners as $name => $listeners) {
             $this_args = $args;
             if (strpos($name, '*') !== false) {
@@ -233,12 +233,12 @@ class EventEmitter extends Fiber
             }
             foreach ($listeners as &$listener) {
                 if ($listener instanceof \Closure) {
-                    // Closure Listener
+                   
                     call_user_func_array($listener, $this_args);
                     $emitted = true;
                 } elseif (is_array($listener) && $listener[0] instanceof \Closure) {
                     if ($listener[1]['times'] > 0) {
-                        // Closure Listener
+                       
                         call_user_func_array($listener[0], $this_args);
                         $emitted = true;
                         $listener[1]['times']--;
@@ -295,9 +295,9 @@ class EventEmitter extends Fiber
         } else {
             $event = strtolower($event);
             if (!empty($this->listeners[$event])) {
-                // Find Listener index
+               
                 if (($key = array_search($listener, $this->listeners[$event])) !== false) {
-                    // Remove it
+                   
                     unset($this->listeners[$event][$key]);
                 }
             }
@@ -410,18 +410,18 @@ abstract class Route extends Middleware
 {
     protected function before()
     {
-        // Implements if you need
+       
     }
 
     protected function after()
     {
-        // Implements if you need
+       
     }
 
     public function call()
     {
         $this->before();
-        // Fallback call all
+       
         if (!method_exists($this, 'run') && method_exists($this, 'missing')) {
             call_user_func(array($this, 'missing'), $this->input, $this->output);
         } else {
@@ -459,7 +459,7 @@ class Router extends Middleware
     public function map($path, $route, $method = '*')
     {
         if (!is_array($route)) {
-            // Init route node
+           
             $this->routes[] = array(
                 'path'  => $path,
                 'route' => $route,
@@ -468,7 +468,7 @@ class Router extends Middleware
             $this->last++;
         } else {
             foreach ($route as $r) {
-                // Init route node
+               
                 $this->routes[] = array(
                     'path'  => $path,
                     'route' => $r,
@@ -510,7 +510,7 @@ class Router extends Middleware
 
     public function dispatch()
     {
-        // Check path
+       
         if ($this->injectors['path'] === null) return false;
 
         $method = $this->input->method();
@@ -519,15 +519,15 @@ class Router extends Middleware
         $app = & $this->app;
 
         if ($this->handle($this->routes, function ($route) use ($path, $method, $prefixes, $app) {
-            // Lookup rules
+           
             $rules = isset($route['rules']) ? $route['rules'] : array();
 
-            // Lookup defaults
+           
             $defaults = isset($route['defaults']) ? $route['defaults'] : array();
 
-            // Try to parse the params
+           
             if (($params = Router::match($path, $route['path'], $rules, $defaults)) !== false) {
-                // Method match
+               
                 if ($route['via'] && !in_array($method, $route['via'])) return false;
 
                 $app->input->params = $params;
@@ -539,7 +539,7 @@ class Router extends Middleware
         ) return true;
 
 
-        // Try to check automatic route parser
+       
         if (isset($this->injectors['automatic']) && is_callable($this->injectors['automatic'])) {
             $routes = (array)call_user_func($this->injectors['automatic'], $this->injectors['path']);
 
@@ -600,7 +600,7 @@ class Router extends Middleware
         $prefixes = array();
         $this->injectors['path'] = $this->app->input->path();
 
-        // Prefixes Lookup
+       
         if ($this->app->prefixes) {
             foreach ($this->app->prefixes as $path => $namespace) {
                 if (strpos($this->injectors['path'], $path) === 0) {
@@ -620,20 +620,20 @@ class Router extends Middleware
     {
         $param = false;
 
-        // Regex or Param check
+       
         if (!strpos($route, ':') && strpos($route, '^') === false) {
             if ($path === $route || $path === $route . '/') {
                 $param = array();
             }
         } else {
-            // Try match
+           
             if (preg_match(self::pathToRegex($route, $rules), $path, $matches)) {
                 array_shift($matches);
                 $param = $matches;
             }
         }
 
-        // When complete the return
+       
         return $param === false ? false : ($defaults + $param);
     }
 
@@ -642,13 +642,13 @@ class Router extends Middleware
         if ($path[1] !== '^') {
             $path = str_replace(array('/'), array('\\/'), $path);
             if ($path{0} == '^') {
-                // As regex
+               
                 $path = '/' . $path . '/';
             } elseif (strpos($path, ':')) {
                 $path = str_replace(array('(', ')'), array('(?:', ')?'), $path);
 
                 if (!$rules) {
-                    // Need replace
+                   
                     $path = '/^' . preg_replace('/(?<!\\\\):([a-zA-Z0-9]+)/', '(?<$1>[^\/]+?)', $path) . '\/?$/';
                 } else {
                     $path = '/^' . preg_replace_callback('/(?<!\\\\):([a-zA-Z0-9]+)/', function ($match) use ($rules) {
@@ -656,11 +656,11 @@ class Router extends Middleware
                         }, $path) . '\/?$/';
                 }
             } else {
-                // Full match
+               
                 $path = '/^' . $path . '\/?$/';
             }
 
-            // * support
+           
             if (strpos($path, '*')) {
                 $path = str_replace('*', '([^\/]+?)', $path);
             }
@@ -912,15 +912,15 @@ class Config extends Fiber
             throw new \InvalidArgumentException("Load config error with non-exists name \"$name\"");
         }
 
-        // Check if config already exists?
+       
         if (static::$imports[$name] instanceof Config) {
             return static::$imports[$name];
         }
 
-        // Try to load
+       
         list($path, $type) = static::$imports[$name];
 
-        // Check file in path
+       
         if (!$file = App::self()->path($path)) {
             throw new \InvalidArgumentException("Can not find file path \"$path\"");
         }
@@ -952,7 +952,7 @@ class Config extends Fiber
 
     public static function parse($string, $type, array $option = array())
     {
-        // Try to use custom parser
+       
         if (!class_exists($class = __NAMESPACE__ . "\\Config\\" . ucfirst(strtolower($type)))
             && !class_exists($class = $type)
         ) {
@@ -964,7 +964,7 @@ class Config extends Fiber
 
     public static function dump($array, $type, array $option = array())
     {
-        // Try to use custom parser
+       
         if (!class_exists($class = __NAMESPACE__ . "\\Config\\" . ucfirst(strtolower($type)))
             && !class_exists($class = $type)
         ) {
@@ -1022,19 +1022,19 @@ class View extends EventEmitter
     public function __construct($path, $data = array(), $injectors = array())
     {
         if (is_array($path)) {
-            // Support View factory
+           
             $this->injectors['data'] = $path;
             $this->compileDirectly = true;
         } else {
-            // Set dir for the view
+           
             $injectors = array('data' => (array)$data, 'path' => $path) + $injectors + array('dir' => (string)App::self()->get('views'), 'app' => App::self()) + $this->injectors;
 
-            // Set path
+           
             $injectors['path'] = ltrim($path, '/');
 
-            // If file exists?
+           
             if (!is_file($injectors['dir'] . '/' . $injectors['path'])) {
-                // Try to load file from absolute path
+               
                 if ($path{0} == '/' && is_file($path)) {
                     $injectors['path'] = $path;
                     $injectors['dir'] = '';
@@ -1047,7 +1047,7 @@ class View extends EventEmitter
             }
         }
 
-        // Set data
+       
         parent::__construct($injectors);
     }
 
@@ -1063,7 +1063,7 @@ class View extends EventEmitter
 
     public function render()
     {
-        // Mark rendering flag
+       
         self::$rendering = true;
 
         $this->emit('render');
@@ -1092,7 +1092,7 @@ class View extends EventEmitter
 
         $this->emit('rendered');
 
-        // Release rendering flag
+       
         self::$rendering = false;
 
         return $__html;
@@ -1109,13 +1109,13 @@ const VERSION = '0.8.0';
 
 spl_autoload_register(function ($class) {
     if (substr($class, 0, strlen(__NAMESPACE__) + 1) == __NAMESPACE__ . '\\') {
-        // If with Pagon path, force require
+       
         if ($file = stream_resolve_include_path(__DIR__ . '/' . str_replace('\\', '/', substr($class, strlen(__NAMESPACE__) + 1)) . '.php')) {
             require $file;
             return true;
         }
     } else if (class_exists(__NAMESPACE__ . '\\' . $class)) {
-        // If class under pagon namespace, alias it.
+       
         class_alias(__NAMESPACE__ . '\\' . $class, $class);
         return true;
     }
@@ -1181,12 +1181,12 @@ class App extends EventEmitter
 
     public static function create($config = array())
     {
-        // Is cli
+       
         if (is_null(self::$_cli)) self::$_cli = PHP_SAPI == 'cli';
 
         $app = new self($config);
 
-        // Set IO depends the run mode
+       
         if (!self::$_cli) {
             $app->input = new Http\Input(array('app' => $app));
             $app->output = new Http\Output(array('app' => $app));
@@ -1195,7 +1195,7 @@ class App extends EventEmitter
             $app->output = new Cli\Output(array('app' => $app));
         }
 
-        // Init Route
+       
         $app->router = new Router(array('app' => $app));
 
         return $app;
@@ -1212,28 +1212,28 @@ class App extends EventEmitter
 
     public function __construct($config = array())
     {
-        // Register shutdown
+       
         register_shutdown_function(array($this, '__shutdown'));
 
-        // Register autoload
+       
         spl_autoload_register(array($this, '__autoload'));
 
-        // Set config
+       
         $this->injectors =
             (!is_array($config) ? Config::load((string)$config) : $config)
             + (!empty($this->injectors['cli']) ? array('buffer' => false) : array())
             + $this->injectors;
 
-        // Set cli mode
+       
         if (!isset($this->injectors['cli'])) $this->injectors['cli'] = self::$_cli;
 
-        // Set default locals
+       
         $this->injectors['locals']['config'] = & $this->injectors;
 
-        // Set mode
+       
         $this->injectors['mode'] = ($_mode = getenv('PAGON_ENV')) ? $_mode : $this->injectors['mode'];
 
-        // Set pagon root directory
+       
         $this->injectors['mounts']['pagon'] = dirname(dirname(__DIR__));
 
         $this->input = & $this->injectors['input'];
@@ -1310,13 +1310,13 @@ class App extends EventEmitter
             || is_string($path) && $path{0} != '/'
             || $path instanceof \Closure
         ) {
-            // If not path
+           
             $options = (array)$middleware;
             $middleware = $path;
             $path = '';
         }
 
-        // Add to the end
+       
         $this->injectors['stacks'][] = array($path, $middleware, $options);
     }
 
@@ -1332,7 +1332,7 @@ class App extends EventEmitter
 
     public function get($key = null, $default = null)
     {
-        // Get config for use
+       
         if ($default === null) {
             if ($key === null) return $this->injectors;
 
@@ -1423,11 +1423,11 @@ class App extends EventEmitter
             return $this->router->automatic = $closure;
         } elseif ($closure === true || is_string($closure)) {
             $_cli = $this->injectors['cli'];
-            // Set route use default automatic
+           
             return $this->router->automatic = function ($path) use ($closure, $_cli, $index) {
                 $parts = array();
 
-                // Split rule
+               
                 if (!$_cli && $path !== '/') {
                     $_paths = explode('/', ltrim($path, '/'));
                 } else if ($_cli && $path !== '') {
@@ -1435,23 +1435,23 @@ class App extends EventEmitter
                     $_paths = explode(':', array_shift($_));
                 }
 
-                // Process parts
+               
                 if (isset($_paths)) {
                     foreach ($_paths as $_path) {
                         $parts[] = ucfirst(strtolower($_path));
                     }
                 }
 
-                // Set default namespace
+               
                 if ($closure !== true) array_unshift($parts, $closure);
 
-                // Index
+               
                 if (!$parts) return $index;
 
-                // Generate class name
+               
                 $class = join('\\', $parts);
 
-                // Try to lookup class and with it's index
+               
                 return array($class, $class . '\\' . $index);
             };
         }
@@ -1498,7 +1498,7 @@ class App extends EventEmitter
     public function engine($name, $engine = null)
     {
         if ($engine) {
-            // Set engine
+           
             $this->injectors['engines'][$name] = $engine;
         }
         return isset($this->injectors['engines'][$name]) ? $this->injectors['engines'][$name] : null;
@@ -1516,117 +1516,117 @@ class App extends EventEmitter
 
     public function compile($path, array $data = null, array $options = array())
     {
-        // Check engine
+       
         if (!isset($options['engine'])) {
-            // Get ext
+           
             $ext = pathinfo($path, PATHINFO_EXTENSION);
             $options['engine'] = false;
 
-            // If ext then check engine with ext
+           
             if ($ext && isset($this->injectors['engines'][$ext])) {
-                // If engine exists
+               
                 if (is_string($this->injectors['engines'][$ext])) {
                     if (!class_exists($class = $this->injectors['engines'][$ext])
                         && !class_exists($class = __NAMESPACE__ . '\\Engine\\' . $this->injectors['engines'][$ext])
                     ) {
                         throw new \RuntimeException("Unavailable view engine '{$this->injectors['engines'][$ext]}'");
                     }
-                    // Create new engine
+                   
                     $this->injectors['engines'][$ext] = $options['engine'] = new $class();
                 } else {
-                    // Get engine from exists engines
+                   
                     $options['engine'] = $this->injectors['engines'][$ext];
                 }
             }
         }
 
-        // Set default data
+       
         $data = (array)$data;
 
-        // Default set app
+       
         $data['_'] = $this;
 
-        // Create view
+       
         $view = new View($path,
             $data + $this->injectors['locals'],
             $options + array('dir' => $this->injectors['views'], 'app' => $this)
         );
 
-        // Return view
+       
         return $view;
     }
 
     public function run()
     {
-        // Check if run
+       
         if ($this->_run) {
             throw new \RuntimeException("Application already running");
         }
 
-        // Save current app
+       
         self::$self = $this;
 
-        // Emit run
+       
         $this->emit('run');
 
-        // Set run
+       
         $this->_run = true;
 
         $_path = $this->input->path();
         $this->registerErrorHandler();
 
         try {
-            // Emit "bundle" event
+           
             $this->emit('bundle');
             foreach ($this->injectors['bundles'] as $id => $options) {
-                // Set id
+               
                 $id = isset($options['id']) ? $options['id'] : $id;
 
-                // Set bootstrap file
+               
                 $bootstrap = isset($options['bootstrap']) ? $options['bootstrap'] : 'bootstrap.php';
 
-                // Set dir to load
+               
                 $dir = isset($options['dir']) ? $options['dir'] : 'bundles/' . $id;
 
-                // Path check, if not match start of path, skip
+               
                 if (isset($options['path'])
                     && strpos($_path, $options['path']) !== 0
                 ) {
                     continue;
                 }
 
-                // Check the file path
+               
                 if (!$file = $this->path($dir . '/' . $bootstrap)) {
                     throw new \InvalidArgumentException('Bundle "' . $id . '" can not bootstrap');
                 }
 
-                // Check if bootstrap file loaded
+               
                 if (isset(self::$loads[$file])) {
                     throw new \RuntimeException('Bundle "' . $id . '" can not bootstrap twice');
                 }
 
-                // Emit "bundle.[id]" event
+               
                 $this->emit('bundle.' . $id);
 
-                // Set variable for bootstrap file
+               
                 $app = $this;
                 extract($options);
                 require $file;
 
-                // Save to loads
+               
                 self::$loads[$file] = true;
             }
 
-            // Start buffer
+           
             if ($this->injectors['buffer']) ob_start();
             if (!in_array(array('', $this->router, array()), $this->injectors['stacks'])) $this->injectors['stacks'][] = $this->router;
 
-            // Emit "middleware" event
+           
             $this->emit('middleware');
 
-            // Process the stacks
+           
             if (!$this->router->handle($this->injectors['stacks'], function ($stack) use ($_path) {
-                // Try to match the path
+               
                 if (is_array($stack) && $stack[0] && strpos($_path, $stack[0]) === false) {
                     return false;
                 }
@@ -1641,7 +1641,7 @@ class App extends EventEmitter
                 $this->handleError('404');
             }
 
-            // Write direct output to the head of buffer
+           
             if ($this->injectors['buffer']) $this->output->write(ob_get_clean());
         } catch (Exception\Stop $e) {
         } catch (\Exception $e) {
@@ -1654,13 +1654,13 @@ class App extends EventEmitter
 
         $this->_run = false;
 
-        // Send start
+       
         $this->emit('flush');
 
-        // Flush
+       
         $this->flush();
 
-        // Send end
+       
         $this->emit('end');
 
         $this->restoreErrorHandler();
@@ -1736,15 +1736,15 @@ class App extends EventEmitter
 
     public function flush()
     {
-        // Send headers
+       
         if (!$this->injectors['cli']) {
             $this->output->sendHeader();
         }
 
-        // Send
+       
         echo $this->output->body();
 
-        // Clear
+       
         $this->output->clear();
     }
 
@@ -1773,49 +1773,49 @@ class App extends EventEmitter
     {
         if ($class{0} == '\\') $class = ltrim($class, '\\');
 
-        // Alias check
+       
         if (!empty($this->injectors['alias'][$class])) {
             class_alias($this->injectors['alias'][$class], $class);
             $class = $this->injectors['alias'][$class];
         }
 
-        // Set the 99 high order for default autoload
+       
         $available_path = array();
 
-        // Autoload
+       
         if ($this->injectors['autoload']) {
             $available_path[99] = $this->injectors['autoload'];
         }
 
-        // Check other namespaces
+       
         if ($this->injectors['namespaces']) {
-            // Loop namespaces as autoload
+           
             foreach ($this->injectors['namespaces'] as $_prefix => $_path) {
-                // Check if match prefix
+               
                 if (strpos($class, $_prefix) === 0) {
-                    // Set ordered path
+                   
                     $available_path[(99 - strlen($_prefix)) . $_prefix] = $_path;
                 }
             }
-            // Sort by order
+           
             ksort($available_path);
         }
 
-        // No available path, no continue
+       
         if ($available_path) {
-            // Set default file name
+           
             $file_name = '';
-            // PSR-0 check
+           
             if ($last_pos = strrpos($class, '\\')) {
                 $namespace = substr($class, 0, $last_pos);
                 $class = substr($class, $last_pos + 1);
                 $file_name = str_replace('\\', '/', $namespace) . '/';
             }
-            // Get last file name
+           
             $file_name .= str_replace('_', '/', $class) . '.php';
-            // Loop available path for check
+           
             foreach ($available_path as $_path) {
-                // Check file if exists
+               
                 if ($file = stream_resolve_include_path($_path . '/' . $file_name)) {
                     require $file;
                     return true;
@@ -2097,7 +2097,7 @@ class Input extends EventEmitter
         if (!isset($this->injectors['path_info'])) {
             $_path_info = substr_replace($this->injectors['server']['REQUEST_URI'], '', 0, strlen($this->scriptName()));
             if (strpos($_path_info, '?') !== false) {
-                // Query string is not removed automatically
+               
                 $_path_info = substr_replace($_path_info, '', strpos($_path_info, '?'));
             }
             $this->injectors['path_info'] = (!$_path_info || $_path_info{0} != '/' ? '/' : '') . $_path_info;
@@ -2266,7 +2266,7 @@ class Input extends EventEmitter
                 }
                 if (!$_name) continue;
 
-                // Set header
+               
                 $_header[strtolower(str_replace('_', '-', $_name))] = trim($value);
             }
 
@@ -2292,12 +2292,12 @@ class Input extends EventEmitter
             foreach ($this->injectors['cookies'] as &$value) {
                 if (!$value) continue;
 
-                // Check crypt
+               
                 if (strpos($value, 'c:') === 0) {
                     $value = $this->app->cryptor->decrypt(substr($value, 2));
                 }
 
-                // Parse signed cookie
+               
                 if ($value && strpos($value, 's:') === 0 && $_option['secret']) {
                     $_pos = strrpos($value, '.');
                     $_data = substr($value, 2, $_pos - 2);
@@ -2308,7 +2308,7 @@ class Input extends EventEmitter
                     }
                 }
 
-                // Parse json cookie
+               
                 if ($value && strpos($value, 'j:') === 0) {
                     $value = json_decode(substr($value, 2), true);
                 }
@@ -2347,29 +2347,29 @@ class Input extends EventEmitter
             }
         }
 
-        // if no parameter was passed, just return parsed data
+       
         if (!$type) return $this->injectors['accept'];
-        // Support get best match
+       
         if ($type === true) {
             reset($this->injectors['accept']);
             return key($this->injectors['accept']);
         }
 
-        // If type is 'txt', 'xml' and so on, use smarty stracy
+       
         if (is_string($type) && !strpos($type, '/')) {
             $type = Config::export('mimes')->{$type};
             if (!$type) return null;
         }
 
-        // Force to array
+       
         $type = (array)$type;
 
-        // let’s check our supported types:
+       
         foreach ($this->injectors['accept'] as $mime => $q) {
             if ($q && in_array($mime, $type)) return $mime;
         }
 
-        // All match
+       
         if (isset($this->injectors['accept']['*/*'])) return $type[0];
         return null;
     }
@@ -2384,18 +2384,18 @@ class Input extends EventEmitter
             }
         }
 
-        // if no parameter was passed, just return parsed data
+       
         if (!$type) return $this->injectors['accept_encoding'];
-        // Support get best match
+       
         if ($type === true) {
             reset($this->injectors['accept_encoding']);
             return key($this->injectors['accept_encoding']);
         }
 
-        // Force to array
+       
         $type = (array)$type;
 
-        // let’s check our supported types:
+       
         foreach ($this->injectors['accept_encoding'] as $lang => $q) {
             if ($q && in_array($lang, $type)) return $lang;
         }
@@ -2412,18 +2412,18 @@ class Input extends EventEmitter
             }
         }
 
-        // if no parameter was passed, just return parsed data
+       
         if (!$type) return $this->injectors['accept_language'];
-        // Support get best match
+       
         if ($type === true) {
             reset($this->injectors['accept_language']);
             return key($this->injectors['accept_language']);
         }
 
-        // Force to array
+       
         $type = (array)$type;
 
-        // let’s check our supported types:
+       
         foreach ($this->injectors['accept_language'] as $lang => $q) {
             if ($q && in_array($lang, $type)) return $lang;
         }
@@ -2469,20 +2469,20 @@ class Input extends EventEmitter
     {
         $_accept = array();
 
-        // Accept header is case insensitive, and whitespace isn’t important
+       
         $accept = strtolower(str_replace(' ', '', $string));
-        // divide it into parts in the place of a ","
+       
         $accept = explode(',', $accept);
         foreach ($accept as $a) {
-            // the default quality is 1.
+           
             $q = 1;
-            // check if there is a different quality
+           
             if (strpos($a, ';q=')) {
-                // divide "mime/type;q=X" into two parts: "mime/type" i "X"
+               
                 list($a, $q) = explode(';q=', $a);
             }
-            // mime-type $a is accepted with the quality $q
-            // WARNING: $q == 0 means, that mime-type isn’t supported!
+           
+           
             $_accept[$a] = $q;
         }
         arsort($_accept);
@@ -2495,11 +2495,11 @@ class Input extends EventEmitter
 class Output extends EventEmitter
 {
     public static $messages = array(
-        // Informational 1xx
+       
         100 => 'Continue',
         101 => 'Switching Protocols',
 
-        // Success 2xx
+       
         200 => 'OK',
         201 => 'Created',
         202 => 'Accepted',
@@ -2508,17 +2508,17 @@ class Output extends EventEmitter
         205 => 'Reset Content',
         206 => 'Partial Content',
 
-        // Redirection 3xx
+       
         300 => 'Multiple Choices',
         301 => 'Moved Permanently',
-        302 => 'Found', // 1.1
+        302 => 'Found',
         303 => 'See Other',
         304 => 'Not Modified',
         305 => 'Use Proxy',
-        // 306 is deprecated but reserved
+       
         307 => 'Temporary Redirect',
 
-        // Client Error 4xx
+       
         400 => 'Bad Request',
         401 => 'Unauthorized',
         402 => 'Payment Required',
@@ -2538,7 +2538,7 @@ class Output extends EventEmitter
         416 => 'Requested Range Not Satisfiable',
         417 => 'Expectation Failed',
 
-        // Server Error 5xx
+       
         500 => 'Internal Server Error',
         501 => 'Not Implemented',
         502 => 'Bad Gateway',
@@ -2611,9 +2611,9 @@ class Output extends EventEmitter
         if ($name === null) {
             return $this->injectors['headers'];
         } elseif (is_array($name)) {
-            // Batch set headers
+           
             foreach ($name as $k => $v) {
-                // Force replace
+               
                 $this->header($k, $v, $replace);
             }
         } else {
@@ -2739,30 +2739,30 @@ class Output extends EventEmitter
 
     public function sendHeader()
     {
-        // Check header
+       
         if (headers_sent() === false) {
             $this->emit('header');
 
-            // Send header
+           
             header(sprintf('HTTP/%s %s %s', $this->app->input->protocol(), $this->injectors['status'], $this->message()));
 
-            // Set content type if not exists
+           
             if (!isset($this->injectors['headers']['Content-Type'])) {
                 $this->injectors['headers']['Content-Type'] = $this->injectors['content_type'] . '; charset=' . $this->injectors['charset'];
             }
 
-            // Content length check and set
+           
             if (!isset($this->injectors['headers']['Content-Length'])
                 && is_numeric($this->injectors['length'])
             ) {
-                // Set content length
+               
                 $this->injectors['headers']['Content-Length'] = $this->injectors['length'];
             }
 
-            // Loop header to send
+           
             if ($this->injectors['headers']) {
                 foreach ($this->injectors['headers'] as $name => $value) {
-                    // Multiple line header support
+                   
                     if (is_array($value)) {
                         foreach ($value as $v) {
                             header("$name: $v", false);
@@ -2773,7 +2773,7 @@ class Output extends EventEmitter
                 }
             }
 
-            // Set cookie
+           
             if ($this->injectors['cookies']) {
                 $_default = $this->app->cookie;
                 if (!$_default) {
@@ -2788,26 +2788,26 @@ class Output extends EventEmitter
                         'encrypt'  => false,
                     );
                 }
-                // Loop for set
+               
                 foreach ($this->injectors['cookies'] as $key => $value) {
                     $_option = (array)$value[1] + $_default;
                     $value = $value[0];
-                    // Json object cookie
+                   
                     if (is_array($value)) {
                         $value = 'j:' . json_encode($value);
                     }
 
-                    // Sign cookie
+                   
                     if ($_option['sign'] && $_default['secret']) {
                         $value = 's:' . $value . '.' . hash_hmac('sha1', $value, $_default['secret']);
                     }
 
-                    // Encrypt
+                   
                     if ($_option['encrypt']) {
                         $value = 'c:' . $this->app->cryptor->encrypt($value);
                     }
 
-                    // Set cookie
+                   
                     setcookie($key, $value, time() + $_option['timeout'], $_option['path'], $_option['domain'], $_option['secure'], $_option['httponly']);
                 }
             }

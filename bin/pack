@@ -90,7 +90,9 @@ function remove_use_statement($php)
 
 function remove_comment($php)
 {
-    return preg_replace('#([ ]*)\/\*\*([\s\S]+?)\*\/\n#', '', $php);
+    $php = preg_replace('#([ ]*)\/\*\*([\s\S]+?)\*\/\n#', '', $php);
+    $php = preg_replace('# \/\/ .*#', '', $php);
+    return $php;
 }
 
 function get_uses($php)
