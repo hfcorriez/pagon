@@ -364,6 +364,12 @@ abstract class Middleware extends EventEmitter
         $prefixes[] = '';
         $prefixes[] = __NAMESPACE__ . "\\Middleware";
 
+        if (strpos($route, '@')) {
+            $arr = explode('@', $route);
+            $route = $arr[0];
+            $options = (array)$options + array('entry' => $arr[1]);
+        }
+
         foreach ($prefixes as $namespace) {
             if (!is_subclass_of($class = ($namespace ? $namespace . '\\' : '') . $route, __CLASS__, true)) continue;
 
@@ -420,12 +426,16 @@ abstract class Route extends Middleware
 
     public function call()
     {
-        $this->before();
        
-        if (!method_exists($this, 'run') && method_exists($this, 'missing')) {
+        $run = !empty($this->injectors['entry']) ? $this->injectors['entry'] : 'run';
+
+        $this->before();
+
+       
+        if (!method_exists($this, $run) && method_exists($this, 'missing')) {
             call_user_func(array($this, 'missing'), $this->input, $this->output);
         } else {
-            $this->run($this->input, $this->output);
+            $this->$run($this->input, $this->output);
         }
         $this->after();
     }
@@ -1157,7 +1167,7 @@ class App extends EventEmitter
             'show'    => array('GET', ':id'),
             'edit'    => array('GET', ':id/edit'),
             'update'  => array('PUT', ':id'),
-            'destroy' => array('DELETE', ':id'),
+            'destroy' => array('DELETE', ':id')
         ),
         'safe_query' => true,
         'input'      => null,
@@ -1406,9 +1416,11 @@ class App extends EventEmitter
         }
     }
 
-    public function resource($path, $namespace)
+    public function resource($path, $namespace, $excepts = array())
     {
         foreach ($this->injectors['resource'] as $type => $opt) {
+            if (in_array($type, $excepts)) continue;
+
             $this->router->map(
                 $path . (!empty($opt[1]) ? '/' . $opt[1] : ''),
                 $namespace . '\\' . (!empty($opt[2]) ? $opt[2] : ucfirst($type)),
