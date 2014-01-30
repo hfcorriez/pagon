@@ -127,6 +127,16 @@ function site_url()
 }
 
 /**
+ * Base url
+ *
+ * @return mixed
+ */
+function base_url()
+{
+    return Url::base();
+}
+
+/**
  * Build page
  *
  * @param string $pattern
@@ -530,7 +540,7 @@ function with($obj)
  *
  * @return bool
  */
-function __or()
+function _or_()
 {
     $last = false;
     foreach (func_get_args() as $arg) {
@@ -545,7 +555,7 @@ function __or()
  *
  * @return bool
  */
-function __and()
+function _and_()
 {
     $last = false;
     foreach (func_get_args() as $arg) {
