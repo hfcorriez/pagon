@@ -74,9 +74,13 @@ class Fiber implements \ArrayAccess
         if (is_array($this->injectors[$key])
             && isset($this->injectors[$key]['fiber'])
             && isset($this->injectors[$key][0])
-            && $this->injectors[$key][0] instanceof \Closure
         ) {
             switch ($this->injectors[$key]['fiber']) {
+                case 2:
+                    // share with mapping
+                    $this->injectors[$key] = $this->{$this->injectors[$key][0]}();
+                    $tmp = & $this->injectors[$key];
+                    break;
                 case 1:
                     // share
                     $this->injectors[$key] = call_user_func($this->injectors[$key][0]);
@@ -148,6 +152,23 @@ class Fiber implements \ArrayAccess
         }
 
         return $key ? ($this->injectors[$key] = array($closure, 'fiber' => 1)) : array($closure, 'fiber' => 1);
+    }
+
+    /**
+     * Share the closure
+     *
+     * @param \Closure|string $key
+     * @param \Closure        $method
+     * @return \Closure
+     */
+    public function shareMapping($key, $method = null)
+    {
+        if (!$method) {
+            $method = $key;
+            $key = false;
+        }
+
+        return $key ? ($this->injectors[$key] = array($method, 'fiber' => 2)) : array($method, 'fiber' => 2);
     }
 
     /**
@@ -259,11 +280,11 @@ class Fiber implements \ArrayAccess
      * @link http://php.net/manual/en/arrayaccess.offsetexists.php
      * @param mixed $offset <p>
      *                      An offset to check for.
-     * </p>
+     *                      </p>
      * @return boolean true on success or false on failure.
-     * </p>
-     * <p>
-     *       The return value will be casted to boolean if non-boolean was returned.
+     *                      </p>
+     *                      <p>
+     *                      The return value will be casted to boolean if non-boolean was returned.
      */
     public function offsetExists($offset)
     {
@@ -277,7 +298,7 @@ class Fiber implements \ArrayAccess
      * @link http://php.net/manual/en/arrayaccess.offsetget.php
      * @param mixed $offset <p>
      *                      The offset to retrieve.
-     * </p>
+     *                      </p>
      * @return mixed Can return all value types.
      */
     public function &offsetGet($offset)
@@ -292,10 +313,10 @@ class Fiber implements \ArrayAccess
      * @link http://php.net/manual/en/arrayaccess.offsetset.php
      * @param mixed $offset <p>
      *                      The offset to assign the value to.
-     * </p>
+     *                      </p>
      * @param mixed $value  <p>
      *                      The value to set.
-     * </p>
+     *                      </p>
      * @return void
      */
     public function offsetSet($offset, $value)
@@ -310,7 +331,7 @@ class Fiber implements \ArrayAccess
      * @link http://php.net/manual/en/arrayaccess.offsetunset.php
      * @param mixed $offset <p>
      *                      The offset to unset.
-     * </p>
+     *                      </p>
      * @return void
      */
     public function offsetUnset($offset)

@@ -30,13 +30,34 @@ class Input extends EventEmitter
     public function __construct(array $injectors = array())
     {
         parent::__construct($injectors + array(
-            'params' => array(),
-            'query'  => &$_GET,
-            'data'   => &$_POST,
-            'files'  => &$_FILES,
-            'server' => &$_SERVER,
-            'app'    => null
-        ));
+                'params'   => array(),
+                'query'    => &$_GET,
+                'data'     => &$_POST,
+                'files'    => &$_FILES,
+                'server'   => &$_SERVER,
+                'headers'  => array('header', 'fiber' => 2),
+                'cookies'  => array('cookie', 'fiber' => 2),
+                'sessions' => array('session', 'fiber' => 2),
+                'path'     => array('path', 'fiber' => 2),
+                'domain'   => array('domain', 'fiber' => 2),
+                'protocol' => array('protocol', 'fiber' => 2),
+                'schema'   => array('schema', 'fiber' => 2),
+                'root'     => array('root', 'fiber' => 2),
+                'uri'      => array('uri', 'fiber' => 2),
+                'url'      => array('url', 'fiber' => 2),
+                'site'     => array('site', 'fiber' => 2),
+                'proxy'    => array('proxy', 'fiber' => 2),
+                'ip'       => array('ip', 'fiber' => 2),
+                'ua'       => array('ua', 'fiber' => 2),
+                'base'     => array('scriptName', 'fiber' => 2),
+                'refer'    => array('refer', 'fiber' => 2),
+                'method'   => array('method', 'fiber' => 2),
+                'type'     => array('type', 'fiber' => 2),
+                'charset'  => array('charset', 'fiber' => 2),
+                'length'   => array('length', 'fiber' => 2),
+                'body'     => array('body', 'fiber' => 2),
+                'app'      => null
+            ));
 
         $this->app = & $this->injectors['app'];
 
@@ -136,7 +157,7 @@ class Input extends EventEmitter
      * @param bool $full
      * @return mixed
      */
-    public function url($full = true)
+    public function url($full = false)
     {
         if (!$full) return $this->injectors['server']['REQUEST_URI'];
 
@@ -167,7 +188,7 @@ class Input extends EventEmitter
     /**
      * Get IP
      *
-     * @param bool $proxy   Use proxy ip?
+     * @param bool $proxy Use proxy ip?
      * @return string
      */
     public function ip($proxy = true)
@@ -398,7 +419,7 @@ class Input extends EventEmitter
      */
     public function header($name = null)
     {
-        if (!isset($this->injectors['headers'])) {
+        if ($name === null) {
             $_header = array();
             foreach ($this->injectors['server'] as $key => $value) {
                 $_name = false;
@@ -422,11 +443,8 @@ class Input extends EventEmitter
                 $pass = isset($this->injectors['server']['PHP_AUTH_PW']) ? $this->injectors['server']['PHP_AUTH_PW'] : '';
                 $_header['authorization'] = 'Basic ' . base64_encode($this->injectors['server']['PHP_AUTH_USER'] . ':' . $pass);
             }
-            $this->injectors['headers'] = $_header;
-            unset($_header);
+            return $_header;
         }
-
-        if ($name === null) return $this->injectors['headers'];
 
         $name = strtolower(str_replace('_', '-', $name));
         return isset($this->injectors['headers'][$name]) ? $this->injectors['headers'][$name] : null;
@@ -441,35 +459,40 @@ class Input extends EventEmitter
      */
     public function cookie($key = null, $default = null)
     {
-        if (!isset($this->injectors['cookies'])) {
-            $this->injectors['cookies'] = $_COOKIE;
-            $_option = $this->app->cookie;
-            foreach ($this->injectors['cookies'] as &$value) {
-                if (!$value) continue;
+        if ($key === null) {
+            $_cookies = $_COOKIE;
+            $_option = $this->app->get('cookie');
 
-                // Check crypt
-                if (strpos($value, 'c:') === 0) {
-                    $value = $this->app->cryptor->decrypt(substr($value, 2));
-                }
+            if ($_option) {
+                foreach ($_cookies as &$value) {
+                    if (!$value) continue;
 
-                // Parse signed cookie
-                if ($value && strpos($value, 's:') === 0 && $_option['secret']) {
-                    $_pos = strrpos($value, '.');
-                    $_data = substr($value, 2, $_pos - 2);
-                    if (substr($value, $_pos + 1) === hash_hmac('sha1', $_data, $_option['secret'])) {
-                        $value = $_data;
-                    } else {
-                        $value = false;
+                    // Check crypt
+                    if (strpos($value, 'c:') === 0) {
+                        $value = $this->app->cryptor->decrypt(substr($value, 2));
+                    }
+
+                    // Parse signed cookie
+                    if ($value && strpos($value, 's:') === 0 && $_option['secret']) {
+                        $_pos = strrpos($value, '.');
+                        $_data = substr($value, 2, $_pos - 2);
+                        if (substr($value, $_pos + 1) === hash_hmac('sha1', $_data, $_option['secret'])) {
+                            $value = $_data;
+                        } else {
+                            $value = false;
+                        }
+                    }
+
+                    // Parse json cookie
+                    if ($value && strpos($value, 'j:') === 0) {
+                        $value = json_decode(substr($value, 2), true);
                     }
                 }
-
-                // Parse json cookie
-                if ($value && strpos($value, 'j:') === 0) {
-                    $value = json_decode(substr($value, 2), true);
-                }
             }
+
+            return $_cookies;
         }
-        if ($key === null) return $this->injectors['cookies'];
+
         return isset($this->injectors['cookies'][$key]) ? $this->injectors['cookies'][$key] : $default;
     }
 
