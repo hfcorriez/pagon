@@ -25,39 +25,33 @@ class Input extends EventEmitter
     public $app;
 
     /**
+     * @var array Mapping
+     */
+    protected $injectorsMap = array(
+        'headers'  => 'header',
+        'cookies'  => 'cookie',
+        'sessions' => 'session',
+        'base'     => 'scriptName',
+        'path', 'domain', 'protocol',
+        'scheme', 'uri', 'url',
+        'site', 'proxy', 'ip',
+        'ua', 'refer', 'method',
+        'type', 'charset', 'length', 'body'
+    );
+
+    /**
      * @param array $injectors
      */
     public function __construct(array $injectors = array())
     {
         parent::__construct($injectors + array(
-                'params'   => array(),
-                'query'    => &$_GET,
-                'data'     => &$_POST,
-                'files'    => &$_FILES,
-                'server'   => &$_SERVER,
-                'headers'  => array('header', 'fiber' => 2),
-                'cookies'  => array('cookie', 'fiber' => 2),
-                'sessions' => array('session', 'fiber' => 2),
-                'path'     => array('path', 'fiber' => 2),
-                'domain'   => array('domain', 'fiber' => 2),
-                'protocol' => array('protocol', 'fiber' => 2),
-                'schema'   => array('schema', 'fiber' => 2),
-                'root'     => array('root', 'fiber' => 2),
-                'uri'      => array('uri', 'fiber' => 2),
-                'url'      => array('url', 'fiber' => 2),
-                'site'     => array('site', 'fiber' => 2),
-                'proxy'    => array('proxy', 'fiber' => 2),
-                'ip'       => array('ip', 'fiber' => 2),
-                'ua'       => array('ua', 'fiber' => 2),
-                'base'     => array('scriptName', 'fiber' => 2),
-                'refer'    => array('refer', 'fiber' => 2),
-                'method'   => array('method', 'fiber' => 2),
-                'type'     => array('type', 'fiber' => 2),
-                'charset'  => array('charset', 'fiber' => 2),
-                'length'   => array('length', 'fiber' => 2),
-                'body'     => array('body', 'fiber' => 2),
-                'app'      => null
-            ));
+            'params' => array(),
+            'query'  => &$_GET,
+            'data'   => &$_POST,
+            'files'  => &$_FILES,
+            'server' => &$_SERVER,
+            'app'    => null
+        ));
 
         $this->app = & $this->injectors['app'];
 
@@ -140,15 +134,12 @@ class Input extends EventEmitter
      */
     public function path()
     {
-        if (!isset($this->injectors['path_info'])) {
-            $_path_info = substr_replace($this->injectors['server']['REQUEST_URI'], '', 0, strlen($this->scriptName()));
-            if (strpos($_path_info, '?') !== false) {
-                // Query string is not removed automatically
-                $_path_info = substr_replace($_path_info, '', strpos($_path_info, '?'));
-            }
-            $this->injectors['path_info'] = (!$_path_info || $_path_info{0} != '/' ? '/' : '') . $_path_info;
+        $_path_info = substr_replace($this->injectors['server']['REQUEST_URI'], '', 0, strlen($this->scriptName()));
+        if (strpos($_path_info, '?') !== false) {
+            // Query string is not removed automatically
+            $_path_info = substr_replace($_path_info, '', strpos($_path_info, '?'));
         }
-        return $this->injectors['path_info'];
+        return (!$_path_info || $_path_info{0} != '/' ? '/' : '') . $_path_info;
     }
 
     /**
@@ -447,7 +438,7 @@ class Input extends EventEmitter
         }
 
         $name = strtolower(str_replace('_', '-', $name));
-        return isset($this->injectors['headers'][$name]) ? $this->injectors['headers'][$name] : null;
+        return isset($this->headers[$name]) ? $this->headers[$name] : null;
     }
 
     /**
@@ -493,7 +484,7 @@ class Input extends EventEmitter
             return $_cookies;
         }
 
-        return isset($this->injectors['cookies'][$key]) ? $this->injectors['cookies'][$key] : $default;
+        return isset($this->cookies[$key]) ? $this->cookies[$key] : $default;
     }
 
     /**

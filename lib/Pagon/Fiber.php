@@ -37,6 +37,7 @@ class Fiber implements \ArrayAccess
      * @var array Injectors
      */
     protected $injectors = array();
+    protected $injectorsMap = array();
 
     /**
      * @param array $injectors
@@ -44,6 +45,12 @@ class Fiber implements \ArrayAccess
     public function __construct(array $injectors = array())
     {
         $this->injectors = $injectors + $this->injectors;
+
+        // Apply the mapping
+        foreach ($this->injectorsMap as $k => $v) {
+            $k = is_numeric($k) ? $v : $k;
+            $this->injectors[$k] = array($k, 'fiber' => 2);
+        }
     }
 
     /**
