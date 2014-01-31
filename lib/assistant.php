@@ -166,25 +166,6 @@ function config($key, $value = null)
 }
 
 /**
- * Get or set cache
- *
- * @param string $name
- * @param string $key
- * @param mixed  $value
- * @return Cache|bool|string|array
- */
-function cache($name, $key = null, $value = null)
-{
-    if ($key === null) {
-        return Cache::dispense($name);
-    } else if ($value !== null) {
-        return Cache::dispense($name)->set($key, $value);
-    } else {
-        return Cache::dispense($name)->get($key);
-    }
-}
-
-/**
  * Get exist file path
  *
  * @param string $file
@@ -454,7 +435,7 @@ function human_size($size)
  * @param array  $attributes
  * @return string
  */
-function html($name, $text = '', array $attributes = array())
+function h($name, $text = '', array $attributes = array())
 {
     return Html::dom($name, $text, $attributes);
 }
@@ -478,7 +459,7 @@ function e($string)
  * @param array  $attributes
  * @return string
  */
-function a($src, $text, array $attributes = array())
+function link($src, $text, array $attributes = array())
 {
     return Html::a($src, $text, $attributes);
 }
