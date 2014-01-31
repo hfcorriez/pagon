@@ -35,9 +35,17 @@ class Fiber implements \ArrayAccess
 {
     protected $injectors = array();
 
+    protected $injectorsMap = array();
+
     public function __construct(array $injectors = array())
     {
         $this->injectors = $injectors + $this->injectors;
+
+       
+        foreach ($this->injectorsMap as $k => $v) {
+            $k = is_numeric($k) ? $v : $k;
+            $this->injectors[$k] = array($k, 'fiber' => 2);
+        }
     }
 
     public function __set($key, $value)
@@ -56,9 +64,13 @@ class Fiber implements \ArrayAccess
         if (is_array($this->injectors[$key])
             && isset($this->injectors[$key]['fiber'])
             && isset($this->injectors[$key][0])
-            && $this->injectors[$key][0] instanceof \Closure
         ) {
             switch ($this->injectors[$key]['fiber']) {
+                case 2:
+                   
+                    $this->injectors[$key] = $this->{$this->injectors[$key][0]}();
+                    $tmp = & $this->injectors[$key];
+                    break;
                 case 1:
                    
                     $this->injectors[$key] = call_user_func($this->injectors[$key][0]);
@@ -105,6 +117,16 @@ class Fiber implements \ArrayAccess
         }
 
         return $key ? ($this->injectors[$key] = array($closure, 'fiber' => 1)) : array($closure, 'fiber' => 1);
+    }
+
+    public function shareMapping($key, $method = null)
+    {
+        if (!$method) {
+            $method = $key;
+            $key = false;
+        }
+
+        return $key ? ($this->injectors[$key] = array($method, 'fiber' => 2)) : array($method, 'fiber' => 2);
     }
 
     public function extend($key, \Closure $closure)
@@ -2055,6 +2077,18 @@ class Input extends EventEmitter
 {
     public $app;
 
+    protected $injectorsMap = array(
+        'headers'  => 'header',
+        'cookies'  => 'cookie',
+        'sessions' => 'session',
+        'base'     => 'scriptName',
+        'path', 'domain', 'protocol',
+        'scheme', 'uri', 'url',
+        'site', 'proxy', 'ip',
+        'ua', 'refer', 'method',
+        'type', 'charset', 'length', 'body'
+    );
+
     public function __construct(array $injectors = array())
     {
         parent::__construct($injectors + array(
@@ -2068,7 +2102,7 @@ class Input extends EventEmitter
 
         $this->app = & $this->injectors['app'];
 
-        if (!$this->injectors['data'] && strpos($_SERVER['CONTENT_TYPE'], '/json')) {
+        if (!$this->injectors['data'] && strpos($this->type(), '/json')) {
             $_POST = json_decode($this->body(), true);
         }
     }
@@ -2111,18 +2145,15 @@ class Input extends EventEmitter
 
     public function path()
     {
-        if (!isset($this->injectors['path_info'])) {
-            $_path_info = substr_replace($this->injectors['server']['REQUEST_URI'], '', 0, strlen($this->scriptName()));
-            if (strpos($_path_info, '?') !== false) {
-               
-                $_path_info = substr_replace($_path_info, '', strpos($_path_info, '?'));
-            }
-            $this->injectors['path_info'] = (!$_path_info || $_path_info{0} != '/' ? '/' : '') . $_path_info;
+        $_path_info = substr_replace($this->injectors['server']['REQUEST_URI'], '', 0, strlen($this->scriptName()));
+        if (strpos($_path_info, '?') !== false) {
+           
+            $_path_info = substr_replace($_path_info, '', strpos($_path_info, '?'));
         }
-        return $this->injectors['path_info'];
+        return (!$_path_info || $_path_info{0} != '/' ? '/' : '') . $_path_info;
     }
 
-    public function url($full = true)
+    public function url($full = false)
     {
         if (!$full) return $this->injectors['server']['REQUEST_URI'];
 
@@ -2267,7 +2298,7 @@ class Input extends EventEmitter
 
     public function header($name = null)
     {
-        if (!isset($this->injectors['headers'])) {
+        if ($name === null) {
             $_header = array();
             foreach ($this->injectors['server'] as $key => $value) {
                 $_name = false;
@@ -2291,48 +2322,50 @@ class Input extends EventEmitter
                 $pass = isset($this->injectors['server']['PHP_AUTH_PW']) ? $this->injectors['server']['PHP_AUTH_PW'] : '';
                 $_header['authorization'] = 'Basic ' . base64_encode($this->injectors['server']['PHP_AUTH_USER'] . ':' . $pass);
             }
-            $this->injectors['headers'] = $_header;
-            unset($_header);
+            return $_header;
         }
 
-        if ($name === null) return $this->injectors['headers'];
-
         $name = strtolower(str_replace('_', '-', $name));
-        return isset($this->injectors['headers'][$name]) ? $this->injectors['headers'][$name] : null;
+        return isset($this->headers[$name]) ? $this->headers[$name] : null;
     }
 
     public function cookie($key = null, $default = null)
     {
-        if (!isset($this->injectors['cookies'])) {
-            $this->injectors['cookies'] = $_COOKIE;
-            $_option = $this->app->cookie;
-            foreach ($this->injectors['cookies'] as &$value) {
-                if (!$value) continue;
+        if ($key === null) {
+            $_cookies = $_COOKIE;
+            $_option = $this->app->get('cookie');
 
-               
-                if (strpos($value, 'c:') === 0) {
-                    $value = $this->app->cryptor->decrypt(substr($value, 2));
-                }
+            if ($_option) {
+                foreach ($_cookies as &$value) {
+                    if (!$value) continue;
 
-               
-                if ($value && strpos($value, 's:') === 0 && $_option['secret']) {
-                    $_pos = strrpos($value, '.');
-                    $_data = substr($value, 2, $_pos - 2);
-                    if (substr($value, $_pos + 1) === hash_hmac('sha1', $_data, $_option['secret'])) {
-                        $value = $_data;
-                    } else {
-                        $value = false;
+                   
+                    if (strpos($value, 'c:') === 0) {
+                        $value = $this->app->cryptor->decrypt(substr($value, 2));
+                    }
+
+                   
+                    if ($value && strpos($value, 's:') === 0 && $_option['secret']) {
+                        $_pos = strrpos($value, '.');
+                        $_data = substr($value, 2, $_pos - 2);
+                        if (substr($value, $_pos + 1) === hash_hmac('sha1', $_data, $_option['secret'])) {
+                            $value = $_data;
+                        } else {
+                            $value = false;
+                        }
+                    }
+
+                   
+                    if ($value && strpos($value, 'j:') === 0) {
+                        $value = json_decode(substr($value, 2), true);
                     }
                 }
-
-               
-                if ($value && strpos($value, 'j:') === 0) {
-                    $value = json_decode(substr($value, 2), true);
-                }
             }
+
+            return $_cookies;
         }
-        if ($key === null) return $this->injectors['cookies'];
-        return isset($this->injectors['cookies'][$key]) ? $this->injectors['cookies'][$key] : $default;
+
+        return isset($this->cookies[$key]) ? $this->cookies[$key] : $default;
     }
 
     public function session($key = null, $value = null)
