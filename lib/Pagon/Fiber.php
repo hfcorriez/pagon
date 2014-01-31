@@ -37,6 +37,10 @@ class Fiber implements \ArrayAccess
      * @var array Injectors
      */
     protected $injectors = array();
+
+    /**
+     * @var array Injectors alias map for functions
+     */
     protected $injectorsMap = array();
 
     /**
