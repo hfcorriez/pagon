@@ -459,7 +459,7 @@ function e($string)
  * @param array  $attributes
  * @return string
  */
-function link($src, $text, array $attributes = array())
+function a($src, $text, array $attributes = array())
 {
     return Html::a($src, $text, $attributes);
 }
