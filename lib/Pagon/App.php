@@ -4,7 +4,7 @@
  *
  * @package       Pagon
  * @author        Corrie Zhao <hfcorriez@gmail.com>
- * @copyright (c) 2011 - 2013 Pagon Framework
+ * @copyright     (c) 2011 - 2013 Pagon Framework
  */
 
 namespace Pagon;
@@ -74,6 +74,9 @@ class App extends EventEmitter
      * @var Config
      */
     protected $injectors = array(
+        /**
+         * Application control
+         */
         'mode'       => 'develop',
         'debug'      => false,
         'views'      => false,
@@ -108,9 +111,19 @@ class App extends EventEmitter
             'destroy' => array('DELETE', ':id')
         ),
         'safe_query' => true,
+
+        /**
+         * Main dependencies
+         */
         'input'      => null,
         'output'     => null,
         'router'     => null,
+
+        /**
+         * System control
+         */
+        'running'    => false,
+        'cli'        => null,
     );
 
     /**
@@ -127,16 +140,6 @@ class App extends EventEmitter
      * @var Router
      */
     public $router;
-
-    /**
-     * @var bool Is run?
-     */
-    private $_run = false;
-
-    /**
-     * @var bool Is cli?
-     */
-    private static $_cli = null;
 
     /**
      * @var App The top app
@@ -156,13 +159,10 @@ class App extends EventEmitter
      */
     public static function create($config = array())
     {
-        // Is cli
-        if (is_null(self::$_cli)) self::$_cli = PHP_SAPI == 'cli';
-
         $app = new self($config);
 
         // Set IO depends the run mode
-        if (!self::$_cli) {
+        if (!$app->cli()) {
             $app->input = new Http\Input(array('app' => $app));
             $app->output = new Http\Output(array('app' => $app));
         } else {
@@ -212,8 +212,7 @@ class App extends EventEmitter
             + (!empty($this->injectors['cli']) ? array('buffer' => false) : array())
             + $this->injectors;
 
-        // Set cli mode
-        if (!isset($this->injectors['cli'])) $this->injectors['cli'] = self::$_cli;
+        if ($this->injectors['cli'] === null) $this->injectors['cli'] = PHP_SAPI === 'cli';
 
         // Set default locals
         $this->injectors['locals']['config'] = & $this->injectors;
@@ -257,7 +256,7 @@ class App extends EventEmitter
      */
     public function running()
     {
-        return $this->_run;
+        return $this->injectors['running'];
     }
 
     /**
@@ -736,7 +735,7 @@ class App extends EventEmitter
     public function run()
     {
         // Check if run
-        if ($this->_run) {
+        if ($this->injectors['running']) {
             throw new \RuntimeException("Application already running");
         }
 
@@ -747,7 +746,7 @@ class App extends EventEmitter
         $this->emit('run');
 
         // Set run
-        $this->_run = true;
+        $this->injectors['running'] = true;
 
         $_path = $this->input->path();
         $this->registerErrorHandler();
@@ -832,7 +831,7 @@ class App extends EventEmitter
             $this->emit('error');
         }
 
-        $this->_run = false;
+        $this->injectors['running'] = false;
 
         // Send start
         $this->emit('flush');
@@ -1077,7 +1076,7 @@ class App extends EventEmitter
     public function __shutdown()
     {
         $this->emit('exit');
-        if (!$this->_run) return;
+        if (!$this->injectors['running']) return;
 
         if (($error = error_get_last())
             && in_array($error['type'], array(E_PARSE, E_ERROR, E_USER_ERROR, E_COMPILE_ERROR, E_CORE_ERROR))
