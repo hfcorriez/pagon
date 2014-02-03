@@ -53,7 +53,7 @@ class Fiber implements \ArrayAccess
         // Apply the mapping
         foreach ($this->injectorsMap as $k => $v) {
             $k = is_numeric($k) ? $v : $k;
-            $this->injectors[$k] = array($k, 'fiber' => 2);
+            $this->injectors[$k] = array($k, 'F$' => 2);
         }
     }
 
@@ -65,7 +65,7 @@ class Fiber implements \ArrayAccess
      */
     public function __set($key, $value)
     {
-        $this->injectors[$key] = $value;
+        $this->injectors[$key] = $value instanceof \Closure ? array($value, 'F$' => 1) : $value;
     }
 
     /**
@@ -83,10 +83,10 @@ class Fiber implements \ArrayAccess
 
         // Inject or share
         if (is_array($this->injectors[$key])
-            && isset($this->injectors[$key]['fiber'])
+            && isset($this->injectors[$key]['F$'])
             && isset($this->injectors[$key][0])
         ) {
-            switch ($this->injectors[$key]['fiber']) {
+            switch ($this->injectors[$key]['F$']) {
                 case 2:
                     // share with mapping
                     $this->injectors[$key] = $this->{$this->injectors[$key][0]}();
@@ -138,14 +138,25 @@ class Fiber implements \ArrayAccess
      * @param \Closure|String $closure
      * @return \Closure
      */
-    public function inject($key, \Closure $closure = null)
+    public function protect($key, \Closure $closure = null)
     {
         if (!$closure) {
             $closure = $key;
             $key = false;
         }
 
-        return $key ? ($this->injectors[$key] = array($closure, 'fiber' => 0)) : array($closure, 'fiber' => 0);
+        return $key ? ($this->injectors[$key] = array($closure, 'F$' => 0)) : array($closure, 'F$' => 0);
+    }
+
+    /**
+     * Inject the function
+     *
+     * @param string   $key
+     * @param callable $closure
+     */
+    public function inject($key, \Closure $closure)
+    {
+        $this->injectors[$key] = $closure;
     }
 
     /**
@@ -162,24 +173,7 @@ class Fiber implements \ArrayAccess
             $key = false;
         }
 
-        return $key ? ($this->injectors[$key] = array($closure, 'fiber' => 1)) : array($closure, 'fiber' => 1);
-    }
-
-    /**
-     * Share the closure
-     *
-     * @param \Closure|string $key
-     * @param \Closure        $method
-     * @return \Closure
-     */
-    public function shareMapping($key, $method = null)
-    {
-        if (!$method) {
-            $method = $key;
-            $key = false;
-        }
-
-        return $key ? ($this->injectors[$key] = array($method, 'fiber' => 2)) : array($method, 'fiber' => 2);
+        return $key ? ($this->injectors[$key] = array($closure, 'F$' => 1)) : array($closure, 'F$' => 1);
     }
 
     /**
@@ -194,8 +188,8 @@ class Fiber implements \ArrayAccess
         $factory = isset($this->injectors[$key]) ? $this->injectors[$key] : null;
         $that = $this;
         return $this->injectors[$key] = array(function () use ($closure, $factory, $that) {
-            return $closure(isset($factory[0]) && isset($factory['fiber']) && $factory[0] instanceof \Closure ? $factory[0]() : $factory, $that);
-        }, 'fiber' => isset($factory['fiber']) ? $factory['fiber'] : 0);
+            return $closure(isset($factory[0]) && isset($factory['F$']) && $factory[0] instanceof \Closure ? $factory[0]() : $factory, $that);
+        }, 'F$' => isset($factory['F$']) ? $factory['F$'] : 0);
     }
 
     /**

@@ -32,7 +32,7 @@ class FiberTest extends PHPUnit_Framework_TestCase
         $this->assertEquals('b', $this->di->b);
     }
 
-    public function testSetObj()
+    public function testShareBare()
     {
         $obj = function () {
             static $i = 0;
@@ -40,9 +40,11 @@ class FiberTest extends PHPUnit_Framework_TestCase
         };
 
         $this->di->obj = $obj;
+        $value = $this->di->obj;
 
-        $this->assertEquals($obj, $this->di->obj);
-        $this->assertEquals($obj, $this->di->obj);
+        var_dump($value);
+        $this->assertEquals($value, $this->di->obj);
+        $this->assertNotEquals($obj, $this->di->obj);
     }
 
     public function testShare()
@@ -76,16 +78,16 @@ class FiberTest extends PHPUnit_Framework_TestCase
         $this->assertEquals('non-exists', $this->di->b);
     }
 
-    public function testProtect()
+    public function testInject()
     {
-        $this->di->md5 = function ($key) {
+        $this->di->inject('md5', function ($key) {
             return md5($key);
-        };
+        });
 
         $this->assertEquals(md5('a'), $this->di->md5('a'));
     }
 
-    public function testProtectBadCall()
+    public function testInjectBadCall()
     {
         $this->di->md6 = 'md6';
 

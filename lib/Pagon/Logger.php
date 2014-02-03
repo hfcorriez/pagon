@@ -100,7 +100,7 @@ class Logger extends Logger\LoggerInterface
         }
 
         // The time injector
-        $this->context('time', $this->inject(function () {
+        $this->context('time', $this->protect(function () {
             return date('Y-m-d H:i:s') . ',' . substr(microtime(true) * 1000, 10, 3);
         }));
 
