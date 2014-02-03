@@ -88,17 +88,17 @@ class Fiber implements \ArrayAccess
         ) {
             switch ($this->injectors[$key]['F$']) {
                 case 2:
-                    // share with mapping
+                    // Share with mapping
                     $this->injectors[$key] = $this->{$this->injectors[$key][0]}();
                     $tmp = & $this->injectors[$key];
                     break;
                 case 1:
-                    // share
+                    // Share
                     $this->injectors[$key] = call_user_func($this->injectors[$key][0]);
                     $tmp = & $this->injectors[$key];
                     break;
                 case 0:
-                    // inject
+                    // Factory
                     $tmp = call_user_func($this->injectors[$key][0]);
                     break;
                 default:
@@ -132,13 +132,13 @@ class Fiber implements \ArrayAccess
     }
 
     /**
-     * Protect the closure
+     * Factory a service
      *
      * @param \Closure|String $key
      * @param \Closure|String $closure
      * @return \Closure
      */
-    public function factory($key, \Closure $closure = null)
+    public function protect($key, \Closure $closure = null)
     {
         if (!$closure) {
             $closure = $key;
@@ -160,7 +160,7 @@ class Fiber implements \ArrayAccess
     }
 
     /**
-     * Share the closure
+     * Share service
      *
      * @param \Closure|string $key
      * @param \Closure        $closure
@@ -185,11 +185,10 @@ class Fiber implements \ArrayAccess
      */
     public function extend($key, \Closure $closure)
     {
-        $factory = isset($this->injectors[$key]) ? $this->injectors[$key] : null;
         $that = $this;
-        return $this->injectors[$key] = array(function () use ($closure, $factory, $that) {
-            return $closure(isset($factory[0]) && isset($factory['F$']) && $factory[0] instanceof \Closure ? $factory[0]() : $factory, $that);
-        }, 'F$' => isset($factory['F$']) ? $factory['F$'] : 0);
+        return $this->injectors[$key] = array(function () use ($closure, $that) {
+            return $closure($that->$key, $that);
+        }, 'F$' => isset($this->injectors[$key]['F$']) ? $this->injectors[$key]['F$'] : 1);
     }
 
     /**
@@ -278,67 +277,25 @@ class Fiber implements \ArrayAccess
         return $this;
     }
 
-    /**
-     * (PHP 5 &gt;= 5.0.0)<br/>
-     * Whether a offset exists
-     *
-     * @link http://php.net/manual/en/arrayaccess.offsetexists.php
-     * @param mixed $offset <p>
-     *                      An offset to check for.
-     *                      </p>
-     * @return boolean true on success or false on failure.
-     *                      </p>
-     *                      <p>
-     *                      The return value will be casted to boolean if non-boolean was returned.
+    /*
+     * Implements the interface to support array access
      */
+
     public function offsetExists($offset)
     {
         return $this->__isset($offset);
     }
 
-    /**
-     * (PHP 5 &gt;= 5.0.0)<br/>
-     * Offset to retrieve
-     *
-     * @link http://php.net/manual/en/arrayaccess.offsetget.php
-     * @param mixed $offset <p>
-     *                      The offset to retrieve.
-     *                      </p>
-     * @return mixed Can return all value types.
-     */
     public function &offsetGet($offset)
     {
         return $this->__get($offset);
     }
 
-    /**
-     * (PHP 5 &gt;= 5.0.0)<br/>
-     * Offset to set
-     *
-     * @link http://php.net/manual/en/arrayaccess.offsetset.php
-     * @param mixed $offset <p>
-     *                      The offset to assign the value to.
-     *                      </p>
-     * @param mixed $value  <p>
-     *                      The value to set.
-     *                      </p>
-     * @return void
-     */
     public function offsetSet($offset, $value)
     {
         return $this->__set($offset, $value);
     }
 
-    /**
-     * (PHP 5 &gt;= 5.0.0)<br/>
-     * Offset to unset
-     *
-     * @link http://php.net/manual/en/arrayaccess.offsetunset.php
-     * @param mixed $offset <p>
-     *                      The offset to unset.
-     *                      </p>
-     * @return void
-     */
     public function offsetUnset($offset)
     {
         return $this->__unset($offset);
