@@ -138,7 +138,7 @@ class Fiber implements \ArrayAccess
      * @param \Closure|String $closure
      * @return \Closure
      */
-    public function protect($key, \Closure $closure = null)
+    public function factory($key, \Closure $closure = null)
     {
         if (!$closure) {
             $closure = $key;
