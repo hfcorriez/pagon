@@ -42,7 +42,6 @@ class FiberTest extends PHPUnit_Framework_TestCase
         $this->di->obj = $obj;
         $value = $this->di->obj;
 
-        var_dump($value);
         $this->assertEquals($value, $this->di->obj);
         $this->assertNotEquals($obj, $this->di->obj);
     }
@@ -59,9 +58,9 @@ class FiberTest extends PHPUnit_Framework_TestCase
 
     public function testExtend()
     {
-        $this->di->share('e', function () {
+        $this->di->e = function () {
             return 'extend';
-        });
+        };
 
         $this->di->extend('e', function ($i) {
             return array($i);

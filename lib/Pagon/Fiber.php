@@ -185,10 +185,11 @@ class Fiber implements \ArrayAccess
      */
     public function extend($key, \Closure $closure)
     {
+        $factory = isset($this->injectors[$key]) ? $this->injectors[$key] : null;
         $that = $this;
-        return $this->injectors[$key] = array(function () use ($closure, $that) {
-            return $closure($that->$key, $that);
-        }, 'F$' => isset($this->injectors[$key]['F$']) ? $this->injectors[$key]['F$'] : 1);
+        return $this->injectors[$key] = array(function () use ($closure, $factory, $that) {
+            return $closure(isset($factory[0]) && isset($factory['F$']) && $factory[0] instanceof \Closure ? $factory[0]() : $factory, $that);
+        }, 'F$' => isset($factory['F$']) ? $factory['F$'] : 0);
     }
 
     /**
