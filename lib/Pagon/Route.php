@@ -15,6 +15,11 @@ use Pagon\Http\Output;
 abstract class Route extends Middleware
 {
     /**
+     * @var array Params
+     */
+    protected $params = array();
+
+    /**
      * abstract before run
      *
      * @abstract
@@ -39,6 +44,9 @@ abstract class Route extends Middleware
      */
     public function call()
     {
+        // Set params
+        $this->params = $this->input->params;
+
         // Run method
         $run = !empty($this->injectors['entry']) ? $this->injectors['entry'] : 'run';
 

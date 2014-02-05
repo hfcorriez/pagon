@@ -44,13 +44,12 @@ use Pagon\Route;
  */
 abstract class Classic extends Route
 {
-    protected $params;
-
     public function call()
     {
-        $action = $this->input->param('action');
-
+        // Set params
         $this->params = $this->input->params;
+
+        $action = $this->input->param('action');
 
         if (!$action) {
             throw new \RuntimeException('Route need ":action" param');

@@ -36,18 +36,18 @@ use Pagon\Route;
  */
 abstract class Rest extends Route
 {
-    protected $params;
-
     /**
      * @throws \RuntimeException
      */
     public function call()
     {
+        // Set params
+        $this->params = $this->input->params;
+
         if ($this->app->cli()) {
             throw new \RuntimeException("Daemon route can not use under the CLI mode!");
         }
 
-        $this->params = $this->input->params;
         $method = strtolower($this->input->method());
 
         $this->before();

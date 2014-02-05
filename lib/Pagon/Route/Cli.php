@@ -17,7 +17,6 @@ abstract class Cli extends Route
 {
     protected $arguments = array();
     protected $usage = '';
-    protected $params = array();
 
     /**
      * @throws \RuntimeException
