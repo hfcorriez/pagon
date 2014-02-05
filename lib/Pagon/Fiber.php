@@ -44,6 +44,11 @@ class Fiber implements \ArrayAccess
     protected $injectorsMap = array();
 
     /**
+     * @var bool Auto use define function
+     */
+    protected $autoDefine = true;
+
+    /**
      * @param array $injectors
      */
     public function __construct(array $injectors = array())
@@ -65,6 +70,12 @@ class Fiber implements \ArrayAccess
      */
     public function __set($key, $value)
     {
+        // Auto define setter support
+        if ($this->autoDefine && method_exists($this, 'set' . $key)) {
+            $this->injectors[$key] = $this->{'set' . $key} ($value);
+            return;
+        }
+
         $this->injectors[$key] = $value instanceof \Closure ? array($value, 'F$' => 1) : $value;
     }
 
@@ -107,6 +118,13 @@ class Fiber implements \ArrayAccess
         } else {
             $tmp = & $this->injectors[$key];
         }
+
+        // Auto define getter support
+        if ($this->autoDefine && method_exists($this, 'get' . $key)) {
+            $tmp = $this->{'get' . $key} ($tmp);
+        }
+
+
         return $tmp;
     }
 
