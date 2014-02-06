@@ -1,7 +1,7 @@
 {
-  "name": "pagon/framework",
-  "description": "Pagon Framework",
-  "keywords": ["framework", "pagon"],
+  "name": "pagon/pagon",
+  "description": "The Pagon Framework",
+  "keywords": ["framework", "pagon", "skelton"],
   "license": "MIT",
   "authors": [
     {
@@ -10,22 +10,9 @@
     }
   ],
   "require": {
-    "php": ">=5.3.9"
-  },
-  "require-dev": {
-    "opauth/opauth": "0.4.4",
-    "opauth/github": "0.1.0",
-    "pagon/jade": "1.0.0",
-    "symfony/yaml": "v2.3.3"
-  },
-  "suggest": {
-    "opauth/opauth": "Auth with OPAuth service provider",
-    "pagon/jade": "Support Jade template engine",
-    "symfony/yaml": "Support Yaml config parse and build"
-  },
-  "autoload": {
-    "psr-0": {
-      "Pagon": "lib/"
-    }
+    "php": ">=5.3.9",
+    "pagon/framework": "dev-master",
+    "j4mie/paris": "v1.4.2",
+    "davedevelopment/phpmig": "v1.0"
   }
 }

@@ -1,0 +1,14 @@
+<?php
+
+require(dirname(__DIR__) . '/lib/Pagon/App.php');
+
+$app = \Pagon\App::create();
+
+$app->command('init', params(array(
+    array('dd'),
+    array('--args')
+)), function ($req, $res) {
+    var_dump($req->params);
+});
+
+$app->run();

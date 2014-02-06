@@ -1,17 +1,13 @@
-## Pagon框架? 
+## Pagon框架
 
-[![Build Status](https://travis-ci.org/hfcorriez/pagon.png)](https://travis-ci.org/hfcorriez/pagon)
-[![Build Status](https://drone.io/github.com/hfcorriez/pagon/status.png)](https://drone.io/github.com/hfcorriez/pagon/latest)
+[![Build Status](https://travis-ci.org/pagon/framework.png)](https://travis-ci.org/pagon/framework)
+[![Build Status](https://drone.io/github.com/pagon/framework/status.png)](https://drone.io/github.com/pagon/framework/latest)
 
 邮件列表: [https://groups.google.com/d/forum/pagonframework](https://groups.google.com/d/forum/pagonframework)
 
-```
-Test cases		: 83
-Code coverage	: 41%
-```
+> 框架已经迁移到 [https://github.com/pagon/framework](https://github.com/pagon/framework)
 
-> ;) 单元测试还在努力ing...
-
+## 目标
 
 - 简单高效的现代应用框架。使用类似Ruby的[Sinatra](http://www.sinatrarb.com)或Node的[Express.js](http://expressjs.com)
 - 致力于打造一个拥有最小化核心组件且尽量不依赖粗糙三方库的简单、智能和高效的框架。
@@ -19,22 +15,6 @@ Code coverage	: 41%
 - 不只WEB，CLI下的开发也做了很多优化。
 - 只需要一套框架，便能快速完成一套高效Web应用的开发！
 - `Write less, Do more!`
-
-## 文档
-
-- [快速向导](./docs/01_Quick_Guide.md)
-- [文档](./docs/02_Document.md)
-- [API](./docs/03_API.md)
-
-## 特性
-
-- 简单，无配置就能使用，小应用可快速成型
-- 智能，经过考虑的模式设计，
-- 扩展，使用中间件方式随意扩展自己想要的
-- 标准，基于[PSR规范](https://github.com/hfcorriez/fig-standards)开发
-- 性能，效率上优于目前所有主流框架
-- 事件，所有类基于事件，随时随地用事件驱动
-- 现代，支持主流的现代应用开发：Web/Cli, Restful, Xml/Yaml/Json/Ini, Jade/Twig?, Dependency Injector
 
 ## License
 
