@@ -46,7 +46,7 @@ class Fiber implements \ArrayAccess
     /**
      * @var bool Auto use define function
      */
-    protected $autoDefine = true;
+    protected $autoDefine = false;
 
     /**
      * @param array $injectors
