@@ -1,6 +1,6 @@
 <html>
 <head>
-    <title>Welcome to pagon!</title>
+    <title>Welcome to Pagon!</title>
     <meta charset="utf-8">
     <style type="text/css">
         @charset "utf-8";
@@ -160,7 +160,7 @@
 </head>
 <body class="typo">
 <div id="wrapper" class="typo typo-selection">
-    <h1>Welcome to pagon!</h1>
+    <h1>Welcome to Pagon!</h1>
 
     <div id="tagline">I'm come from future!</div>
 
