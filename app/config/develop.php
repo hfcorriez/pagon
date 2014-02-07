@@ -7,6 +7,7 @@
  *
  */
 
+error_reporting(E_ALL & ~E_NOTICE);
 
 return array(
     'debug'    => true,

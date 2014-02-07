@@ -13,6 +13,7 @@
     "php": ">=5.3.9",
     "pagon/framework": "dev-master",
     "j4mie/paris": "v1.4.2",
-    "davedevelopment/phpmig": "v1.0"
+    "davedevelopment/phpmig": "v1.0",
+    "react/http": "0.3.*"
   }
 }

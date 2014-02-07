@@ -1,14 +1,48 @@
+#!/usr/bin/env php
 <?php
 
-require(dirname(__DIR__) . '/lib/Pagon/App.php');
+require dirname(__DIR__) . '/vendor/autoload.php';
 
-$app = \Pagon\App::create();
+$pagonApp = \Pagon\App::create();
 
-$app->command('init', params(array(
-    array('dd'),
-    array('--args')
-)), function ($req, $res) {
-    var_dump($req->params);
+$pagonApp->command('serve', function ($req, $res) {
+    $dev = function ($request, $response) {
+        include(dirname(__DIR__) . '/app/bootstrap.php');
+
+        $app->input = $devReq = new \Pagon\Http\Input(array('app' => $app));
+            $app->output = $devRes = new \Pagon\Http\Output(array('app' => $app));
+        $app->cli = false;
+
+        foreach ($request->getHeaders() as $k => $v) {
+            $devReq->server['HTTP_' . strtoupper(str_replace('-', '_', $k))] = $v;
+        }
+
+        $devReq->server['REQUEST_URI'] = $request->getPath();
+        $devReq->server['REQUEST_METHOD'] = $request->getMethod();
+        $devReq->server['REMOTE_ADDR'] = '127.0.0.1';
+        $devReq->server['HTTP_HOST'] = '127.0.0.1';
+        $devReq->server['SERVER_PORT'] = 5000;
+
+        $devRes->on('header', function () use ($response, $request, $devRes, $devReq) {
+            $response->writeHead($devRes->status, $devRes->headers);
+            $response->end($devRes->body);
+
+            $devRes->body('');
+        });
+
+        include(dirname(__DIR__) . '/public/index.php');
+    };
+
+    $loop = React\EventLoop\Factory::create();
+    $socket = new React\Socket\Server($loop);
+    $http = new React\Http\Server($socket, $loop);
+
+    $http->on('request', $dev);
+
+    echo "Pagon serve at http://127.0.0.1:5000\n";
+
+    $socket->listen(5000);
+    $loop->run();
 });
 
-$app->run();
+$pagonApp->run();
