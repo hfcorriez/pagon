@@ -13,13 +13,8 @@
          bootstrap="./vendor/autoload.php"
         >
     <testsuites>
-        <testsuite name="Test Suite">
-            <directory suffix=".php">./tests/</directory>
+        <testsuite name="Application Test Suite">
+            <directory suffix=".php">./app/tests/</directory>
         </testsuite>
     </testsuites>
-
-    <logging>
-        <log type="testdox-html" target="./tmp/testdox.html"/>
-        <log type="testdox-text" target="./tmp/testdox.txt"/>
-    </logging>
 </phpunit>
