@@ -10,7 +10,7 @@ class Serve extends Route
     public function run($req, $res)
     {
         $devApp = function ($request, $response) {
-            include(APP_DIR . '/bootstrap.php');
+            $app = include(APP_DIR . '/bootstrap.php');
 
             $app->input = $devReq = new \Pagon\Http\Input(array('app' => $app));
             $app->output = $devRes = new \Pagon\Http\Output(array('app' => $app));
