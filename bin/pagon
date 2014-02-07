@@ -8,7 +8,7 @@ use Pagon\Console;
 $pagonApp = \Pagon\App::create();
 
 $pagonApp->command('serve', function ($req, $res) {
-    $dev = function ($request, $response) {
+    $devApp = function ($request, $response) {
         include(dirname(__DIR__) . '/app/bootstrap.php');
 
         $app->input = $devReq = new \Pagon\Http\Input(array('app' => $app));
@@ -42,7 +42,7 @@ $pagonApp->command('serve', function ($req, $res) {
     $socket = new React\Socket\Server($loop);
     $http = new React\Http\Server($socket, $loop);
 
-    $http->on('request', $dev);
+    $http->on('request', $devApp);
 
     echo "Pagon serve at http://127.0.0.1:5000\n";
 
