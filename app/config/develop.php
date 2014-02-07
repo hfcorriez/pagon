@@ -15,7 +15,7 @@ return array(
         'type'     => 'mysql',
         'host'     => 'localhost',
         'port'     => '3306',
-        'dbname'   => 'test',
+        'dbname'   => 'pagon',
         'username' => 'root',
         'password' => '',
         'charset'  => 'utf8',
