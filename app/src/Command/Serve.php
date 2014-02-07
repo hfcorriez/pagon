@@ -14,7 +14,7 @@ class Serve extends Route
              * Static file check and render
              */
             $static_file = ROOT_DIR . '/public' . $request->getPath();
-            if (file_exists($static_file)) {
+            if (is_file($static_file)) {
                 echo Console::text(
                     "<green>200</green>"
                     . ' <cyan>' . str_pad($request->getMethod(), 6, ' ', STR_PAD_RIGHT) . '</cyan>'
