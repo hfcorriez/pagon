@@ -18,6 +18,7 @@ class Serve extends Route
             $app->cli = false;
 
             $headers = $request->getHeaders();
+            $_GET = $query = $request->getQuery();
 
             $request->on('data', function ($data) use ($headers, $devReq, $app) {
                 $_POST = parse_raw_http_request($data, $headers['Content-Type']);
@@ -29,15 +30,15 @@ class Serve extends Route
                 $devReq->server['HTTP_' . strtoupper(str_replace('-', '_', $k))] = $v;
             }
 
-            $devReq->server['REQUEST_URI'] = $request->getPath();
+            $devReq->server['REQUEST_URI'] = $request->getPath() . ($query ? '?' . http_build_query($query) : '');
             $devReq->server['REQUEST_METHOD'] = $request->getMethod();
             $devReq->server['REMOTE_ADDR'] = '127.0.0.1';
-            $devReq->server['HTTP_HOST'] = '127.0.0.1';
+            $devReq->server['SERVER_NAME'] = '127.0.0.1';
             $devReq->server['SERVER_PORT'] = 5000;
             $devReq->server['SCRIPT_NAME'] = '/';
 
             $devRes->on('header', function () use ($response, $request, $devRes, $devReq) {
-                echo Console::text('<cyan>' . str_pad($request->getMethod(), 6, ' ', STR_PAD_RIGHT) . '</cyan> ' . $request->getPath() . ' <yellow>' . $devRes->status . '</yellow>', true);
+                echo Console::text('<cyan>' . str_pad($request->getMethod(), 6, ' ', STR_PAD_RIGHT) . '</cyan> '  . $devReq->url, true);
 
                 $response->writeHead($devRes->status, $devRes->headers);
                 $response->end($devRes->body);
