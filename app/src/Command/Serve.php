@@ -38,7 +38,10 @@ class Serve extends Route
             $devReq->server['SCRIPT_NAME'] = '/';
 
             $devRes->on('header', function () use ($response, $request, $devRes, $devReq) {
-                echo Console::text('<cyan>' . str_pad($request->getMethod(), 6, ' ', STR_PAD_RIGHT) . '</cyan> '  . $devReq->url, true);
+                echo Console::text(
+                    ($devRes->status < 400 ? "<green>$devRes->status</green>" : "<red>$devRes->status</red>")
+                    . ' <cyan>' . str_pad($request->getMethod(), 6, ' ', STR_PAD_RIGHT) . '</cyan>'
+                    . ' ' . $devReq->url, true);
 
                 $response->writeHead($devRes->status, $devRes->headers);
                 $response->end($devRes->body);
