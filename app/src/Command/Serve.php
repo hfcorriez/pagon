@@ -35,6 +35,9 @@ class Serve extends Route
             $app->buffer = true;
             $app->cli = false;
 
+            $headers = $request->getHeaders();
+            $_GET = $query = $request->getQuery();
+
             $request->on('data', function ($data) use ($headers, $devReq, $app) {
                 $_POST = parse_raw_http_request($data, $headers['Content-Type']);
 
@@ -44,8 +47,6 @@ class Serve extends Route
             /**
              * Web environment initial
              */
-            $headers = $request->getHeaders();
-            $_GET = $query = $request->getQuery();
 
             foreach ($headers as $k => $v) {
                 $devReq->server['HTTP_' . strtoupper(str_replace('-', '_', $k))] = $v;
