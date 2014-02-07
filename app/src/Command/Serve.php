@@ -10,6 +10,24 @@ class Serve extends Route
     public function run($req, $res)
     {
         $devApp = function ($request, $response) {
+            /**
+             * Static file check and render
+             */
+            $static_file = ROOT_DIR . '/public' . $request->getPath();
+            if (file_exists($static_file)) {
+                echo Console::text(
+                    "<green>200</green>"
+                    . ' <cyan>' . str_pad($request->getMethod(), 6, ' ', STR_PAD_RIGHT) . '</cyan>'
+                    . ' ' . $request->getPath(), true);
+
+                $response->writeHead(200, array('Content-Type' => mime_content_type($static_file)));
+                $response->end(file_get_contents($static_file));
+                return;
+            }
+
+            /**
+             * Mock Application and init
+             */
             $app = include(APP_DIR . '/bootstrap.php');
 
             $app->input = $devReq = new \Pagon\Http\Input(array('app' => $app));
@@ -17,14 +35,17 @@ class Serve extends Route
             $app->buffer = true;
             $app->cli = false;
 
-            $headers = $request->getHeaders();
-            $_GET = $query = $request->getQuery();
-
             $request->on('data', function ($data) use ($headers, $devReq, $app) {
                 $_POST = parse_raw_http_request($data, $headers['Content-Type']);
 
                 include(ROOT_DIR . '/public/index.php');
             });
+
+            /**
+             * Web environment initial
+             */
+            $headers = $request->getHeaders();
+            $_GET = $query = $request->getQuery();
 
             foreach ($headers as $k => $v) {
                 $devReq->server['HTTP_' . strtoupper(str_replace('-', '_', $k))] = $v;
@@ -37,6 +58,9 @@ class Serve extends Route
             $devReq->server['SERVER_PORT'] = 5000;
             $devReq->server['SCRIPT_NAME'] = '/';
 
+            /**
+             * Pagon header inject
+             */
             $devRes->on('header', function () use ($response, $request, $devRes, $devReq) {
                 echo Console::text(
                     ($devRes->status < 400 ? "<green>$devRes->status</green>" : "<red>$devRes->status</red>")
