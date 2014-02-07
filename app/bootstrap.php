@@ -1,5 +1,8 @@
 <?php
 
+define('APP_DIR', __DIR__);
+define('ROOT_DIR', dirname(APP_DIR));
+
 require dirname(__DIR__) . '/vendor/autoload.php';
 
 use Pagon\App;
@@ -10,3 +13,5 @@ $mode = $app->mode();
 if (is_file($conf_file = __DIR__ . '/config/' . $mode . '.php')) {
     $app->append(include($conf_file));
 }
+
+return $app;

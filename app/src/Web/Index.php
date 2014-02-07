@@ -10,4 +10,9 @@ class Index extends Rest
     {
         $this->app->render('index.php');
     }
+
+    public function post()
+    {
+        print_r($this->input->data);
+    }
 }

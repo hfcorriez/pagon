@@ -1,53 +1,8 @@
 #!/usr/bin/env php
 <?php
 
-require dirname(__DIR__) . '/vendor/autoload.php';
+include(dirname(__DIR__) . '/app/bootstrap.php');
 
-use Pagon\Console;
+$app->autoRoute('Command');
 
-$pagonApp = \Pagon\App::create();
-
-$pagonApp->command('serve', function ($req, $res) {
-    $devApp = function ($request, $response) {
-        include(dirname(__DIR__) . '/app/bootstrap.php');
-
-        $app->input = $devReq = new \Pagon\Http\Input(array('app' => $app));
-        $app->output = $devRes = new \Pagon\Http\Output(array('app' => $app));
-        $app->cli = false;
-
-        foreach ($request->getHeaders() as $k => $v) {
-            $devReq->server['HTTP_' . strtoupper(str_replace('-', '_', $k))] = $v;
-        }
-
-        $devReq->server['REQUEST_URI'] = $request->getPath();
-        $devReq->server['REQUEST_METHOD'] = $request->getMethod();
-        $devReq->server['REMOTE_ADDR'] = '127.0.0.1';
-        $devReq->server['HTTP_HOST'] = '127.0.0.1';
-        $devReq->server['SERVER_PORT'] = 5000;
-        $devReq->server['SCRIPT_NAME'] = '/';
-
-        $devRes->on('header', function () use ($response, $request, $devRes, $devReq) {
-            echo Console::text('<cyan>' . str_pad($request->getMethod(), 6, ' ', STR_PAD_RIGHT) . '</cyan> ' . $request->getPath() . ' <yellow>' . $devRes->status . '</yellow>', true);
-
-            $response->writeHead($devRes->status, $devRes->headers);
-            $response->end($devRes->body);
-
-            $devRes->body('');
-        });
-
-        include(dirname(__DIR__) . '/public/index.php');
-    };
-
-    $loop = React\EventLoop\Factory::create();
-    $socket = new React\Socket\Server($loop);
-    $http = new React\Http\Server($socket, $loop);
-
-    $http->on('request', $devApp);
-
-    echo "Pagon serve at http://127.0.0.1:5000\n";
-
-    $socket->listen(5000);
-    $loop->run();
-});
-
-$pagonApp->run();
+$app->run();
