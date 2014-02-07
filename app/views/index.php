@@ -169,7 +169,7 @@
     </div>
 
     <div id="action">
-        <a href="https://github.com/hfcorriez/pagon" class="button">Visit documentation!</a>
+        <a href="http://ipagon.com" class="button" target="_blank">Visit documentation!</a>
     </div>
 </div>
 </body>
