@@ -9,7 +9,7 @@ class Serve extends Route
 {
     public function run($req, $res)
     {
-        $devApp = function ($request, $response) {
+        $server_app = function ($request, $response) {
             /**
              * Static file check and render
              */
@@ -30,15 +30,15 @@ class Serve extends Route
              */
             $app = include(APP_DIR . '/bootstrap.php');
 
-            $app->input = $devReq = new \Pagon\Http\Input(array('app' => $app));
-            $app->output = $devRes = new \Pagon\Http\Output(array('app' => $app));
+            $app->input = $mock_req = new \Pagon\Http\Input(array('app' => $app));
+            $app->output = $mock_res = new \Pagon\Http\Output(array('app' => $app));
             $app->buffer = true;
             $app->cli = false;
 
             $headers = $request->getHeaders();
             $_GET = $query = $request->getQuery();
 
-            $request->on('data', function ($data) use ($headers, $devReq, $app) {
+            $request->on('data', function ($data) use ($headers, $mock_req, $app) {
                 $_POST = parse_raw_http_request($data, $headers['Content-Type']);
 
                 include(ROOT_DIR . '/public/index.php');
@@ -49,29 +49,29 @@ class Serve extends Route
              */
 
             foreach ($headers as $k => $v) {
-                $devReq->server['HTTP_' . strtoupper(str_replace('-', '_', $k))] = $v;
+                $mock_req->server['HTTP_' . strtoupper(str_replace('-', '_', $k))] = $v;
             }
 
-            $devReq->server['REQUEST_URI'] = $request->getPath() . ($query ? '?' . http_build_query($query) : '');
-            $devReq->server['REQUEST_METHOD'] = $request->getMethod();
-            $devReq->server['REMOTE_ADDR'] = '127.0.0.1';
-            $devReq->server['SERVER_NAME'] = '127.0.0.1';
-            $devReq->server['SERVER_PORT'] = 5000;
-            $devReq->server['SCRIPT_NAME'] = '/';
+            $mock_req->server['REQUEST_URI'] = $request->getPath() . ($query ? '?' . http_build_query($query) : '');
+            $mock_req->server['REQUEST_METHOD'] = $request->getMethod();
+            $mock_req->server['REMOTE_ADDR'] = '127.0.0.1';
+            $mock_req->server['SERVER_NAME'] = '127.0.0.1';
+            $mock_req->server['SERVER_PORT'] = 5000;
+            $mock_req->server['SCRIPT_NAME'] = '/';
 
             /**
              * Pagon header inject
              */
-            $devRes->on('header', function () use ($response, $request, $devRes, $devReq) {
+            $mock_res->on('header', function () use ($response, $request, $mock_res, $mock_req) {
                 echo Console::text(
-                    ($devRes->status < 400 ? "<green>$devRes->status</green>" : "<red>$devRes->status</red>")
+                    ($mock_res->status < 400 ? "<green>$mock_res->status</green>" : "<red>$mock_res->status</red>")
                     . ' <cyan>' . str_pad($request->getMethod(), 6, ' ', STR_PAD_RIGHT) . '</cyan>'
-                    . ' ' . $devReq->url, true);
+                    . ' ' . $mock_req->url, true);
 
-                $response->writeHead($devRes->status, $devRes->headers);
-                $response->end($devRes->body);
+                $response->writeHead($mock_res->status, $mock_res->headers);
+                $response->end($mock_res->body);
 
-                $devRes->body('');
+                $mock_res->body('');
             });
         };
 
@@ -79,7 +79,7 @@ class Serve extends Route
         $socket = new \React\Socket\Server($loop);
         $http = new \React\Http\Server($socket, $loop);
 
-        $http->on('request', $devApp);
+        $http->on('request', $server_app);
 
         echo "Pagon serve at http://127.0.0.1:5000\n";
 
