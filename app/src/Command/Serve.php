@@ -37,6 +37,9 @@ class Serve extends Route
 
             $headers = $request->getHeaders();
             $_GET = $query = $request->getQuery();
+            if ($headers['Cookie']) {
+                $_COOKIE = decode_cookie($headers['Cookie']);
+            }
 
             $request->on('data', function ($data) use ($headers, $mock_req, $app) {
                 $_POST = parse_raw_http_request($data, $headers['Content-Type']);
@@ -68,7 +71,13 @@ class Serve extends Route
                     . ' <cyan>' . str_pad($request->getMethod(), 6, ' ', STR_PAD_RIGHT) . '</cyan>'
                     . ' ' . $mock_req->url, true);
 
-                $response->writeHead($mock_res->status, $mock_res->headers);
+                $headers = $mock_res->headers;
+
+                if ($cookies = $mock_res->buildCookie()) {
+                    $headers['Set-Cookie'] = encode_cookie($cookies);
+                }
+
+                $response->writeHead($mock_res->status, $headers);
                 $response->end($mock_res->body);
 
                 $mock_res->body('');
@@ -130,4 +139,29 @@ function parse_raw_http_request($input, $content_type)
     }
 
     return $a_data;
+}
+
+function encode_cookie(array $cookies)
+{
+    $lines = array();
+
+    foreach ($cookies as $cookie) {
+        $paris = array($cookie['key'] . "=" . rawurlencode($cookie['value']));
+        $_option = $cookie['option'];
+
+        if ($_option['maxage']) $paris[] = 'Max-Age=' . $_option['expires'];
+        if ($_option['path']) $paris[] = 'Path=' . $_option['path'];
+        if ($_option['httponly']) $paris[] = 'HttpOnly';
+        if ($_option['secure']) $paris[] = 'Secure';
+
+        $lines[] = join('; ', $paris);
+    }
+
+    return join("\r\n", $lines);
+}
+
+function decode_cookie($string)
+{
+    parse_str(urldecode($string), $arr);
+    return $arr;
 }
