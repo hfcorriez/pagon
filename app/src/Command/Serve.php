@@ -25,10 +25,14 @@ class Serve extends Route
                 return;
             }
 
+            // Initial
+            $_COOKIE = $_FILES = $_SESSION = $_GET = $_POST = array();
+
             /**
              * Mock Application and init
              */
             $app = include(APP_DIR . '/bootstrap.php');
+            $raw = '';
 
             $app->input = $mock_req = new \Pagon\Http\Input(array('app' => $app));
             $app->output = $mock_res = new \Pagon\Http\Output(array('app' => $app));
@@ -36,13 +40,23 @@ class Serve extends Route
             $app->cli = false;
 
             $headers = $request->getHeaders();
-            $_GET = $query = $request->getQuery();
+            $_GET = $request->getQuery();
             if ($headers['Cookie']) {
                 $_COOKIE = decode_cookie($headers['Cookie']);
             }
+            $_SESSION = array();
 
-            $request->on('data', function ($data) use ($headers, $mock_req, $app) {
-                $_POST = parse_raw_http_request($data, $headers['Content-Type']);
+            $request->on('data', function ($data) use (&$raw, $request, $headers, $app) {
+                $raw .= $data;
+
+                if (strlen($raw) < $headers['Content-Length']) return;
+
+                // Start parse
+                $parsed = parse_raw_http_request($raw, $headers['Content-Type']);
+
+                // Inject data and files
+                $app->input->data = $_POST = $parsed['data'];
+                $app->input->files = $_FILES = $parsed['files'];
 
                 include(ROOT_DIR . '/public/index.php');
             });
@@ -55,7 +69,7 @@ class Serve extends Route
                 $mock_req->server['HTTP_' . strtoupper(str_replace('-', '_', $k))] = $v;
             }
 
-            $mock_req->server['REQUEST_URI'] = $request->getPath() . ($query ? '?' . http_build_query($query) : '');
+            $mock_req->server['REQUEST_URI'] = $request->getPath() . ($_GET ? '?' . http_build_query($_GET) : '');
             $mock_req->server['REQUEST_METHOD'] = $request->getMethod();
             $mock_req->server['REMOTE_ADDR'] = '127.0.0.1';
             $mock_req->server['SERVER_NAME'] = '127.0.0.1';
@@ -77,8 +91,11 @@ class Serve extends Route
                     $headers['Set-Cookie'] = encode_cookie($cookies);
                 }
 
-                $response->writeHead($mock_res->status, $headers);
-                $response->end($mock_res->body);
+                try {
+                    $response->writeHead($mock_res->status, $headers);
+                    $response->end($mock_res->body);
+                } catch (\Exception $e) {
+                }
 
                 $mock_res->body('');
             });
@@ -100,7 +117,9 @@ class Serve extends Route
 
 function parse_raw_http_request($input, $content_type)
 {
-    $a_data = array();
+    $data = array('data' => array(), 'files' => array());
+    $post = & $data['data'];
+    $file = & $data['files'];
 
     // grab multipart boundary from content type header
     preg_match('/boundary=(.*)$/', $content_type, $matches);
@@ -108,37 +127,47 @@ function parse_raw_http_request($input, $content_type)
     // content type is probably regular form-encoded
     if (!count($matches)) {
         // we expect regular puts to containt a query string containing data
-        parse_str(urldecode($input), $a_data);
-        return $a_data;
+        parse_str(urldecode($input), $post);
+        return $data;
     }
 
     $boundary = $matches[1];
 
     // split content by boundary and get rid of last -- element
-    $a_blocks = preg_split("/-+$boundary/", $input);
-    array_pop($a_blocks);
+    $blocks = preg_split("/-+$boundary/", $input);
+    array_pop($blocks);
 
     // loop data blocks
-    foreach ($a_blocks as $id => $block) {
+    foreach ($blocks as $id => $block) {
         if (empty($block))
             continue;
 
         // you'll have to var_dump $block to understand this and maybe replace \n or \r with a visibile char
 
         // parse uploaded files
-        if (strpos($block, 'application/octet-stream') !== FALSE) {
+        if (strpos($block, 'filename=') !== FALSE) {
             // match "name", then everything after "stream" (optional) except for prepending newlines
-            preg_match("/name=\"([^\"]*)\".*stream[\n|\r]+([^\n\r].*)?$/s", $block, $matches);
-            $a_data['files'][$matches[1]] = $matches[2];
+            preg_match("/name=\"([^\"]*)\"; filename=\"([^\"]*)\"\r\nContent-Type: (.*?)\r\n\r\n([^\n\r].*)?$/s", $block, $matches);
+
+            $tmp_file = tempnam(sys_get_temp_dir(), 'php');
+            $write_length = file_put_contents($tmp_file, $matches[4]);
+
+            $file[$matches[1]] = array(
+                'name'     => $matches[2],
+                'type'     => $matches[3],
+                'tmp_name' => $write_length ? $tmp_file : null,
+                'error'    => $write_length ? UPLOAD_ERR_OK : UPLOAD_ERR_CANT_WRITE,
+                'size'     => $write_length
+            );
         } // parse all other fields
         else {
             // match "name" and optional value in between newline sequences
             preg_match('/name=\"([^\"]*)\"[\n|\r]+([^\n\r].*)?\r$/s', $block, $matches);
-            $a_data[$matches[1]] = $matches[2];
+            $post[$matches[1]] = $matches[2];
         }
     }
 
-    return $a_data;
+    return $data;
 }
 
 function encode_cookie(array $cookies)
