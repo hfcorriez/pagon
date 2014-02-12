@@ -9,6 +9,8 @@ class Serve extends Route
 {
     public function run($req, $res)
     {
+        session_start();
+
         $server_app = function ($request, $response) {
             /**
              * Static file check and render
@@ -44,7 +46,6 @@ class Serve extends Route
             if ($headers['Cookie']) {
                 $_COOKIE = decode_cookie($headers['Cookie']);
             }
-            $_SESSION = array();
 
             $request->on('data', function ($data) use (&$raw, $request, $headers, $app) {
                 $raw .= $data;
@@ -191,6 +192,6 @@ function encode_cookie(array $cookies)
 
 function decode_cookie($string)
 {
-    parse_str(urldecode($string), $arr);
+    parse_str(str_replace('; ', '&', urldecode($string)), $arr);
     return $arr;
 }
