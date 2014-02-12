@@ -9,8 +9,6 @@ class Serve extends Route
 {
     public function run($req, $res)
     {
-        session_start();
-
         $server_app = function ($request, $response) {
             /**
              * Static file check and render
@@ -28,7 +26,7 @@ class Serve extends Route
             }
 
             // Initial
-            $_COOKIE = $_FILES = $_SESSION = $_GET = $_POST = array();
+            $_COOKIE = $_SESSION = $_FILES = $_GET = $_POST = array();
 
             /**
              * Mock Application and init
