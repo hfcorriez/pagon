@@ -96,6 +96,7 @@ class Serve extends Route
                     $response->writeHead($mock_res->status, $headers);
                     $response->end($mock_res->body);
                 } catch (\Exception $e) {
+                    echo Console::text($e->getMessage(), 'red', true);
                 }
 
                 $mock_res->body('');
