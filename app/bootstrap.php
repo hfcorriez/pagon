@@ -7,9 +7,16 @@ require dirname(__DIR__) . '/vendor/autoload.php';
 
 use Pagon\App;
 
+// Create application
 $app = App::create(__DIR__ . '/config/default.php');
+
+// Get current mode
 $mode = $app->mode();
 
+// Mount current dir as root dir
+$app->mount(__DIR__);
+
+// Load mode config depends on ENV
 if (is_file($conf_file = __DIR__ . '/config/' . $mode . '.php')) {
     $app->append(include($conf_file));
 }
