@@ -14,7 +14,8 @@ $app = App::create(__DIR__ . '/config/default.php');
 $mode = $app->mode();
 
 // Mount current dir as root dir
-$app->mount(__DIR__);
+$app->mount(APP_DIR);
+$app->mount('public', ROOT_DIR . '/public');
 
 // Load mode config depends on ENV
 if (is_file($conf_file = __DIR__ . '/config/' . $mode . '.php')) {
