@@ -5,7 +5,46 @@
 
 邮件列表: [https://groups.google.com/d/forum/pagonframework](https://groups.google.com/d/forum/pagonframework)
 
-> 框架已经迁移到 [https://github.com/pagon/framework](https://github.com/pagon/framework)
+> 新版本框架已经分离，单独迁移到 [https://github.com/pagon/framework](https://github.com/pagon/framework)
+
+## 快速开始
+
+### 安装
+
+下载
+
+```bash
+$ wget https://drone.io/github.com/hfcorriez/pagon/files/build/pagon-0.8.0-dev.tar.gz
+```
+
+Git
+
+```bash
+$ git clone -b 0.8.0-dev git@github.com:hfcorriez/pagon.git myapp
+```
+
+### 代码
+
+```php
+$app = App::create();
+
+$app->get('/', function($req, $res) {
+  $res->render('index.php');
+});
+
+$app->run();
+```
+
+### 运行
+
+```bash
+$ ./bin/pagon serve
+Pagon serve at http://127.0.0.1:5000
+```
+
+### 预览
+
+![运行欢迎页面](https://f.cloud.github.com/assets/119550/2168909/28e8f986-954e-11e3-8031-9c21079cbef6.jpg)
 
 ## 目标
 
