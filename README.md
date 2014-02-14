@@ -42,6 +42,8 @@ $ ./bin/pagon serve
 Pagon serve at http://127.0.0.1:5000
 ```
 
+> 内建服务器运行方式只适用于开发，生产环境请使用HTTP服务器来维护
+
 ### 预览
 
 ![运行欢迎页面](https://f.cloud.github.com/assets/119550/2168909/28e8f986-954e-11e3-8031-9c21079cbef6.jpg)
