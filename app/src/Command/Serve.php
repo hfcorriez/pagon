@@ -5,11 +5,17 @@ namespace Command;
 use Pagon\Console;
 use Pagon\Route;
 
-class Serve extends Route
+class Serve extends Route\Command
 {
+    protected $arguments = array(
+        '-p|--port' => array('help' => 'Port to listen'),
+    );
+
     public function run($req, $res)
     {
-        $server_app = function ($request, $response) {
+        $port = $this->params['port'] ? $this->params['port'] : '5000';
+
+        $server_app = function ($request, $response) use ($port) {
             /**
              * Static file check and render
              */
@@ -72,7 +78,7 @@ class Serve extends Route
             $mock_req->server['REQUEST_METHOD'] = $request->getMethod();
             $mock_req->server['REMOTE_ADDR'] = '127.0.0.1';
             $mock_req->server['SERVER_NAME'] = '127.0.0.1';
-            $mock_req->server['SERVER_PORT'] = 5000;
+            $mock_req->server['SERVER_PORT'] = $port;
             $mock_req->server['SCRIPT_NAME'] = '/';
 
             /**
@@ -107,9 +113,10 @@ class Serve extends Route
 
         $http->on('request', $server_app);
 
-        echo "Pagon serve at http://127.0.0.1:5000\n";
+        $socket->listen($port);
 
-        $socket->listen(5000);
+        echo "Pagon serve at http://127.0.0.1:$port\n";
+
         $loop->run();
     }
 }
