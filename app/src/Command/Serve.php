@@ -115,7 +115,7 @@ class Serve extends Route\Command
 
         $socket->listen($port);
 
-        echo "Pagon serve at http://127.0.0.1:$port\n";
+        echo "Pagon serve at " . Console::text("http://127.0.0.1:$port", array("underline", "bold")) . "\n";
 
         $loop->run();
     }
