@@ -18,5 +18,8 @@
     "j4mie/paris": "v1.4.2",
     "davedevelopment/phpmig": "v1.0",
     "react/http": "0.3.*"
+  },
+  "require-dev": {
+    "pagon/composer-packer": "0.1.x"
   }
 }
