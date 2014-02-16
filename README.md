@@ -26,7 +26,7 @@ $ git clone -b 0.8.0-dev git@github.com:hfcorriez/pagon.git myapp
 ### 代码
 
 ```php
-$app = App::create();
+$app = Pagon::create();
 
 $app->get('/', function($req, $res) {
   $res->render('index.php');

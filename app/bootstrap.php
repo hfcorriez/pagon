@@ -5,10 +5,10 @@ define('ROOT_DIR', dirname(APP_DIR));
 
 require dirname(__DIR__) . '/vendor/autoload.php';
 
-use Pagon\App;
+use Pagon\Pagon;
 
 // Create application
-$app = App::create(__DIR__ . '/config/default.php');
+$app = Pagon::create(__DIR__ . '/config/default.php');
 
 // Get current mode
 $mode = $app->mode();
