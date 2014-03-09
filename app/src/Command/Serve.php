@@ -15,7 +15,12 @@ class Serve extends Route\Command
     {
         $port = $this->params['port'] ? $this->params['port'] : '5000';
 
-        $server_app = function ($request, $response) use ($port) {
+        /**
+         * Mock Application and init
+         */
+        $app = include(APP_DIR . '/bootstrap.php');
+
+        $server_app = function ($request, $response) use ($port, $app) {
             /**
              * Static file check and render
              */
@@ -31,10 +36,6 @@ class Serve extends Route\Command
                 return;
             }
 
-            /**
-             * Mock Application and init
-             */
-            $app = include(APP_DIR . '/bootstrap.php');
             $raw = '';
 
             $app->input = $mock_req = new \Pagon\Http\Input(array('app' => $app));
