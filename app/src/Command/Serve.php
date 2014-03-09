@@ -31,9 +31,6 @@ class Serve extends Route\Command
                 return;
             }
 
-            // Initial
-            $_COOKIE = $_SESSION = $_FILES = $_GET = $_POST = array();
-
             /**
              * Mock Application and init
              */
@@ -45,10 +42,13 @@ class Serve extends Route\Command
             $app->buffer = true;
             $app->cli = false;
 
+            // Init request data
+            $mock_req->server = $mock_req->query = $mock_req->data = $mock_req->files = $mock_req->_cookies = array();
+
             $headers = $request->getHeaders();
-            $_GET = $request->getQuery();
+            $mock_req->query = $request->getQuery();
             if ($headers['Cookie']) {
-                $_COOKIE = decode_cookie($headers['Cookie']);
+                $mock_req->_cookies = decode_cookie($headers['Cookie']);
             }
 
             $request->on('data', function ($data) use (&$raw, $request, $headers, $app) {
@@ -60,21 +60,23 @@ class Serve extends Route\Command
                 $parsed = parse_raw_http_request($raw, $headers['Content-Type']);
 
                 // Inject data and files
-                $app->input->data = $_POST = $parsed['data'];
-                $app->input->files = $_FILES = $parsed['files'];
+                $app->input->data = $parsed['data'];
+                $app->input->files = $parsed['files'];
 
                 include(ROOT_DIR . '/public/index.php');
             });
 
             /**
-             * Web environment initial
+             * Web header initial
              */
-
             foreach ($headers as $k => $v) {
                 $mock_req->server['HTTP_' . strtoupper(str_replace('-', '_', $k))] = $v;
             }
 
-            $mock_req->server['REQUEST_URI'] = $request->getPath() . ($_GET ? '?' . http_build_query($_GET) : '');
+            /**
+             * Web environment set
+             */
+            $mock_req->server['REQUEST_URI'] = $request->getPath() . ($mock_req->query ? '?' . http_build_query($mock_req->query) : '');
             $mock_req->server['REQUEST_METHOD'] = $request->getMethod();
             $mock_req->server['REMOTE_ADDR'] = '127.0.0.1';
             $mock_req->server['SERVER_NAME'] = '127.0.0.1';
