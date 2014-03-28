@@ -14,13 +14,13 @@
 下载
 
 ```bash
-$ wget https://drone.io/github.com/hfcorriez/pagon/files/build/pagon-0.8.0-dev.tar.gz
+$ wget https://drone.io/github.com/hfcorriez/pagon/files/build/pagon-master.tar.gz
 ```
 
 Git
 
 ```bash
-$ git clone -b 0.8.0-dev git@github.com:hfcorriez/pagon.git myapp
+$ git clone git@github.com:hfcorriez/pagon.git myapp
 ```
 
 ### 代码
