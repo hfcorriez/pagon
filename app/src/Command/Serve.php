@@ -2,6 +2,7 @@
 
 namespace Command;
 
+use Pagon\Config;
 use Pagon\Console;
 use Pagon\Route;
 
@@ -31,7 +32,10 @@ class Serve extends Route\Command
                     . ' <cyan>' . str_pad($request->getMethod(), 6, ' ', STR_PAD_RIGHT) . '</cyan>'
                     . ' ' . $request->getPath(), true);
 
-                $response->writeHead(200, array('Content-Type' => mime_content_type($static_file)));
+                $ext = array_pop(explode('.', $static_file));
+                $mimes = Config::export('mimes');
+
+                $response->writeHead(200, array('Content-Type' => isset($mimes[$ext]) ? $mimes[$ext][0] : mime_content_type($static_file)));
                 $response->end(file_get_contents($static_file));
                 return;
             }
