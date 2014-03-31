@@ -21,6 +21,13 @@ Git
 
 ```bash
 $ git clone git@github.com:hfcorriez/pagon.git myapp
+$ composer install
+```
+
+Composer
+
+```
+$ composer.phar create-project pagon/pagon="dev-master" myapp
 ```
 
 ### 代码
