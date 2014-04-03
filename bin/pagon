@@ -1,8 +1,1 @@
-#!/usr/bin/env php
-<?php
-
-include(dirname(__DIR__) . '/app/bootstrap.php');
-
-$app->autoRoute('Command');
-
-$app->run();
+../vendor/pagon/cli/bin/pagon

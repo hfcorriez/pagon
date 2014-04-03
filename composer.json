@@ -1,7 +1,7 @@
 {
   "name": "pagon/pagon",
-  "description": "The Pagon Framework",
-  "keywords": ["framework", "pagon", "skelton"],
+  "description": "Pagon starter app",
+  "keywords": ["pagon", "skelton"],
   "license": "MIT",
   "authors": [
     {
@@ -15,6 +15,7 @@
   "require": {
     "php": ">=5.3.9",
     "pagon/framework": "dev-master",
+    "pagon/cli": "dev-master",
     "j4mie/paris": "v1.4.2",
     "davedevelopment/phpmig": "v1.0",
     "react/http": "0.3.*"
