@@ -1,4 +1,5 @@
 .idea
 *.log
 *.lock
+bin/
 vendor/
