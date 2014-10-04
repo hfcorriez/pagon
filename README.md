@@ -14,7 +14,7 @@
 下载
 
 ```bash
-$ wget https://drone.io/github.com/hfcorriez/pagon/files/build/pagon-master.tar.gz
+$ wget https://drone.io/github.com/hfcorriez/pagon/files/build/pagon-0.8.0.tar.gz
 ```
 
 Git
@@ -27,7 +27,7 @@ $ composer install
 Composer
 
 ```
-$ composer.phar create-project pagon/pagon="dev-master" myapp
+$ composer.phar create-project pagon/pagon myapp
 ```
 
 ### 代码
