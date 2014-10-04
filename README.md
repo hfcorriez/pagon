@@ -1,12 +1,5 @@
 ## Pagon框架
 
-[![Build Status](https://travis-ci.org/pagon/framework.png)](https://travis-ci.org/pagon/framework)
-[![Build Status](https://drone.io/github.com/pagon/framework/status.png)](https://drone.io/github.com/pagon/framework/latest)
-
-邮件列表: [https://groups.google.com/d/forum/pagonframework](https://groups.google.com/d/forum/pagonframework)
-
-> 新版本框架已经分离，单独迁移到 [https://github.com/pagon/framework](https://github.com/pagon/framework)
-
 ## 快速开始
 
 ### 安装
@@ -14,7 +7,7 @@
 下载
 
 ```bash
-$ wget https://drone.io/github.com/hfcorriez/pagon/files/build/pagon-0.8.0.tar.gz
+$ wget https://drone.io/github.com/hfcorriez/pagon/files/build/pagon-master.tar.gz
 ```
 
 Git
