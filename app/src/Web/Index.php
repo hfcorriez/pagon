@@ -2,9 +2,7 @@
 
 namespace Web;
 
-use Pagon\Route\Rest;
-
-class Index extends Rest
+class Index extends Web
 {
     /**
      * Users for page rending
