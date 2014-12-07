@@ -4,23 +4,19 @@
 
 ### 安装
 
-下载
+[从 Github 下载](https://github.com/hfcorriez/pagon/releases/latest)
 
-```bash
-$ wget https://drone.io/github.com/hfcorriez/pagon/files/build/pagon-master.tar.gz
-```
-
-Git
+从 Git 安装
 
 ```bash
 $ git clone git@github.com:hfcorriez/pagon.git myapp
 $ composer install
 ```
 
-Composer
+从 Composer 安装
 
 ```
-$ composer.phar create-project pagon/pagon myapp
+$ composer create-project pagon/pagon myapp
 ```
 
 ### 代码

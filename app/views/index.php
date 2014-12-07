@@ -1,6 +1,6 @@
 <html>
 <head>
-    <title>Welcome to Pagon!</title>
+    <title><?php echo $title;?></title>
     <meta charset="utf-8">
     <style type="text/css">
         @charset "utf-8";
