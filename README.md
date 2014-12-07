@@ -15,7 +15,7 @@ $ composer install
 
 从 Composer 安装
 
-```
+```bash
 $ composer create-project pagon/pagon myapp
 ```
 
@@ -53,9 +53,8 @@ $app->command('queue\:start', '\Command\Queue\Start');
 执行
 
 ```bash
-./bin/cli db:init
-
-./bin/cli queue:start
+$ ./bin/cli db:init
+$ ./bin/cli queue:start
 ```
 
 ### 数据库
