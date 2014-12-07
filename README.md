@@ -24,18 +24,18 @@ $ composer create-project pagon/pagon myapp
 ```php
 $app = Pagon::create();
 
-// Get index with closure
+// 匿名函数做为路由
 $app->get('/', function($req, $res) {
   $res->render('index.php');
 });
 
-// Get one user
+// 类做为路由
 $app->get('/users/:id', 'Web\\User');
 
-// Run some operator
-$app->post('/users/:id(/:op)?', 'Web\\UserOperator');
+// 可选参数的路由，op 为可选参数
+$app->post('/users/:id(/:op)', 'Web\\UserOperator');
 
-// Run application
+// 运行应用
 $app->run();
 ```
 
