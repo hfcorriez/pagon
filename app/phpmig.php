@@ -2,16 +2,13 @@
 
 $app = require_once __DIR__ . '/bootstrap.php';
 
-use \Phpmig\Adapter,
-    \Phpmig\Pimple\Pimple;
-
-$container = new Pimple();
+$container = new Pagon\Fiber();
 
 $container['pdo'] = $app->pdo;
 $container['app'] = $app;
 
 $container['phpmig.adapter'] = $container->share(function () use ($app) {
-    return new Adapter\PDO\Sql($app->pdo, 'migrations');
+    return new Phpmig\Adapter\PDO\Sql($app->pdo, 'migrations');
 });
 
 $container['phpmig.migrations'] = function () {

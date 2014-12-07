@@ -47,7 +47,7 @@ $app->inject('loadOrm', function () use ($app) {
 /**
  * The pdo service for global use
  */
-$app->share('pdo', function ($app) {
+$app->share('pdo', function () use ($app) {
     $config = $app->database;
     return new PDO(buildDsn($config), $config['username'], $config['password'], $config['options']);
 });
