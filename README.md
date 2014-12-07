@@ -79,7 +79,7 @@ $users = \Model\User::dispense()->where('status', 1)->find_many();
 
 ```bash
 $ ./bin/cli db:generate AddUserLoginTime
-+f ./migrations/20141208030747_dd.php
++f ./migrations/20141208030747_AddUserLoginTime.php
 
 $ ./bin/cli db:status
 
