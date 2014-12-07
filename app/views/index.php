@@ -162,7 +162,7 @@
 <div id="wrapper" class="typo typo-selection">
     <h1>Welcome to Pagon!</h1>
 
-    <div id="tagline">I'm come from future!</div>
+    <div id="tagline">The future is under development!</div>
 
     <div id="desc">
         Pagon is a modern PHP framework, It's under MIT license.
