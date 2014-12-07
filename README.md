@@ -19,7 +19,7 @@ $ composer install
 $ composer create-project pagon/pagon myapp
 ```
 
-### 简单路由
+### 轻路由
 
 ```php
 $app = Pagon::create();
@@ -39,6 +39,25 @@ $app->post('/users/:id(/:op)?', 'Web\\UserOperator');
 $app->run();
 ```
 
+### 命令行
+
+> 主要用户一些命令行交互和指令的统一管理
+
+`./bin/cli`
+
+```php
+$app->command('db\:init', '\Command\DB\Init');
+$app->command('queue\:start', '\Command\Queue\Start');
+```
+
+执行
+
+```bash
+./bin/cli db:init
+
+./bin/cli queue:start
+```
+
 ### 数据库
 
 > 操作数据库采用 [Paris](https://github.com/j4mie/paris) 做为ORM。[查看文档](http://paris.readthedocs.org/en/latest/)
@@ -48,6 +67,33 @@ $app->run();
 ```php
 $users = \Model\User::dispense()->where('status', 1)->find_many();
 ```
+
+初始化
+
+```bash
+./bin/cli db:init
+```
+
+> 会执行 app/migrations/schema.sql 到数据库
+
+升级和状态
+
+```bash
+$ ./bin/cli db:generate AddUserLoginTime
++f ./migrations/20141208030747_dd.php
+
+$ ./bin/cli db:status
+
+ Status   Migration ID    Migration Name
+-----------------------------------------
+   down  20141208030747  AddUserLoginTime
+
+$ ./bin/cli db:migrate
+ == 20141208030747 AddUserLoginTime migrating
+ == 20141208030747 AddUserLoginTime migrated 0.0084s
+```
+
+> 除了 init 外的指令，都会映射到 [phpmig](https://github.com/davedevelopment/phpmig) 的指令上。
 
 ### 运行
 
