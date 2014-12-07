@@ -46,7 +46,7 @@ Pagon serve at http://127.0.0.1:5000
 
 ### 预览
 
-![运行欢迎页面](https://f.cloud.github.com/assets/119550/2168909/28e8f986-954e-11e3-8031-9c21079cbef6.jpg)
+![运行欢迎页面](https://cloud.githubusercontent.com/assets/119550/5330562/63b05914-7e38-11e4-96f3-0a51a8aa4d01.jpg)
 
 ## 特性
 
