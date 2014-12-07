@@ -19,16 +19,34 @@ $ composer install
 $ composer create-project pagon/pagon myapp
 ```
 
-### 代码
+### 简单路由
 
 ```php
 $app = Pagon::create();
 
+// Get index with closure
 $app->get('/', function($req, $res) {
   $res->render('index.php');
 });
 
+// Get one user
+$app->get('/users/:id', 'Web\\User');
+
+// Run some operator
+$app->post('/users/:id(/:op)?', 'Web\\UserOperator');
+
+// Run application
 $app->run();
+```
+
+### 数据库
+
+> 操作数据库采用 [Paris](https://github.com/j4mie/paris) 做为ORM。[查看文档](http://paris.readthedocs.org/en/latest/)
+
+简单示例
+
+```php
+$users = \Model\User::dispense()->where('status', 1)->find_many();
 ```
 
 ### 运行
@@ -38,7 +56,7 @@ $ ./bin/pagon serve
 Pagon serve at http://127.0.0.1:5000
 ```
 
-> 内建服务器运行方式只适用于开发，生产环境请使用HTTP服务器来维护
+> 内建服务器运行方式只适用于开发，生产环境请使用 Nginx 或 Apache 来运行。
 
 ### 预览
 
