@@ -22,6 +22,20 @@ class Api extends Rest
     protected $_format = 'json';
 
     /**
+     * Xml option for dump
+     *
+     * @var array
+     */
+    protected $_xml_option = array();
+
+    /**
+     * Json callback function
+     *
+     * @var string
+     */
+    protected $_jsonp_callback = 'callback';
+
+    /**
      * Show error error message
      *
      * @param string $message
@@ -44,20 +58,19 @@ class Api extends Rest
     /**
      * Dump API data
      *
-     * @param array        $data
-     * @param int          $code
-     * @param array|string $other_option
+     * @param array $data
+     * @param int   $code
      */
-    protected function dump(array $data, $code = 200, $other_option = null)
+    protected function dump(array $data, $code = 200)
     {
         $this->output->status($code);
 
         switch ($this->_format) {
             case 'xml':
-                $this->output->xml($data, (array)$other_option);
+                $this->output->xml($data, $this->_xml_option);
                 break;
             case 'jsonp':
-                $this->output->jsonp($data, (string)$other_option);
+                $this->output->jsonp($data, $this->_jsonp_callback);
                 break;
             default:
                 $this->output->json($data);
