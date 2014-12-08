@@ -3,6 +3,8 @@ Pagon
 
 Pagon is a modern php framework with elegant syntax. It also enables you to quickly and easily build RESTful web applications.
 
+[中文文档]
+
 ## Quick Started
 
 ### Installation
@@ -113,6 +115,7 @@ inews: [https://github.com/Trimidea/inews]
 
 Copyright (c) 2014 hfcorriez. MIT Licensed, see [LICENSE] for details.
 
+[中文文档]: https://github.com/hfcorriez/pagon/blob/master/README_CN.md
 [Composer]: https://getcomposer.org/
 [Download]: https://github.com/hfcorriez/pagon/releases/latest
 [Paris Doc]: http://paris.readthedocs.org/en/latest/philosophy.html
