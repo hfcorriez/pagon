@@ -30,10 +30,10 @@ $app->get('/', function($req, $res) {
 });
 
 // 类做为路由
-$app->get('/users/:id', 'Web\\User');
+$app->get('/users/:id', 'Web\User');
 
 // 可选参数的路由，op 为可选参数
-$app->post('/users/:id(/:op)', 'Web\\UserOperator');
+$app->post('/users/:id(/:op)', 'Web\UserOperator');
 
 // 运行应用
 $app->run();
@@ -46,8 +46,8 @@ $app->run();
 `./bin/cli`
 
 ```php
-$app->command('db\:init', '\Command\DB\Init');
-$app->command('queue\:start', '\Command\Queue\Start');
+$app->command('db\:init', 'Command\DB\Init');
+$app->command('queue\:start', 'Command\Queue\Start');
 ```
 
 执行
