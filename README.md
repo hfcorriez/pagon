@@ -93,9 +93,9 @@ $app->run();
 
 ```
 
-## Paris ORM
+## Database
 
-Pagon ships with a superb ORM: Paris. More detailed documentation and examples, please check out [Paris Doc] .
+Pagon ships with a superb ORM: Paris. More detailed documentation and examples, please check out [Paris Doc].
 
 Simple Example
 
